@@ -36,43 +36,23 @@ interface TradingDecision {
 }
 
 function createPrompt(context: MarketContext): string {
-  return `You are an expert stock trader managing a portfolio worth $${context.accountValue.toFixed(2)}.
+  // Optimized prompt - reduced from ~1200 tokens to ~600 tokens
+  const positionsStr = context.positions.length > 0
+    ? context.positions.map(p => `${p.symbol}: ${p.quantity}@$${p.entryPrice.toFixed(2)} P&L:${p.unrealizedPnLPercent.toFixed(1)}%`).join(', ')
+    : 'None';
 
-CURRENT PORTFOLIO:
-- Cash Available: $${context.cashBalance.toFixed(2)}
-- Open Positions: ${context.positions.length}
-${context.positions.map(p => `  • ${p.quantity} shares of ${p.symbol} @ $${p.entryPrice.toFixed(2)} (Current: $${p.currentPrice.toFixed(2)}, P&L: ${p.unrealizedPnL >= 0 ? '+' : ''}$${p.unrealizedPnL.toFixed(2)} / ${p.unrealizedPnLPercent >= 0 ? '+' : ''}${p.unrealizedPnLPercent.toFixed(2)}%)`).join('\n')}
+  return `Stock trader. Portfolio: $${context.accountValue.toFixed(0)}, Cash: $${context.cashBalance.toFixed(0)}
+Positions: ${positionsStr}
 
-MARKET DATA (Top 20 S&P 500 Stocks):
-${context.stocks.map(s => `${s.symbol.padEnd(6)} - ${s.name.padEnd(30)} - $${s.price.toFixed(2).padStart(8)} (${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%)`).join('\n')}
+Market (S&P 500):
+${context.stocks.map(s => `${s.symbol}:$${s.price.toFixed(2)}(${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(1)}%)`).join(' ')}
 
-INSTRUCTIONS:
-Analyze the current market conditions and your portfolio. Make ONE of the following decisions:
+Decide: BUY (max 20% cash), SELL position, or HOLD.
 
-1. BUY - Purchase shares of a stock (max 20% of cash per trade)
-2. SELL - Close an existing position entirely
-3. HOLD - Do nothing this cycle
+JSON only:
+{"action":"BUY|SELL|HOLD","symbol":"AAPL","quantity":5,"reasoning":"brief","confidence":0.75,"riskAssessment":"Low|Med|High","targetPrice":200,"stopLoss":175}
 
-Consider:
-- Portfolio diversification (don't over-concentrate)
-- Risk management (position sizing, stop losses)
-- Market momentum and trends
-- Your current P&L on open positions
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "action": "BUY" | "SELL" | "HOLD",
-  "symbol": "AAPL",
-  "quantity": 5,
-  "reasoning": "Brief explanation of your decision and market analysis",
-  "confidence": 0.75,
-  "riskAssessment": "Low/Medium/High risk trade",
-  "targetPrice": 200.00,
-  "stopLoss": 175.00
-}
-
-For HOLD decisions, only include action, reasoning, and confidence.
-For SELL decisions, include the symbol of position to close.`;
+HOLD: action, reasoning, confidence only.`;
 }
 
 export async function getAIDecision(
@@ -112,12 +92,13 @@ async function callOpenAI(context: MarketContext): Promise<TradingDecision> {
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  // Using GPT-4o-mini instead of GPT-4 (98% cost reduction)
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'You are an expert stock trader. Always respond with valid JSON only.',
+        content: 'Stock trader. JSON only.',
       },
       {
         role: 'user',
@@ -125,7 +106,7 @@ async function callOpenAI(context: MarketContext): Promise<TradingDecision> {
       },
     ],
     temperature: 0.7,
-    max_tokens: 500,
+    max_tokens: 150, // Reduced from 500
   });
 
   const response = completion.choices[0].message.content || '{}';
@@ -137,9 +118,10 @@ async function callClaude(context: MarketContext): Promise<TradingDecision> {
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
+  // Using Claude Haiku instead of Sonnet (95% cost reduction)
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
+    model: 'claude-3-5-haiku-20241022',
+    max_tokens: 200, // Reduced from 1024
     messages: [
       {
         role: 'user',

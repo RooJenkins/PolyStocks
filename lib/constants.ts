@@ -24,26 +24,26 @@ export const TOP_20_STOCKS = [
 export const AI_AGENTS = [
   {
     id: 'gpt4',
-    name: 'GPT-4',
-    model: 'OpenAI GPT-4',
+    name: 'GPT-4o Mini',
+    model: 'OpenAI GPT-4o-mini',
     color: '#10b981',
   },
   {
     id: 'claude',
-    name: 'Claude Sonnet 4.5',
-    model: 'Anthropic Claude',
+    name: 'Claude Haiku',
+    model: 'Anthropic Claude Haiku',
     color: '#3b82f6',
   },
   {
     id: 'gemini',
-    name: 'Gemini Pro',
-    model: 'Google Gemini',
+    name: 'Gemini Flash',
+    model: 'Google Gemini 1.5 Flash',
     color: '#f59e0b',
   },
   {
     id: 'grok',
     name: 'Grok',
-    model: 'xAI Grok',
+    model: 'xAI Grok (Fallback)',
     color: '#ef4444',
   },
   {
@@ -55,7 +55,7 @@ export const AI_AGENTS = [
   {
     id: 'qwen',
     name: 'Qwen',
-    model: 'Alibaba Qwen',
+    model: 'Alibaba Qwen (Fallback)',
     color: '#ec4899',
   },
 ];
