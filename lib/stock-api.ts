@@ -66,6 +66,14 @@ export async function fetchStockQuote(symbol: string): Promise<Stock> {
     throw new Error(`Stock ${symbol} not found in top 20 list`);
   }
 
+  if (!config) {
+    // Return simulated price for this stock
+    const mockPrices = generateMockStockPrices();
+    const mockStock = mockPrices.find((s) => s.symbol === symbol);
+    if (mockStock) return mockStock;
+    throw new Error(`Failed to get price for ${symbol}`);
+  }
+
   switch (config.provider) {
     case 'polygon':
       return fetchPolygonQuote(symbol, stock.name, config.apiKey);
@@ -254,6 +262,10 @@ async function fetchFinnhubQuote(
  */
 export async function fetchStockNews(symbols: string[] = []): Promise<any[]> {
   const config = getAPIConfig();
+
+  if (!config) {
+    return []; // No news without API
+  }
 
   switch (config.provider) {
     case 'polygon':

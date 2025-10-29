@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import StockTicker from '@/components/StockTicker';
 import PerformanceChart from '@/components/PerformanceChart';
+import TradesList from '@/components/TradesList';
+import PositionsList from '@/components/PositionsList';
+import ModelChat from '@/components/ModelChat';
 import type { AIAgent } from '@/types';
 
 export default function Home() {
@@ -181,21 +184,9 @@ export default function Home() {
 
               {/* Tab Content */}
               <div className="p-6">
-                {activeTab === 'trades' && (
-                  <div className="text-center py-8 text-gray-500">
-                    No trades yet. AI agents will start trading soon.
-                  </div>
-                )}
-                {activeTab === 'positions' && (
-                  <div className="text-center py-8 text-gray-500">
-                    No open positions. AI agents will start trading soon.
-                  </div>
-                )}
-                {activeTab === 'chat' && (
-                  <div className="text-center py-8 text-gray-500">
-                    AI decision logs will appear here once trading begins.
-                  </div>
-                )}
+                {activeTab === 'trades' && <TradesList agentId={selectedAgent!} />}
+                {activeTab === 'positions' && <PositionsList agentId={selectedAgent!} />}
+                {activeTab === 'chat' && <ModelChat agentId={selectedAgent!} />}
                 {activeTab === 'readme' && (
                   <div className="prose prose-invert max-w-none">
                     <h3>About PolyStocks</h3>

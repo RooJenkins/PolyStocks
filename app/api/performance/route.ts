@@ -30,17 +30,26 @@ export async function GET(request: Request) {
       orderBy: { timestamp: 'asc' },
     });
 
-    // Group by timestamp and format for chart
+    // Group by timestamp (rounded to nearest minute) and format for chart
     const groupedData = new Map<string, any>();
 
     for (const point of performancePoints) {
-      const timestamp = point.timestamp.toISOString();
+      // Round timestamp to nearest minute for grouping
+      const roundedTime = new Date(point.timestamp);
+      roundedTime.setSeconds(0);
+      roundedTime.setMilliseconds(0);
+      const timeKey = roundedTime.toISOString();
 
-      if (!groupedData.has(timestamp)) {
-        groupedData.set(timestamp, { timestamp });
+      if (!groupedData.has(timeKey)) {
+        groupedData.set(timeKey, {
+          timestamp: roundedTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        });
       }
 
-      const entry = groupedData.get(timestamp);
+      const entry = groupedData.get(timeKey);
       entry[point.agentId] = point.accountValue;
     }
 
