@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy necessary files for the bot
+COPY scripts/trading-bot.ts ./scripts/
+COPY lib ./lib/
+COPY types.ts ./
+COPY tsconfig.json ./
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Install ts-node for running TypeScript
+RUN npm install -g tsx
+
+# Run the trading bot
+CMD ["tsx", "scripts/trading-bot.ts"]
