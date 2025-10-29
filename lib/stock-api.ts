@@ -1,5 +1,6 @@
 import { TOP_20_STOCKS } from './constants';
 import type { Stock } from '@/types';
+import { generateMockStockPrices } from './mock-stock-data';
 
 // Stock API provider types
 type StockProvider = 'alpha_vantage' | 'polygon' | 'finnhub';
@@ -9,21 +10,19 @@ interface StockAPIConfig {
   apiKey: string;
 }
 
-function getAPIConfig(): StockAPIConfig {
+function getAPIConfig(): StockAPIConfig | null {
   // Check which API keys are available
-  if (process.env.POLYGON_API_KEY) {
+  if (process.env.POLYGON_API_KEY && process.env.POLYGON_API_KEY !== 'demo') {
     return { provider: 'polygon', apiKey: process.env.POLYGON_API_KEY };
   }
-  if (process.env.ALPHA_VANTAGE_API_KEY) {
+  if (process.env.ALPHA_VANTAGE_API_KEY && process.env.ALPHA_VANTAGE_API_KEY !== 'demo') {
     return { provider: 'alpha_vantage', apiKey: process.env.ALPHA_VANTAGE_API_KEY };
   }
-  if (process.env.FINNHUB_API_KEY) {
+  if (process.env.FINNHUB_API_KEY && process.env.FINNHUB_API_KEY !== 'demo') {
     return { provider: 'finnhub', apiKey: process.env.FINNHUB_API_KEY };
   }
 
-  throw new Error(
-    'No stock API key configured. Please set POLYGON_API_KEY, ALPHA_VANTAGE_API_KEY, or FINNHUB_API_KEY in your .env file'
-  );
+  return null; // Will use mock data
 }
 
 /**
@@ -32,15 +31,27 @@ function getAPIConfig(): StockAPIConfig {
 export async function fetchStockPrices(): Promise<Stock[]> {
   const config = getAPIConfig();
 
-  switch (config.provider) {
-    case 'polygon':
-      return fetchPolygonPrices(config.apiKey);
-    case 'alpha_vantage':
-      return fetchAlphaVantagePrices(config.apiKey);
-    case 'finnhub':
-      return fetchFinnhubPrices(config.apiKey);
-    default:
-      throw new Error(`Unsupported provider: ${config.provider}`);
+  // If no valid API key, use mock data
+  if (!config) {
+    console.log('  ⚠️  No stock API key found, using simulated prices');
+    return generateMockStockPrices();
+  }
+
+  try {
+    switch (config.provider) {
+      case 'polygon':
+        return await fetchPolygonPrices(config.apiKey);
+      case 'alpha_vantage':
+        return await fetchAlphaVantagePrices(config.apiKey);
+      case 'finnhub':
+        return await fetchFinnhubPrices(config.apiKey);
+      default:
+        console.log('  ⚠️  Unknown provider, using simulated prices');
+        return generateMockStockPrices();
+    }
+  } catch (error) {
+    console.error('  ❌ Error fetching real stock prices, falling back to simulated data:', error);
+    return generateMockStockPrices();
   }
 }
 
