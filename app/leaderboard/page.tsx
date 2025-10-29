@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import StockTicker from '@/components/StockTicker';
+import ModelIcon from '@/components/ModelIcon';
 import type { AIAgent } from '@/types';
 
 export default function Leaderboard() {
@@ -44,7 +45,10 @@ export default function Leaderboard() {
       <StockTicker />
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Leaderboard</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">LEADERBOARD</h1>
+          <p className="text-gray-400 text-sm">AI Trading Models Ranked by Performance</p>
+        </div>
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading leaderboard...</div>
@@ -135,18 +139,21 @@ export default function Leaderboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-3">
+                          <ModelIcon model={agent.model} size={20} />
                           <div
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: agent.color }}
                           ></div>
                           <div>
-                            <div className="font-semibold">{agent.name}</div>
+                            <div className="font-semibold text-white">{agent.name}</div>
                             <div className="text-xs text-gray-400">{agent.model}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-mono font-semibold">
-                        ${agent.accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-mono font-bold text-lg text-white">
+                          ${agent.accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </div>
                       </td>
                       <td
                         className={`px-6 py-4 whitespace-nowrap font-mono font-semibold ${

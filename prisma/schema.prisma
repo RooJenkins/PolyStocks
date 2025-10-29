@@ -32,6 +32,7 @@ model Position {
   agentId              String
   symbol               String
   name                 String
+  side                 String   @default("LONG") // LONG or SHORT
   quantity             Float
   entryPrice           Float
   currentPrice         Float
@@ -50,7 +51,7 @@ model Trade {
   agentId      String
   symbol       String
   name         String
-  action       String // BUY or SELL
+  action       String // BUY, SELL, SELL_SHORT, or BUY_TO_COVER
   quantity     Float
   price        Float
   total        Float
@@ -75,7 +76,7 @@ model Decision {
   cashBalance    Float
 
   // Decision details
-  action         String // BUY, SELL, or HOLD
+  action         String // BUY, SELL, SELL_SHORT, BUY_TO_COVER, or HOLD
   symbol         String?
   quantity       Float?
   confidence     Float

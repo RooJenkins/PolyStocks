@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { fetchStockPrices } from '@/lib/stock-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,10 @@ export async function GET() {
       },
     });
 
+    // Fetch current stock prices
+    const stocks = await fetchStockPrices();
+    const stockPriceMap = new Map(stocks.map(s => [s.symbol, s.price]));
+
     // Calculate metrics for each agent
     const agentsWithMetrics = await Promise.all(
       agents.map(async (agent) => {
@@ -23,11 +28,24 @@ export async function GET() {
           where: { agentId: agent.id },
         });
 
+        // Recalculate current account value based on live stock prices
+        let unrealizedPnL = 0;
+        for (const position of agent.positions) {
+          const currentPrice = stockPriceMap.get(position.symbol) || position.currentPrice;
+          const positionPnL = (currentPrice - position.entryPrice) * position.quantity;
+          unrealizedPnL += positionPnL;
+        }
+
+        const currentAccountValue = agent.cashBalance + agent.positions.reduce((sum, pos) => {
+          const currentPrice = stockPriceMap.get(pos.symbol) || pos.currentPrice;
+          return sum + (currentPrice * pos.quantity);
+        }, 0);
+
         const winningTrades = trades.filter((t) => t.realizedPnL && t.realizedPnL > 0);
         const losingTrades = trades.filter((t) => t.realizedPnL && t.realizedPnL < 0);
 
-        const roi = ((agent.accountValue - agent.startingValue) / agent.startingValue) * 100;
-        const totalPnL = agent.accountValue - agent.startingValue;
+        const roi = ((currentAccountValue - agent.startingValue) / agent.startingValue) * 100;
+        const totalPnL = currentAccountValue - agent.startingValue;
         const winRate = trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0;
 
         const biggestWin = Math.max(...trades.map((t) => t.realizedPnL || 0), 0);
@@ -76,7 +94,7 @@ export async function GET() {
           name: agent.name,
           model: agent.model,
           color: agent.color,
-          accountValue: agent.accountValue,
+          accountValue: currentAccountValue,
           startingValue: agent.startingValue,
           roi,
           totalPnL,

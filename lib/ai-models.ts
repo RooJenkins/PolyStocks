@@ -2,6 +2,11 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
+import {
+  getMultiSourceToolsForOpenAI,
+  callMultiSourceTool,
+  getMultiSourceUsageSummary,
+} from './multi-source-tools';
 
 interface MarketContext {
   stocks: Array<{
@@ -10,6 +15,11 @@ interface MarketContext {
     price: number;
     change: number;
     changePercent: number;
+    weekTrend?: number; // 7-day trend
+    ma7?: number; // 7-day moving average
+    ma30?: number; // 30-day moving average
+    volume?: number;
+    volumeStatus?: 'high' | 'low' | 'normal';
   }>;
   cashBalance: number;
   accountValue: number;
@@ -22,10 +32,30 @@ interface MarketContext {
     unrealizedPnL: number;
     unrealizedPnLPercent: number;
   }>;
+  // Phase 1: Market context
+  marketTrend?: {
+    daily: number;
+    weekly: number;
+  };
+  // Phase 1: Agent performance stats
+  agentStats?: {
+    winRate: number;
+    totalTrades: number;
+    avgWin: number;
+    avgLoss: number;
+    bestTrade: number;
+    worstTrade: number;
+  };
+  // Phase 2: News for big movers
+  news?: Array<{
+    symbol: string;
+    headline: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+  }>;
 }
 
 interface TradingDecision {
-  action: 'BUY' | 'SELL' | 'HOLD';
+  action: 'BUY' | 'SELL' | 'SELL_SHORT' | 'BUY_TO_COVER' | 'HOLD';
   symbol?: string;
   quantity?: number;
   reasoning: string;
@@ -35,24 +65,112 @@ interface TradingDecision {
   stopLoss?: number;
 }
 
-function createPrompt(context: MarketContext): string {
-  // Optimized prompt - reduced from ~1200 tokens to ~600 tokens
+function createPrompt(context: MarketContext, maxToolCalls: number = 15, useMCPTools: boolean = false): string {
+  // Format positions
   const positionsStr = context.positions.length > 0
     ? context.positions.map(p => `${p.symbol}: ${p.quantity}@$${p.entryPrice.toFixed(2)} P&L:${p.unrealizedPnLPercent.toFixed(1)}%`).join(', ')
     : 'None';
 
-  return `Stock trader. Portfolio: $${context.accountValue.toFixed(0)}, Cash: $${context.cashBalance.toFixed(0)}
+  // Format market trend
+  const marketTrendStr = context.marketTrend
+    ? `Market today: ${context.marketTrend.daily >= 0 ? '+' : ''}${context.marketTrend.daily.toFixed(2)}%`
+    : '';
+
+  // Format agent stats
+  const agentStatsStr = context.agentStats && context.agentStats.totalTrades > 0
+    ? `Your stats: ${context.agentStats.winRate.toFixed(0)}% win rate (${context.agentStats.totalTrades} trades), Avg win: $${context.agentStats.avgWin.toFixed(0)}, Avg loss: $${context.agentStats.avgLoss.toFixed(0)}`
+    : '';
+
+  // Format news if available
+  const newsStr = context.news && context.news.length > 0
+    ? '\nNEWS:\n' + context.news.map(n => `${n.symbol}: ${n.headline} [${n.sentiment}]`).join('\n')
+    : '';
+
+  // Format stocks with technical indicators
+  const stocksStr = context.stocks.map(s => {
+    const parts = [`${s.symbol}:$${s.price.toFixed(2)}`];
+
+    // Today's change
+    parts.push(`(${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(1)}%)`);
+
+    // 7-day trend if available
+    if (s.weekTrend !== undefined) {
+      parts.push(`7d:${s.weekTrend >= 0 ? '+' : ''}${s.weekTrend.toFixed(1)}%`);
+    }
+
+    // Moving averages if available
+    if (s.ma7 !== undefined && s.ma30 !== undefined) {
+      const vsMA7 = ((s.price - s.ma7) / s.ma7 * 100).toFixed(1);
+      const vsMA30 = ((s.price - s.ma30) / s.ma30 * 100).toFixed(1);
+      parts.push(`MA7:${Number(vsMA7) >= 0 ? '+' : ''}${vsMA7}%`);
+      parts.push(`MA30:${Number(vsMA30) >= 0 ? '+' : ''}${vsMA30}%`);
+    }
+
+    // Volume status if available
+    if (s.volumeStatus) {
+      parts.push(`Vol:${s.volumeStatus}`);
+    }
+
+    return parts.join(' ');
+  }).join('\n');
+
+  return `STOCK TRADER - S&P 500
+
+==== PORTFOLIO ====
+Value: $${context.accountValue.toFixed(0)} | Cash: $${context.cashBalance.toFixed(0)}
 Positions: ${positionsStr}
 
-Market (S&P 500):
-${context.stocks.map(s => `${s.symbol}:$${s.price.toFixed(2)}(${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(1)}%)`).join(' ')}
+==== MARKET CONTEXT ====
+${marketTrendStr}
+${stocksStr}${newsStr}
 
-Decide: BUY (max 20% cash), SELL position, or HOLD.
+Format: Symbol:Price (Today%) 7d:Week% MA7:vsMA7% MA30:vsMA30% Vol:status
+- MA7/MA30: % above/below moving average (positive = bullish momentum)
+- Vol: high/normal/low trading volume
 
-JSON only:
-{"action":"BUY|SELL|HOLD","symbol":"AAPL","quantity":5,"reasoning":"brief","confidence":0.75,"riskAssessment":"Low|Med|High","targetPrice":200,"stopLoss":175}
+==== YOUR PERFORMANCE ====
+${agentStatsStr || 'No trade history yet'}
 
-HOLD: action, reasoning, confidence only.`;
+==== RISK RULES ====
+- Max 25% cash per trade
+- Max 30% portfolio in single stock
+- Min 3 positions for diversification
+- Use stop-losses for risk management
+
+==== TRADING PRINCIPLES ====
+✓ Buy dips in strong uptrends with positive market sentiment
+✓ Take profits on parabolic moves (>15% gains)
+✓ Cut losses early on weak stocks (<-8%)
+✗ Avoid chasing breakouts without confirmation
+✗ Don't average down on falling stocks without support
+
+${useMCPTools ? `==== TOOL CALL BUDGET: ${maxToolCalls} maximum ====
+Use efficiently based on situation:
+- ROUTINE MONITORING (no opportunities): 2-3 calls
+  Example: get_quote(symbol) for quick checks
+
+- INVESTIGATING OPPORTUNITY (interesting signal): 8-10 calls
+  Example: get_quote → get_rsi → get_macd → get_news_sentiment
+
+- CRITICAL DECISION (large risk/reward at stake): 12-15 calls
+  Example: Full analysis including fundamentals, multiple indicators, news
+
+Available tools:
+- get_quote(symbol): Real-time price & daily change
+- get_rsi(symbol, interval='daily'): Relative Strength Index (overbought >70, oversold <30)
+- get_macd(symbol, interval='daily'): Momentum indicator (bullish/bearish signal)
+- get_company_overview(symbol): P/E ratio, market cap, sector, description
+- get_news_sentiment(symbol): Recent news headlines with sentiment scores
+
+Use tools to gather data, then make ONE trading decision.
+` : ''}
+==== DECISION ====
+Actions: BUY (long), SELL (close long), SELL_SHORT (bet on drop), BUY_TO_COVER (close short), HOLD
+
+Respond with JSON only:
+{"action":"BUY|SELL|SELL_SHORT|BUY_TO_COVER|HOLD","symbol":"AAPL","quantity":5,"reasoning":"Why this trade fits market context and your strategy","confidence":0.75,"riskAssessment":"Low|Med|High","targetPrice":200,"stopLoss":175}
+
+For HOLD: {"action":"HOLD","reasoning":"Why waiting is best","confidence":0.7}`;
 }
 
 export async function getAIDecision(
@@ -65,9 +183,9 @@ export async function getAIDecision(
   try {
     switch (agentId) {
       case 'gpt4':
-        return await callOpenAI(context);
+        return await callOpenAI(context, agentId, agentName);
       case 'claude':
-        return await callClaude(context);
+        return await callClaude(context, agentId, agentName);
       case 'gemini':
         return await callGemini(context);
       case 'deepseek':
@@ -87,33 +205,123 @@ export async function getAIDecision(
   }
 }
 
-async function callOpenAI(context: MarketContext): Promise<TradingDecision> {
+async function callOpenAI(context: MarketContext, agentId: string = 'gpt4', agentName: string = 'GPT-4'): Promise<TradingDecision> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Using GPT-4o-mini instead of GPT-4 (98% cost reduction)
-  const completion = await openai.chat.completions.create({
+  // Use function calling with Alpha Vantage tools
+  return await callOpenAIWithTools(openai, context, agentId, agentName);
+}
+
+async function callOpenAIWithTools(
+  openai: OpenAI,
+  context: MarketContext,
+  agentId: string,
+  agentName: string
+): Promise<TradingDecision> {
+  const MAX_TOOL_CALLS = 15;
+  let toolCallsUsed = 0;
+
+  const tools = getMultiSourceToolsForOpenAI();
+  const messages: any[] = [
+    {
+      role: 'system',
+      content: `You are an expert stock trader. You have access to multi-source financial data tools:
+- Yahoo Finance (yf_*): Unlimited free quotes, historical data, company info, trending stocks
+- Alpha Vantage (get_*): Technical indicators (RSI, MACD), news sentiment (LIMITED: 25 calls/day, use sparingly!)
+
+Use them wisely to make informed trading decisions. Budget: ${MAX_TOOL_CALLS} tool calls maximum.
+
+Strategy: Prefer Yahoo Finance tools (unlimited), use Alpha Vantage only for technical indicators you really need.`,
+    },
+    {
+      role: 'user',
+      content: createPrompt(context, MAX_TOOL_CALLS, true),
+    },
+  ];
+
+  console.log(`  🔧 Multi-source function calling enabled (${MAX_TOOL_CALLS} tool budget)`);
+
+  while (toolCallsUsed < MAX_TOOL_CALLS) {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages,
+      tools,
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    const message = response.choices[0].message;
+    messages.push(message);
+
+    // If AI returns a decision (no more tool calls)
+    if (!message.tool_calls || message.tool_calls.length === 0) {
+      if (message.content) {
+        console.log(`  ✅ Decision made after ${toolCallsUsed} tool calls`);
+        return parseAIResponse(message.content);
+      }
+      // No content and no tool calls - error
+      throw new Error('AI returned no decision or tool calls');
+    }
+
+    // Execute tool calls
+    for (const toolCall of message.tool_calls) {
+      toolCallsUsed++;
+
+      // Type guard for function tool calls
+      if (toolCall.type !== 'function' || !toolCall.function) continue;
+
+      console.log(`  🔧 Tool call ${toolCallsUsed}/${MAX_TOOL_CALLS}: ${toolCall.function.name}`);
+
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = await callMultiSourceTool(toolCall.function.name, args, agentId, agentName);
+
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        });
+      } catch (error: any) {
+        console.log(`  ⚠️  Tool error: ${error.message}`);
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify({ error: error.message }),
+        });
+      }
+    }
+
+    // Add budget reminder
+    if (toolCallsUsed < MAX_TOOL_CALLS) {
+      messages.push({
+        role: 'system',
+        content: `Tool calls used: ${toolCallsUsed}/${MAX_TOOL_CALLS}. ${MAX_TOOL_CALLS - toolCallsUsed} remaining. Make your decision or continue investigating.`,
+      });
+    }
+  }
+
+  // Budget exhausted, force decision
+  console.log(`  ⚠️  Tool budget exhausted (${MAX_TOOL_CALLS} calls), forcing decision`);
+  const finalResponse = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
+      ...messages,
       {
         role: 'system',
-        content: 'Stock trader. JSON only.',
-      },
-      {
-        role: 'user',
-        content: createPrompt(context),
+        content: 'Budget exhausted. Make your final trading decision NOW based on the data you gathered. Respond with JSON only.',
       },
     ],
     temperature: 0.7,
-    max_tokens: 150, // Reduced from 500
+    max_tokens: 500,
   });
 
-  const response = completion.choices[0].message.content || '{}';
-  return parseAIResponse(response);
+  const content = finalResponse.choices[0].message.content || '{"action":"HOLD","reasoning":"Budget exhausted","confidence":0.5}';
+  return parseAIResponse(content);
 }
 
-async function callClaude(context: MarketContext): Promise<TradingDecision> {
+async function callClaude(context: MarketContext, agentId: string = 'claude', agentName: string = 'Claude'): Promise<TradingDecision> {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
@@ -136,7 +344,7 @@ async function callClaude(context: MarketContext): Promise<TradingDecision> {
 
 async function callGemini(context: MarketContext): Promise<TradingDecision> {
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
   const result = await model.generateContent(createPrompt(context));
   const response = result.response.text();
@@ -226,7 +434,7 @@ function parseAIResponse(response: string): TradingDecision {
     const decision = JSON.parse(jsonStr);
 
     // Validate and normalize the decision
-    if (!['BUY', 'SELL', 'HOLD'].includes(decision.action)) {
+    if (!['BUY', 'SELL', 'SELL_SHORT', 'BUY_TO_COVER', 'HOLD'].includes(decision.action)) {
       throw new Error('Invalid action');
     }
 

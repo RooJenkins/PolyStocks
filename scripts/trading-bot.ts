@@ -1,20 +1,46 @@
 import cron from 'node-cron';
 import { runTradingCycle } from '../lib/trading-engine';
+import { isMarketOpen, getMarketStatus, formatDuration } from '../lib/realistic-execution';
 
 console.log('🤖 PolyStocks AI Trading Bot Started');
-console.log('📅 Running every 30 minutes (cost-optimized)');
+console.log('📅 Running every 30 minutes during market hours (9:30am-4pm ET)');
 console.log('⏰ Started at:', new Date().toLocaleString());
 console.log('💰 Estimated cost: $4-5/month');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-// Run immediately on startup
-console.log('🚀 Running initial trading cycle...\n');
-runTradingCycle().catch(console.error);
+// Check market status on startup
+const marketStatus = getMarketStatus();
+console.log(`📊 Market Status: ${marketStatus.isOpen ? '✅ OPEN' : '🔴 CLOSED'}`);
+if (!marketStatus.isOpen) {
+  console.log(`⏰ Next market open: ${marketStatus.nextOpen.toLocaleString()}`);
+  console.log(`⏳ Time until open: ${formatDuration(marketStatus.timeUntilOpen)}\n`);
+}
 
-// Then run every 30 minutes (48 cycles per day)
+// Run immediately on startup (only if market is open)
+if (marketStatus.isOpen) {
+  console.log('🚀 Market is open - Running initial trading cycle...\n');
+  runTradingCycle().catch(console.error);
+} else {
+  console.log('⏸️  Market is closed - Waiting for next market open...\n');
+}
+
+// Then run every 30 minutes (only during market hours)
 // This reduces API costs by 90% while maintaining active trading
 cron.schedule('*/30 * * * *', async () => {
-  console.log(`\n\n⏰ Scheduled run at ${new Date().toLocaleString()}`);
+  const now = new Date();
+  console.log(`\n\n⏰ Scheduled run at ${now.toLocaleString()}`);
+
+  // Check if market is open
+  if (!isMarketOpen(now)) {
+    const status = getMarketStatus();
+    console.log('🔴 Market is CLOSED - Skipping trading cycle');
+    console.log(`⏰ Next market open: ${status.nextOpen.toLocaleString()}`);
+    console.log(`⏳ Time until open: ${formatDuration(status.timeUntilOpen)}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    return;
+  }
+
+  console.log('✅ Market is OPEN - Running trading cycle');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   try {

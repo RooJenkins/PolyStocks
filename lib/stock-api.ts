@@ -1,28 +1,27 @@
 import { TOP_20_STOCKS } from './constants';
 import type { Stock } from '@/types';
 import { generateMockStockPrices } from './mock-stock-data';
+import { get_quote as yahooGetQuote } from './yahoo-finance-tools';
 
 // Stock API provider types
-type StockProvider = 'alpha_vantage' | 'polygon' | 'finnhub';
+type StockProvider = 'yahoo_finance' | 'alpha_vantage' | 'polygon' | 'finnhub';
 
 interface StockAPIConfig {
   provider: StockProvider;
-  apiKey: string;
+  apiKey?: string; // Optional now since Yahoo Finance doesn't need one
 }
 
-function getAPIConfig(): StockAPIConfig | null {
-  // Check which API keys are available
-  if (process.env.POLYGON_API_KEY && process.env.POLYGON_API_KEY !== 'demo') {
-    return { provider: 'polygon', apiKey: process.env.POLYGON_API_KEY };
-  }
-  if (process.env.ALPHA_VANTAGE_API_KEY && process.env.ALPHA_VANTAGE_API_KEY !== 'demo') {
-    return { provider: 'alpha_vantage', apiKey: process.env.ALPHA_VANTAGE_API_KEY };
-  }
-  if (process.env.FINNHUB_API_KEY && process.env.FINNHUB_API_KEY !== 'demo') {
-    return { provider: 'finnhub', apiKey: process.env.FINNHUB_API_KEY };
-  }
+function getAPIConfig(): StockAPIConfig {
+  // Always use Yahoo Finance first (unlimited, free, no API key needed)
+  return { provider: 'yahoo_finance' };
 
-  return null; // Will use mock data
+  // Fallback providers (kept for reference, but Yahoo Finance should always work)
+  // if (process.env.POLYGON_API_KEY && process.env.POLYGON_API_KEY !== 'demo') {
+  //   return { provider: 'polygon', apiKey: process.env.POLYGON_API_KEY };
+  // }
+  // if (process.env.ALPHA_VANTAGE_API_KEY && process.env.ALPHA_VANTAGE_API_KEY !== 'demo') {
+  //   return { provider: 'alpha_vantage', apiKey: process.env.ALPHA_VANTAGE_API_KEY };
+  // }
 }
 
 /**
@@ -31,20 +30,16 @@ function getAPIConfig(): StockAPIConfig | null {
 export async function fetchStockPrices(): Promise<Stock[]> {
   const config = getAPIConfig();
 
-  // If no valid API key, use mock data
-  if (!config) {
-    console.log('  ⚠️  No stock API key found, using simulated prices');
-    return generateMockStockPrices();
-  }
-
   try {
     switch (config.provider) {
+      case 'yahoo_finance':
+        return await fetchYahooFinancePrices();
       case 'polygon':
-        return await fetchPolygonPrices(config.apiKey);
+        return await fetchPolygonPrices(config.apiKey!);
       case 'alpha_vantage':
-        return await fetchAlphaVantagePrices(config.apiKey);
+        return await fetchAlphaVantagePrices(config.apiKey!);
       case 'finnhub':
-        return await fetchFinnhubPrices(config.apiKey);
+        return await fetchFinnhubPrices(config.apiKey!);
       default:
         console.log('  ⚠️  Unknown provider, using simulated prices');
         return generateMockStockPrices();
@@ -76,11 +71,11 @@ export async function fetchStockQuote(symbol: string): Promise<Stock> {
 
   switch (config.provider) {
     case 'polygon':
-      return fetchPolygonQuote(symbol, stock.name, config.apiKey);
+      return fetchPolygonQuote(symbol, stock.name, config.apiKey!);
     case 'alpha_vantage':
-      return fetchAlphaVantageQuote(symbol, stock.name, config.apiKey);
+      return fetchAlphaVantageQuote(symbol, stock.name, config.apiKey!);
     case 'finnhub':
-      return fetchFinnhubQuote(symbol, stock.name, config.apiKey);
+      return fetchFinnhubQuote(symbol, stock.name, config.apiKey!);
     default:
       throw new Error(`Unsupported provider: ${config.provider}`);
   }
@@ -145,6 +140,35 @@ async function fetchPolygonQuote(
     console.error(`Error fetching Polygon quote for ${symbol}:`, error);
     throw error;
   }
+}
+
+// Yahoo Finance implementation (FREE, unlimited)
+async function fetchYahooFinancePrices(): Promise<Stock[]> {
+  console.log('  📊 Using Yahoo Finance (unlimited, free)');
+  const stocks: Stock[]  = [];
+
+  // Fetch all stocks in parallel
+  const promises = TOP_20_STOCKS.map(async (stock) => {
+    try {
+      const quote = await yahooGetQuote(stock.symbol, 'stock-api', 'StockAPI');
+      return {
+        symbol: stock.symbol,
+        name: stock.name,
+        price: quote.price,
+        change: quote.change,
+        changePercent: quote.changePercent,
+      };
+    } catch (error) {
+      console.error(`Error fetching ${stock.symbol} from Yahoo Finance:`, error);
+      return null;
+    }
+  });
+
+  const results = await Promise.all(promises);
+  const validResults = results.filter((r): r is Stock => r !== null);
+
+  console.log(`  ✓ Fetched ${validResults.length}/${TOP_20_STOCKS.length} stocks from Yahoo Finance`);
+  return validResults;
 }
 
 // Alpha Vantage implementation
@@ -269,9 +293,9 @@ export async function fetchStockNews(symbols: string[] = []): Promise<any[]> {
 
   switch (config.provider) {
     case 'polygon':
-      return fetchPolygonNews(symbols, config.apiKey);
+      return fetchPolygonNews(symbols, config.apiKey!);
     case 'finnhub':
-      return fetchFinnhubNews(symbols, config.apiKey);
+      return fetchFinnhubNews(symbols, config.apiKey!);
     default:
       return [];
   }

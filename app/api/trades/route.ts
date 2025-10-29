@@ -20,6 +20,7 @@ export async function GET(request: Request) {
           select: {
             name: true,
             color: true,
+            model: true,
           },
         },
       },

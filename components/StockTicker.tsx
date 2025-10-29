@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import AnimatedNumber from './AnimatedNumber';
+import StockLogo from './StockLogo';
 import type { Stock } from '@/types';
 
 export default function StockTicker() {
@@ -21,7 +23,7 @@ export default function StockTicker() {
     };
 
     fetchStocks();
-    const interval = setInterval(fetchStocks, 30000); // Update every 30 seconds
+    const interval = setInterval(fetchStocks, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -37,19 +39,42 @@ export default function StockTicker() {
   }
 
   return (
-    <div className="w-full border-b border-[var(--border)] bg-[var(--card-bg)]">
-      <div className="container mx-auto px-4 py-3">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {stocks.slice(0, 6).map((stock) => (
-            <div key={stock.symbol} className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-gray-400">{stock.symbol}</div>
-                <div className="text-sm font-mono font-semibold">
-                  ${stock.price.toFixed(2)}
-                </div>
+    <div className="w-full border-b border-[var(--border)] bg-[var(--card-bg)] overflow-hidden">
+      <div className="relative">
+        <style jsx>{`
+          @keyframes scroll {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          .scroll-container {
+            animation: scroll 60s linear infinite;
+          }
+          .scroll-container:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+
+        <div className="scroll-container flex py-3">
+          {/* Duplicate the stocks array for seamless looping */}
+          {[...stocks, ...stocks].map((stock, index) => (
+            <div
+              key={`${stock.symbol}-${index}`}
+              className="flex items-center gap-6 px-10 border-r border-[var(--border)] whitespace-nowrap min-w-[220px]"
+            >
+              <div className="flex items-center gap-2">
+                <StockLogo symbol={stock.symbol} size={16} />
+                <div className="text-sm font-bold text-white">{stock.symbol}</div>
               </div>
-              <div className={`text-sm font-mono ${stock.change >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
-                {stock.change >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+              <div
+                className={`text-sm font-mono font-semibold ${
+                  stock.change >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'
+                }`}
+              >
+                <AnimatedNumber value={stock.price} decimals={2} prefix="$" className="font-mono" />
               </div>
             </div>
           ))}

@@ -37,7 +37,7 @@ export const AI_AGENTS = [
   {
     id: 'gemini',
     name: 'Gemini Flash',
-    model: 'Google Gemini 1.5 Flash',
+    model: 'Google Gemini 2.0 Flash',
     color: '#f59e0b',
   },
   {

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ModelIcon from './ModelIcon';
+import StockLogo from './StockLogo';
 
 interface Trade {
   id: string;
@@ -14,6 +16,11 @@ interface Trade {
   reasoning: string;
   confidence: number;
   timestamp: Date;
+  agent?: {
+    name: string;
+    color: string;
+    model: string;
+  };
 }
 
 export default function TradesList({ agentId }: { agentId: string }) {
@@ -34,7 +41,7 @@ export default function TradesList({ agentId }: { agentId: string }) {
     };
 
     fetchTrades();
-    const interval = setInterval(fetchTrades, 30000);
+    const interval = setInterval(fetchTrades, 5000); // Update every 5 seconds
     return () => clearInterval(interval);
   }, [agentId]);
 
@@ -51,57 +58,52 @@ export default function TradesList({ agentId }: { agentId: string }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {trades.map((trade) => (
         <div
           key={trade.id}
-          className="p-4 bg-[var(--background)] rounded-lg border border-[var(--border)] hover:border-gray-600 transition-colors"
+          className="p-3 bg-[var(--background)] rounded border border-[var(--border)] hover:border-gray-600 transition-colors"
         >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              {trade.agent && <ModelIcon model={trade.agent.model} size={14} />}
               <div
-                className={`px-2 py-1 rounded text-xs font-bold ${
-                  trade.action === 'BUY'
+                className={`px-2 py-0.5 rounded text-xs font-bold ${
+                  trade.action === 'BUY' || trade.action === 'BUY_TO_COVER'
                     ? 'bg-green-500/20 text-[var(--green)]'
                     : 'bg-red-500/20 text-[var(--red)]'
                 }`}
               >
-                {trade.action}
+                {trade.action === 'BUY' || trade.action === 'BUY_TO_COVER' ? '↗' : '↘'} {trade.action}
               </div>
-              <div>
-                <div className="font-semibold">
-                  {trade.quantity} shares of {trade.symbol}
-                </div>
-                <div className="text-sm text-gray-400">{trade.name}</div>
-              </div>
+              <StockLogo symbol={trade.symbol} size={16} />
+              <span className="text-sm font-bold text-white">{trade.symbol}</span>
             </div>
-            <div className="text-right">
-              <div className="font-mono font-semibold">${trade.price.toFixed(2)}</div>
-              <div className="text-xs text-gray-400">
-                Total: ${trade.total.toFixed(2)}
-              </div>
+            <div className="text-xs text-gray-500">
+              {new Date(trade.timestamp).toLocaleTimeString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </div>
           </div>
 
-          {trade.realizedPnL !== null && trade.realizedPnL !== undefined && (
-            <div
-              className={`text-sm font-mono font-semibold mb-2 ${
-                trade.realizedPnL >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'
-              }`}
-            >
-              P&L: {trade.realizedPnL >= 0 ? '+' : ''}${trade.realizedPnL.toFixed(2)}
-            </div>
-          )}
-
-          <div className="text-sm text-gray-400 mb-2">{trade.reasoning}</div>
+          <div className="text-xs text-gray-400 mb-2 line-clamp-2">{trade.reasoning}</div>
 
           <div className="flex items-center justify-between text-xs">
             <div className="text-gray-500">
-              Confidence: {(trade.confidence * 100).toFixed(0)}%
+              Quantity: {trade.quantity} @ ${trade.price.toFixed(2)}
             </div>
-            <div className="text-gray-500">
-              {new Date(trade.timestamp).toLocaleString()}
-            </div>
+            {trade.realizedPnL !== null && trade.realizedPnL !== undefined && (
+              <div
+                className={`font-mono font-bold ${
+                  trade.realizedPnL >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'
+                }`}
+              >
+                {trade.realizedPnL >= 0 ? '+' : ''}${trade.realizedPnL.toFixed(2)}
+              </div>
+            )}
           </div>
         </div>
       ))}
