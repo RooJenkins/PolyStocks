@@ -3,9 +3,6 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import StockTicker from '@/components/StockTicker';
-import PerformanceChart from '@/components/PerformanceChart';
-import PerformanceChartOption1 from '@/components/PerformanceChartOption1';
-import PerformanceChartOption2 from '@/components/PerformanceChartOption2';
 import PerformanceChartOption3 from '@/components/PerformanceChartOption3';
 import TradesList from '@/components/TradesList';
 import PositionsList from '@/components/PositionsList';
@@ -19,7 +16,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'trades' | 'positions' | 'chat'>('trades');
-  const [chartOption, setChartOption] = useState<'current' | 'option1' | 'option2' | 'option3'>('current');
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -43,41 +39,41 @@ export default function Home() {
   const currentAgent = agents.find((a) => a.id === selectedAgent);
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--background)] overflow-hidden">
+    <div className="min-h-screen lg:h-screen flex flex-col bg-[var(--background)] lg:overflow-hidden">
       <Header />
       <StockTicker />
 
-      {/* Main Content Area - Split Screen */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Agent Cards Section */}
-        <div className="border-b border-[var(--border)] bg-[var(--background)] px-6 py-4">
-          <div className="grid grid-cols-6 gap-3">
+      {/* Main Content Area - Responsive Layout */}
+      <main className="flex-1 flex flex-col lg:overflow-hidden">
+        {/* Agent Cards Section - Responsive Grid */}
+        <div className="border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
             {agents.map((agent) => (
               <button
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent.id)}
-                className={`p-3 rounded-lg border transition-all text-left ${
+                className={`p-2 sm:p-3 rounded-lg border transition-all text-left ${
                   selectedAgent === agent.id
                     ? 'border-[var(--blue)] bg-[var(--card-bg)] ring-2 ring-[var(--blue)] ring-opacity-50'
                     : 'border-[var(--border)] bg-[var(--card-bg)] hover:border-gray-500'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                     <div
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: agent.color }}
                     ></div>
-                    <ModelIcon model={agent.model} size={16} />
-                    <span className="text-xs font-bold truncate">{agent.name}</span>
+                    <ModelIcon model={agent.model} size={14} className="flex-shrink-0" />
+                    <span className="text-[10px] sm:text-xs font-bold truncate">{agent.name}</span>
                   </div>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-xl font-mono font-bold text-white">
+                <div className="flex items-baseline gap-1 sm:gap-2">
+                  <div className="text-base sm:text-xl font-mono font-bold text-white">
                     <AnimatedNumber value={agent.accountValue} decimals={0} prefix="$" className="font-mono" />
                   </div>
                   <div
-                    className={`text-sm font-mono font-bold flex items-center ${
+                    className={`text-xs sm:text-sm font-mono font-bold flex items-center ${
                       agent.roi >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'
                     }`}
                   >
@@ -90,60 +86,45 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Chart + Activity Feed Section */}
-        <div className="flex-1 flex min-h-0">
+        {/* Chart + Activity Feed Section - Responsive Flex */}
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:overflow-hidden">
           {/* Left: Performance Chart */}
-          <div className="flex-1 flex flex-col p-6 border-r border-[var(--border)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold uppercase tracking-wide text-white">TOTAL ACCOUNT VALUE</h2>
-              <div className="flex space-x-1">
-                <select
-                  value={chartOption}
-                  onChange={(e) => setChartOption(e.target.value as any)}
-                  className="px-3 py-1 text-xs font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded text-white hover:border-gray-500 transition-colors cursor-pointer"
-                >
-                  <option value="current">Current (Recharts Labels)</option>
-                  <option value="option1">Option 1 (Recharts + Absolute)</option>
-                  <option value="option2">Option 2 (Lightweight Charts)</option>
-                  <option value="option3">Option 3 (Canvas)</option>
-                </select>
-              </div>
+          <div className="flex-1 flex flex-col p-3 sm:p-4 lg:border-r border-[var(--border)] lg:overflow-hidden">
+            <div className="flex items-center mb-2 flex-shrink-0">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wide text-white">TOTAL ACCOUNT VALUE</h2>
             </div>
-            <div className="flex-1 min-h-0">
-              {chartOption === 'current' && <PerformanceChart agents={agents} />}
-              {chartOption === 'option1' && <PerformanceChartOption1 agents={agents} />}
-              {chartOption === 'option2' && <PerformanceChartOption2 agents={agents} />}
-              {chartOption === 'option3' && <PerformanceChartOption3 agents={agents} />}
+            <div className="h-[500px] lg:flex-1 lg:overflow-hidden">
+              <PerformanceChartOption3 agents={agents} />
             </div>
           </div>
 
-          {/* Right: Activity Feed */}
-          <div className="w-[500px] flex flex-col bg-[var(--card-bg)] border-l border-[var(--border)]">
+          {/* Right: Activity Feed - Full width on mobile, fixed width on desktop */}
+          <div className="w-full lg:w-[500px] flex flex-col bg-[var(--card-bg)] lg:border-l border-[var(--border)] lg:overflow-hidden">
             {/* Tabs */}
             <div className="flex border-b border-[var(--border)] bg-[var(--background)]">
               <button
                 onClick={() => setActiveTab('trades')}
-                className={`flex-1 px-4 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-wide transition-colors ${
                   activeTab === 'trades'
                     ? 'bg-[var(--card-bg)] text-white border-b-2 border-[var(--blue)]'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
-                Completed Trades
+                Trades
               </button>
               <button
                 onClick={() => setActiveTab('chat')}
-                className={`flex-1 px-4 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-wide transition-colors ${
                   activeTab === 'chat'
                     ? 'bg-[var(--card-bg)] text-white border-b-2 border-[var(--blue)]'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
-                Model Chat
+                Chat
               </button>
               <button
                 onClick={() => setActiveTab('positions')}
-                className={`flex-1 px-4 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-wide transition-colors ${
                   activeTab === 'positions'
                     ? 'bg-[var(--card-bg)] text-white border-b-2 border-[var(--blue)]'
                     : 'text-gray-400 hover:text-gray-200'
@@ -154,13 +135,13 @@ export default function Home() {
             </div>
 
             {/* Filter */}
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--background)]">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">FILTER:</span>
+            <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-[var(--border)] bg-[var(--background)]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-400">FILTER:</span>
                 <select
                   value={selectedAgent}
                   onChange={(e) => setSelectedAgent(e.target.value)}
-                  className="px-3 py-1.5 text-xs font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded text-white hover:border-gray-500 transition-colors cursor-pointer"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium bg-[var(--card-bg)] border border-[var(--border)] rounded text-white hover:border-gray-500 transition-colors cursor-pointer"
                 >
                   <option value="all">All Models</option>
                   {agents.map((agent) => (
@@ -173,7 +154,7 @@ export default function Home() {
             </div>
 
             {/* Content Area with Scroll */}
-            <div className="flex-1 overflow-y-auto p-4 pb-8">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 pb-8">
               {activeTab === 'trades' && <TradesList agentId={selectedAgent === 'all' ? '' : selectedAgent} />}
               {activeTab === 'chat' && <ModelChat agentId={selectedAgent === 'all' ? '' : selectedAgent} />}
               {activeTab === 'positions' && <PositionsList agentId={selectedAgent === 'all' ? '' : selectedAgent} />}

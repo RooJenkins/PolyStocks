@@ -1,13 +1,78 @@
 import { prisma } from './prisma';
 import { fetchStockPrices, fetchStockQuote, fetchStockNews } from './stock-api';
 import { getAIDecision } from './ai-models';
-import type { Stock } from '@/types';
+import type { Stock} from '@/types';
 import {
   executeBuy as realisticBuy,
   executeSell as realisticSell,
   isMarketOpen,
   getMarketStatus,
 } from './realistic-execution';
+import {
+  executeAlpacaBuy,
+  executeAlpacaSell,
+} from './alpaca-broker';
+import { validateTrade, logSafetyViolation } from './safety-limits';
+
+// Get trading mode from environment
+const TRADING_MODE = process.env.TRADING_MODE || 'simulated';
+
+// Wrapper functions that route to correct execution method
+async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
+  console.log(`  📍 Trading Mode: ${TRADING_MODE}`);
+
+  // Check safety limits first
+  const validation = await validateTrade(agentId, agentName, 'BUY', symbol, quantity, marketPrice);
+  if (!validation.allowed) {
+    await logSafetyViolation(agentId, agentName, validation.reason!, validation.warningLevel!);
+    return {
+      success: false,
+      error: validation.reason,
+      executedPrice: 0,
+      executedQuantity: 0,
+      commission: 0,
+      slippage: 0,
+      executionTime: 0
+    };
+  }
+
+  // Route to appropriate execution method
+  if (TRADING_MODE === 'paper' || TRADING_MODE === 'live') {
+    console.log(`  🔌 Using Alpaca API (${TRADING_MODE} mode)`);
+    return await executeAlpacaBuy(symbol, quantity, agentId);
+  } else {
+    // Simulated mode (default)
+    return await realisticBuy(symbol, quantity, marketPrice);
+  }
+}
+
+async function executeSellTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
+  console.log(`  📍 Trading Mode: ${TRADING_MODE}`);
+
+  // Check safety limits first
+  const validation = await validateTrade(agentId, agentName, 'SELL', symbol, quantity, marketPrice);
+  if (!validation.allowed) {
+    await logSafetyViolation(agentId, agentName, validation.reason!, validation.warningLevel!);
+    return {
+      success: false,
+      error: validation.reason,
+      executedPrice: 0,
+      executedQuantity: 0,
+      commission: 0,
+      slippage: 0,
+      executionTime: 0
+    };
+  }
+
+  // Route to appropriate execution method
+  if (TRADING_MODE === 'paper' || TRADING_MODE === 'live') {
+    console.log(`  🔌 Using Alpaca API (${TRADING_MODE} mode)`);
+    return await executeAlpacaSell(symbol, quantity, agentId);
+  } else {
+    // Simulated mode (default)
+    return await realisticSell(symbol, quantity, marketPrice);
+  }
+}
 
 // Helper: Calculate market trend from stocks
 function calculateMarketTrend(stocks: Stock[]): { daily: number; weekly: number } {
@@ -358,7 +423,8 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
   }
 
   // Execute with realistic constraints (bid-ask spread, market hours, delays, partial fills)
-  const execution = await realisticBuy(stock.symbol, decision.quantity, stock.price);
+  // Uses Alpaca API if TRADING_MODE is "paper" or "live", otherwise simulates
+  const execution = await executeBuyTrade(agent.id, agent.name, stock.symbol, decision.quantity, stock.price);
 
   if (!execution.success) {
     console.log(`  ❌ Execution failed: ${execution.error}`);
@@ -477,7 +543,8 @@ async function executeSell(agent: any, decision: any, stocks: Stock[]) {
   }
 
   // Execute with realistic constraints (bid-ask spread, market hours, delays, partial fills)
-  const execution = await realisticSell(stock.symbol, position.quantity, stock.price);
+  // Uses Alpaca API if TRADING_MODE is "paper" or "live", otherwise simulates
+  const execution = await executeSellTrade(agent.id, agent.name, stock.symbol, position.quantity, stock.price);
 
   if (!execution.success) {
     console.log(`  ❌ Execution failed: ${execution.error}`);

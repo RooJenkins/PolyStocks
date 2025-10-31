@@ -29,14 +29,15 @@ interface ExecutionResult {
 
 const DEFAULT_CONFIG: ExecutionConfig = {
   enableBidAskSpread: true,
-  enableMarketHours: true,
+  enableMarketHours: true, // PRODUCTION MODE: Only trade during market hours
   enableExecutionDelay: true,
   enablePartialFills: true,
   enableCommission: true,
 };
 
 /**
- * Check if market is currently open (NYSE hours: 9:30am-4:00pm ET)
+ * Check if market is currently open (NYSE hours: 9:25am-4:00pm ET)
+ * Bot starts at 9:25am to prepare for 9:30am market open
  */
 export function isMarketOpen(date: Date = new Date()): boolean {
   // Convert to ET timezone
@@ -51,9 +52,10 @@ export function isMarketOpen(date: Date = new Date()): boolean {
     return false;
   }
 
-  // Check if within trading hours (9:30am - 4:00pm ET)
+  // Check if within trading hours (9:25am - 4:00pm ET)
+  // 9:25am allows 5 minutes of prep before 9:30am market open
   const timeInMinutes = hours * 60 + minutes;
-  const marketOpen = 9 * 60 + 30;  // 9:30am
+  const marketOpen = 9 * 60 + 25;  // 9:25am (5 min before official open)
   const marketClose = 16 * 60;      // 4:00pm
 
   return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
@@ -61,6 +63,7 @@ export function isMarketOpen(date: Date = new Date()): boolean {
 
 /**
  * Get time until market opens (in milliseconds)
+ * Market opens at 9:25am ET for bot prep
  */
 export function getTimeUntilMarketOpen(date: Date = new Date()): number {
   const etTime = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -72,31 +75,31 @@ export function getTimeUntilMarketOpen(date: Date = new Date()): number {
   if (day === 0) { // Sunday
     const tomorrow = new Date(etTime);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 30, 0, 0);
+    tomorrow.setHours(9, 25, 0, 0); // 9:25am
     return tomorrow.getTime() - etTime.getTime();
   }
 
   if (day === 6) { // Saturday
     const monday = new Date(etTime);
     monday.setDate(monday.getDate() + 2);
-    monday.setHours(9, 30, 0, 0);
+    monday.setHours(9, 25, 0, 0); // 9:25am
     return monday.getTime() - etTime.getTime();
   }
 
   // Weekday - check if before market open
   const timeInMinutes = hours * 60 + minutes;
-  const marketOpen = 9 * 60 + 30;
+  const marketOpen = 9 * 60 + 25; // 9:25am
 
   if (timeInMinutes < marketOpen) {
     const today = new Date(etTime);
-    today.setHours(9, 30, 0, 0);
+    today.setHours(9, 25, 0, 0); // 9:25am
     return today.getTime() - etTime.getTime();
   }
 
   // After market close - next trading day
   const tomorrow = new Date(etTime);
   tomorrow.setDate(tomorrow.getDate() + (day === 5 ? 3 : 1)); // If Friday, skip to Monday
-  tomorrow.setHours(9, 30, 0, 0);
+  tomorrow.setHours(9, 25, 0, 0); // 9:25am
   return tomorrow.getTime() - etTime.getTime();
 }
 

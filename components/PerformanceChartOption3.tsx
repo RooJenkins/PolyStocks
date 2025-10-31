@@ -18,9 +18,18 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const [crosshairValues, setCrosshairValues] = useState<Record<string, number>>({});
+  const [isMobile, setIsMobile] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const linePointsRef = useRef<Record<string, Array<{ x: number; y: number; value: number }>>>({});
+
+  // Check screen size for responsive design
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchPerformanceData = async () => {
@@ -52,7 +61,12 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
     const drawChart = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
-      const padding = { top: 20, right: 160, bottom: 40, left: 50 };
+      const padding = {
+        top: 20,
+        right: isMobile ? 120 : 160,
+        bottom: isMobile ? 30 : 40,
+        left: isMobile ? 40 : 50
+      };
 
       canvas.width = width;
       canvas.height = height;
@@ -232,7 +246,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
     resizeObserver.observe(container);
 
     return () => resizeObserver.disconnect();
-  }, [data, agents, hoveredBubble, hoveredLine, mousePos]);
+  }, [data, agents, hoveredBubble, hoveredLine, mousePos, isMobile]);
 
   const getLatestValue = (agentId: string) => {
     const agent = agents.find(a => a.id === agentId);
@@ -366,8 +380,8 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
             <div className="flex items-center gap-1.5 cursor-pointer">
               <div
                 style={{
-                  width: isActive ? '36px' : '28px',
-                  height: isActive ? '36px' : '28px',
+                  width: isActive ? (isMobile ? '32px' : '36px') : (isMobile ? '24px' : '28px'),
+                  height: isActive ? (isMobile ? '32px' : '36px') : (isMobile ? '24px' : '28px'),
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -377,15 +391,15 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
                   transition: 'all 0.15s ease-out',
                 }}
               >
-                <ModelIcon model={agent.model} size={isActive ? 16 : 14} />
+                <ModelIcon model={agent.model} size={isActive ? (isMobile ? 14 : 16) : (isMobile ? 12 : 14)} />
               </div>
               <div
                 style={{
-                  padding: '2px 6px',
+                  padding: isMobile ? '1px 4px' : '2px 6px',
                   borderRadius: '4px',
                   backgroundColor: agent.color,
                   color: '#000',
-                  fontSize: '10px',
+                  fontSize: isMobile ? '9px' : '10px',
                   fontWeight: 'bold',
                   fontFamily: 'monospace',
                   transform: isActive ? 'scale(1.05)' : 'scale(1)',
@@ -393,7 +407,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all' }: P
                   transition: 'all 0.15s ease-out',
                 }}
               >
-                <AnimatedNumber value={getLatestValue(agent.id)} decimals={2} prefix="$" className="font-mono" />
+                <AnimatedNumber value={getLatestValue(agent.id)} decimals={isMobile ? 0 : 2} prefix="$" className="font-mono" />
               </div>
             </div>
           </div>
