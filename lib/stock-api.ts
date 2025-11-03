@@ -70,6 +70,8 @@ export async function fetchStockQuote(symbol: string): Promise<Stock> {
   }
 
   switch (config.provider) {
+    case 'yahoo_finance':
+      return yahooGetQuote(symbol, 'stock-api', 'StockAPI');
     case 'polygon':
       return fetchPolygonQuote(symbol, stock.name, config.apiKey!);
     case 'alpha_vantage':
