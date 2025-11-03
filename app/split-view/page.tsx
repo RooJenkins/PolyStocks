@@ -99,6 +99,73 @@ const STOCK_TICKERS = [
   { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.56, change: -1.23, changePercent: -0.62 },
 ];
 
+// Market conditions and benchmark data
+const MARKET_CONDITIONS: {
+  sp500: { current: number; change: number; changePercent: number; startValue: number };
+  sentiment: 'Bullish' | 'Bearish' | 'Neutral';
+  volatility: 'Low' | 'Moderate' | 'High';
+  trend: 'Uptrend' | 'Downtrend' | 'Sideways';
+  vix: number;
+  description: string;
+} = {
+  sp500: {
+    current: 4783.45,
+    change: 32.18,
+    changePercent: 0.68,
+    startValue: 4750.00,
+  },
+  sentiment: 'Bullish',
+  volatility: 'Moderate',
+  trend: 'Uptrend',
+  vix: 14.2,
+  description: 'Market showing bullish momentum with tech sector leading gains. Volatility remains moderate as investors digest earnings reports.'
+};
+
+// Generate market vs AI performance comparison data
+const generateMarketComparisonData = () => {
+  const dataPoints = 20;
+  const data: any[] = [];
+  let sp500Value = MARKET_CONDITIONS.sp500.startValue;
+
+  for (let i = 0; i < dataPoints; i++) {
+    const progress = i / (dataPoints - 1);
+    // S&P 500 grows steadily
+    sp500Value = MARKET_CONDITIONS.sp500.startValue + (MARKET_CONDITIONS.sp500.change * progress);
+    const sp500Change = ((sp500Value - MARKET_CONDITIONS.sp500.startValue) / MARKET_CONDITIONS.sp500.startValue) * 100;
+
+    data.push({
+      day: i,
+      sp500: sp500Change,
+      market: sp500Value
+    });
+  }
+  return data;
+};
+
+// Performance by market condition
+const PERFORMANCE_BY_CONDITION = {
+  bullish: {
+    bestPerformer: 'Gemini Flash',
+    avgROI: 3.2,
+    topModels: ['Gemini Flash', 'GPT-4o Mini', 'DeepSeek'],
+  },
+  bearish: {
+    bestPerformer: 'GPT-4o Mini',
+    avgROI: -0.8,
+    topModels: ['GPT-4o Mini', 'Claude Haiku', 'DeepSeek'],
+  },
+  highVolatility: {
+    bestPerformer: 'Qwen',
+    avgROI: 2.1,
+    topModels: ['Qwen', 'Gemini Flash', 'GPT-4o Mini'],
+  },
+  sideways: {
+    bestPerformer: 'Claude Haiku',
+    avgROI: 1.2,
+    topModels: ['Claude Haiku', 'DeepSeek', 'Gemini Flash'],
+  }
+};
+
 // Mock chat/reasoning data
 const MOCK_CHAT_HISTORY: Record<string, Array<{timestamp: string, message: string, type: 'decision' | 'analysis' | 'trade'}>> = {
   '1': [
@@ -1101,6 +1168,128 @@ export default function SplitViewPage() {
               display: 'flex',
               flexDirection: 'column'
             }}>
+              {/* Market Conditions Banner */}
+              <div style={{
+                padding: '20px',
+                background: 'linear-gradient(135deg, #990F3D 0%, #7a0c30 100%)',
+                color: '#FFF1E5',
+                borderBottom: '2px solid #990F3D'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '2fr 1fr 1fr 1fr',
+                  gap: '20px',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+                      Market Conditions
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: '1.6', opacity: 0.95 }}>
+                      {MARKET_CONDITIONS.description}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+                      S&P 500
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '2px' }}>
+                      {MARKET_CONDITIONS.sp500.current.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: '600', color: MARKET_CONDITIONS.sp500.changePercent >= 0 ? '#90EE90' : '#FFB6C1' }}>
+                      {MARKET_CONDITIONS.sp500.changePercent >= 0 ? '▲' : '▼'} {Math.abs(MARKET_CONDITIONS.sp500.changePercent).toFixed(2)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+                      Sentiment
+                    </div>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '6px 14px',
+                      backgroundColor: MARKET_CONDITIONS.sentiment === 'Bullish' ? 'rgba(144, 238, 144, 0.2)' : MARKET_CONDITIONS.sentiment === 'Bearish' ? 'rgba(255, 182, 193, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                      border: `1px solid ${MARKET_CONDITIONS.sentiment === 'Bullish' ? '#90EE90' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#FFB6C1' : '#FFF'}`,
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      fontWeight: '700'
+                    }}>
+                      {MARKET_CONDITIONS.sentiment}
+                    </div>
+                    <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.9 }}>
+                      {MARKET_CONDITIONS.trend}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+                      Volatility (VIX)
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '2px' }}>
+                      {MARKET_CONDITIONS.vix}
+                    </div>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '4px 10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.4)',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: '600'
+                    }}>
+                      {MARKET_CONDITIONS.volatility}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Best Performers by Market Condition */}
+              <div style={{
+                padding: '20px',
+                borderBottom: '2px solid #990F3D',
+                backgroundColor: '#EBE0D0'
+              }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+                  🏆 Best Performers by Market Condition
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '12px'
+                }}>
+                  {[
+                    { label: 'Bullish Markets', condition: 'bullish', emoji: '📈', color: '#0F7B3A' },
+                    { label: 'Bearish Markets', condition: 'bearish', emoji: '📉', color: '#CC0000' },
+                    { label: 'High Volatility', condition: 'highVolatility', emoji: '⚡', color: '#FF6B35' },
+                    { label: 'Sideways Markets', condition: 'sideways', emoji: '↔️', color: '#4A90E2' }
+                  ].map((item) => {
+                    const data = PERFORMANCE_BY_CONDITION[item.condition as keyof typeof PERFORMANCE_BY_CONDITION];
+                    return (
+                      <div key={item.condition} style={{
+                        padding: '14px',
+                        backgroundColor: '#F5E6D3',
+                        border: '1px solid #CCC1B7',
+                        borderRadius: '16px',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.06)'
+                      }}>
+                        <div style={{ fontSize: '10px', fontWeight: '700', color: item.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {item.emoji} {item.label}
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#262A33', marginBottom: '4px' }}>
+                          {data.bestPerformer}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '8px' }}>
+                          Avg ROI: <span style={{ fontWeight: '700', color: data.avgROI >= 0 ? '#0F7B3A' : '#CC0000' }}>
+                            {data.avgROI >= 0 ? '+' : ''}{data.avgROI.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '9px', color: '#66605C' }}>
+                          Top 3: {data.topModels.slice(0, 3).join(', ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Charts Section */}
               <div style={{
                 padding: '20px',
@@ -1292,6 +1481,106 @@ export default function SplitViewPage() {
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* AI Performance vs Market Benchmark */}
+              <div style={{
+                padding: '20px',
+                borderBottom: '2px solid #990F3D'
+              }}>
+                <div style={{
+                  backgroundColor: '#F8EBD8',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1px solid #CCC1B7'
+                }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                    AI Performance vs S&P 500 Benchmark
+                  </h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart
+                      data={(() => {
+                        const marketData = generateMarketComparisonData();
+                        return marketData.map((point, i) => {
+                          const result: any = { ...point };
+                          // Add each agent's performance
+                          sortedAgents.forEach(agent => {
+                            // Simulate performance trajectory
+                            const progress = i / (marketData.length - 1);
+                            const targetROI = agent.roi;
+                            const volatility = Math.abs(agent.maxDrawdown) * 0.3;
+                            const randomWalk = (Math.random() - 0.5) * volatility;
+                            result[agent.name] = (targetROI * progress) + randomWalk;
+                          });
+                          return result;
+                        });
+                      })()}
+                      margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                      <XAxis
+                        dataKey="day"
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                        label={{ value: 'Trading Days', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                        label={{ value: 'Return (%)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                        formatter={(value: any, name: string) => {
+                          if (name === 'sp500') return [`${Number(value).toFixed(2)}%`, 'S&P 500'];
+                          return [`${Number(value).toFixed(2)}%`, name];
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '10px' }} />
+
+                      {/* S&P 500 Benchmark Line */}
+                      <Line
+                        type="monotone"
+                        dataKey="sp500"
+                        name="S&P 500"
+                        stroke="#262A33"
+                        strokeWidth={3}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+
+                      {/* AI Agent Lines */}
+                      {sortedAgents.map((agent, index) => (
+                        <Line
+                          key={agent.id}
+                          type="monotone"
+                          dataKey={agent.name}
+                          name={agent.name}
+                          stroke={agent.color}
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '10px',
+                    backgroundColor: '#EBE0D0',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    color: '#66605C'
+                  }}>
+                    <strong style={{ color: '#262A33' }}>Analysis:</strong> {
+                      sortedAgents[0].roi > MARKET_CONDITIONS.sp500.changePercent
+                        ? `Top performer ${sortedAgents[0].name} is outperforming the market by ${(sortedAgents[0].roi - MARKET_CONDITIONS.sp500.changePercent).toFixed(2)}%. `
+                        : `Market is outperforming AI models. `
+                    }
+                    {MARKET_CONDITIONS.sentiment === 'Bullish' && 'Bullish conditions favor momentum strategies.'}
+                    {MARKET_CONDITIONS.sentiment === 'Bearish' && 'Bearish conditions favor defensive strategies.'}
+                    {MARKET_CONDITIONS.sentiment === 'Neutral' && 'Neutral conditions favor range-trading strategies.'}
+                  </div>
                 </div>
               </div>
 
