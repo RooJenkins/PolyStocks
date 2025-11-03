@@ -42,7 +42,7 @@ async function checkTrades() {
   } else {
     console.log(`✅ Found ${positions.length} positions:\n`);
     for (const pos of positions) {
-      console.log(`${pos.agent.name}: ${pos.quantity} shares of ${pos.symbol} @ avg $${pos.averagePrice.toFixed(2)}`);
+      console.log(`${pos.agent.name}: ${pos.quantity} shares of ${pos.symbol} @ avg $${pos.entryPrice.toFixed(2)}`);
     }
   }
 
