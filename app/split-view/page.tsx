@@ -513,7 +513,7 @@ export default function SplitViewPage() {
       <div style={{
         background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
         color: '#262A33',
-        padding: '16px 28px',
+        padding: '6px 20px',
         borderBottom: '2px solid #990F3D',
         flexShrink: 0,
         display: 'flex',
@@ -521,42 +521,42 @@ export default function SplitViewPage() {
         alignItems: 'center',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Link href="/" style={{
             color: '#262A33',
-            fontSize: '12px',
+            fontSize: '10px',
             textDecoration: 'none',
             fontFamily: 'system-ui, sans-serif',
             fontWeight: '600',
-            padding: '6px 16px',
+            padding: '4px 12px',
             backgroundColor: 'rgba(38, 42, 51, 0.08)',
-            borderRadius: '20px',
+            borderRadius: '16px',
             transition: 'all 0.2s',
             border: '1px solid rgba(38, 42, 51, 0.15)'
           }}>
             ← Live Arena
           </Link>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <div style={{
-              fontSize: '10px',
+              fontSize: '8px',
               fontWeight: '700',
               color: '#990F3D',
               textTransform: 'uppercase',
-              letterSpacing: '1.2px',
+              letterSpacing: '1px',
               fontFamily: 'system-ui, sans-serif',
-              padding: '3px 10px',
+              padding: '2px 8px',
               backgroundColor: 'rgba(153, 15, 61, 0.15)',
-              borderRadius: '12px',
+              borderRadius: '10px',
               border: '1px solid rgba(153, 15, 61, 0.3)'
             }}>
               AI Trading Arena
             </div>
             <h1 style={{
-              fontSize: '24px',
+              fontSize: '16px',
               fontWeight: '500',
               margin: 0,
               letterSpacing: '-0.5px',
-              lineHeight: '1.1',
+              lineHeight: '1',
               color: '#262A33'
             }}>
               Model Leaderboard
@@ -566,30 +566,30 @@ export default function SplitViewPage() {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '16px'
+          gap: '10px'
         }}>
           <div style={{
-            fontSize: '11px',
+            fontSize: '9px',
             fontFamily: 'system-ui, sans-serif',
             textAlign: 'right',
             color: '#66605C',
-            padding: '8px 16px',
+            padding: '4px 10px',
             backgroundColor: 'rgba(38, 42, 51, 0.05)',
-            borderRadius: '20px',
+            borderRadius: '14px',
             border: '1px solid #CCC1B7'
           }}>
-            <div style={{ marginBottom: '2px', fontSize: '10px' }}>Portfolio</div>
-            <div style={{ color: '#262A33', fontWeight: '700', fontSize: '14px' }}>
+            <div style={{ marginBottom: '1px', fontSize: '8px' }}>Portfolio</div>
+            <div style={{ color: '#262A33', fontWeight: '700', fontSize: '11px' }}>
               ${totalValue.toLocaleString()}
             </div>
           </div>
           <div style={{
             color: totalGainPercent >= 0 ? '#0F7B3A' : '#CC0000',
             fontWeight: '700',
-            fontSize: '14px',
-            padding: '8px 16px',
+            fontSize: '11px',
+            padding: '5px 12px',
             backgroundColor: totalGainPercent >= 0 ? 'rgba(15, 123, 58, 0.15)' : 'rgba(204, 0, 0, 0.15)',
-            borderRadius: '20px',
+            borderRadius: '14px',
             border: `1px solid ${totalGainPercent >= 0 ? 'rgba(15, 123, 58, 0.3)' : 'rgba(204, 0, 0, 0.3)'}`
           }}>
             {totalGainPercent >= 0 ? '▲' : '▼'} {Math.abs(totalGainPercent).toFixed(2)}%
@@ -604,7 +604,7 @@ export default function SplitViewPage() {
         overflow: 'hidden',
         flexShrink: 0,
         position: 'relative',
-        padding: '12px 0'
+        padding: '8px 0'
       }}>
         <style>
           {`
@@ -629,16 +629,16 @@ export default function SplitViewPage() {
             <div key={idx} style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '10px 18px',
+              gap: '8px',
+              padding: '6px 14px',
               backgroundColor: '#F5E6D3',
-              borderRadius: '28px',
+              borderRadius: '24px',
               border: '1px solid #CCC1B7',
               whiteSpace: 'nowrap',
               boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06)'
             }}>
               <div style={{
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: '700',
                 fontFamily: 'system-ui, sans-serif',
                 color: '#262A33',
@@ -647,7 +647,7 @@ export default function SplitViewPage() {
                 {stock.symbol}
               </div>
               <div style={{
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: '600',
                 fontFamily: 'system-ui, sans-serif',
                 color: '#33302E'
@@ -655,13 +655,13 @@ export default function SplitViewPage() {
                 ${stock.price.toFixed(2)}
               </div>
               <div style={{
-                fontSize: '10px',
+                fontSize: '9px',
                 fontWeight: '700',
                 fontFamily: 'system-ui, sans-serif',
                 color: stock.changePercent >= 0 ? '#0F7B3A' : '#CC0000',
-                padding: '3px 8px',
+                padding: '2px 6px',
                 backgroundColor: stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 border: `1px solid ${stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
               }}>
                 {stock.changePercent >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
@@ -1170,70 +1170,66 @@ export default function SplitViewPage() {
             }}>
               {/* Market Conditions Banner */}
               <div style={{
-                padding: '20px',
-                background: 'linear-gradient(135deg, #990F3D 0%, #7a0c30 100%)',
-                color: '#FFF1E5',
-                borderBottom: '2px solid #990F3D'
+                padding: '16px 20px',
+                background: 'linear-gradient(to bottom, #E9DECF 0%, #E0D4C3 100%)',
+                color: '#262A33',
+                borderBottom: '2px solid #CCC1B7'
               }}>
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                  gap: '20px',
-                  alignItems: 'center'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '32px'
                 }}>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
-                      Market Conditions
-                    </div>
-                    <div style={{ fontSize: '12px', lineHeight: '1.6', opacity: 0.95 }}>
-                      {MARKET_CONDITIONS.description}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
                       S&P 500
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '2px' }}>
+                    </span>
+                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#262A33' }}>
                       {MARKET_CONDITIONS.sp500.current.toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: '11px', fontWeight: '600', color: MARKET_CONDITIONS.sp500.changePercent >= 0 ? '#90EE90' : '#FFB6C1' }}>
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: MARKET_CONDITIONS.sp500.changePercent >= 0 ? '#0F7B3A' : '#CC0000' }}>
                       {MARKET_CONDITIONS.sp500.changePercent >= 0 ? '▲' : '▼'} {Math.abs(MARKET_CONDITIONS.sp500.changePercent).toFixed(2)}%
-                    </div>
+                    </span>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
                       Sentiment
-                    </div>
+                    </span>
                     <div style={{
                       display: 'inline-block',
                       padding: '6px 14px',
-                      backgroundColor: MARKET_CONDITIONS.sentiment === 'Bullish' ? 'rgba(144, 238, 144, 0.2)' : MARKET_CONDITIONS.sentiment === 'Bearish' ? 'rgba(255, 182, 193, 0.2)' : 'rgba(255, 255, 255, 0.2)',
-                      border: `1px solid ${MARKET_CONDITIONS.sentiment === 'Bullish' ? '#90EE90' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#FFB6C1' : '#FFF'}`,
+                      backgroundColor: MARKET_CONDITIONS.sentiment === 'Bullish' ? 'rgba(15, 123, 58, 0.15)' : MARKET_CONDITIONS.sentiment === 'Bearish' ? 'rgba(204, 0, 0, 0.15)' : 'rgba(102, 96, 92, 0.15)',
+                      border: `1px solid ${MARKET_CONDITIONS.sentiment === 'Bullish' ? '#0F7B3A' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#CC0000' : '#66605C'}`,
                       borderRadius: '16px',
                       fontSize: '12px',
-                      fontWeight: '700'
+                      fontWeight: '700',
+                      color: MARKET_CONDITIONS.sentiment === 'Bullish' ? '#0F7B3A' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#CC0000' : '#66605C'
                     }}>
                       {MARKET_CONDITIONS.sentiment}
                     </div>
-                    <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.9 }}>
+                    <span style={{ fontSize: '10px', color: '#66605C' }}>
                       {MARKET_CONDITIONS.trend}
-                    </div>
+                    </span>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px', opacity: 0.9 }}>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
                       Volatility (VIX)
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '2px' }}>
+                    </span>
+                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#262A33' }}>
                       {MARKET_CONDITIONS.vix}
-                    </div>
+                    </span>
                     <div style={{
                       display: 'inline-block',
                       padding: '4px 10px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.4)',
+                      backgroundColor: 'rgba(153, 15, 61, 0.1)',
+                      border: '1px solid #990F3D',
                       borderRadius: '12px',
                       fontSize: '10px',
-                      fontWeight: '600'
+                      fontWeight: '600',
+                      color: '#990F3D'
                     }}>
                       {MARKET_CONDITIONS.volatility}
                     </div>
@@ -1243,17 +1239,17 @@ export default function SplitViewPage() {
 
               {/* Best Performers by Market Condition */}
               <div style={{
-                padding: '20px',
+                padding: '12px 20px',
                 borderBottom: '2px solid #990F3D',
                 backgroundColor: '#EBE0D0'
               }}>
-                <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '10px', color: '#262A33' }}>
                   🏆 Best Performers by Market Condition
                 </h3>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '12px'
+                  gap: '10px'
                 }}>
                   {[
                     { label: 'Bullish Markets', condition: 'bullish', emoji: '📈', color: '#0F7B3A' },
@@ -1264,24 +1260,24 @@ export default function SplitViewPage() {
                     const data = PERFORMANCE_BY_CONDITION[item.condition as keyof typeof PERFORMANCE_BY_CONDITION];
                     return (
                       <div key={item.condition} style={{
-                        padding: '14px',
+                        padding: '10px',
                         backgroundColor: '#F5E6D3',
                         border: '1px solid #CCC1B7',
-                        borderRadius: '16px',
+                        borderRadius: '14px',
                         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.06)'
                       }}>
-                        <div style={{ fontSize: '10px', fontWeight: '700', color: item.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div style={{ fontSize: '9px', fontWeight: '700', color: item.color, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {item.emoji} {item.label}
                         </div>
-                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#262A33', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: '700', color: '#262A33', marginBottom: '3px' }}>
                           {data.bestPerformer}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '10px', color: '#66605C', marginBottom: '4px' }}>
                           Avg ROI: <span style={{ fontWeight: '700', color: data.avgROI >= 0 ? '#0F7B3A' : '#CC0000' }}>
                             {data.avgROI >= 0 ? '+' : ''}{data.avgROI.toFixed(1)}%
                           </span>
                         </div>
-                        <div style={{ fontSize: '9px', color: '#66605C' }}>
+                        <div style={{ fontSize: '8px', color: '#66605C', lineHeight: '1.3' }}>
                           Top 3: {data.topModels.slice(0, 3).join(', ')}
                         </div>
                       </div>
@@ -1337,12 +1333,18 @@ export default function SplitViewPage() {
                           roi: agent.roi,
                           name: agent.name,
                           fill: agent.color,
-                          trades: agent.tradeCount
+                          trades: agent.tradeCount,
+                          agentId: agent.id
                         }))}
                         fill="#8884d8"
                       >
                         {sortedAgents.map((agent, index) => (
-                          <Cell key={`cell-${index}`} fill={agent.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={agent.color}
+                            fillOpacity={selectedAgentId && selectedAgentId !== agent.id ? 0.3 : 1}
+                            r={selectedAgentId === agent.id ? 10 : 6}
+                          />
                         ))}
                       </Scatter>
                     </ScatterChart>
@@ -1384,7 +1386,11 @@ export default function SplitViewPage() {
                       />
                       <Bar dataKey="winRate" radius={[8, 8, 0, 0]}>
                         {sortedAgents.map((agent, index) => (
-                          <Cell key={`cell-${index}`} fill={agent.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={agent.color}
+                            fillOpacity={selectedAgentId && selectedAgentId !== agent.id ? 0.3 : 1}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -1433,8 +1439,9 @@ export default function SplitViewPage() {
                           name={agent.name}
                           dataKey={agent.name}
                           stroke={agent.color}
+                          strokeWidth={selectedAgentId === agent.id ? 3 : 1}
                           fill={agent.color}
-                          fillOpacity={0.2}
+                          fillOpacity={selectedAgentId && selectedAgentId !== agent.id ? 0.1 : selectedAgentId === agent.id ? 0.4 : 0.2}
                         />
                       ))}
                       <Legend wrapperStyle={{ fontSize: '9px' }} />
@@ -1476,7 +1483,11 @@ export default function SplitViewPage() {
                       />
                       <Bar dataKey="sharpeRatio" radius={[0, 8, 8, 0]}>
                         {sortedAgents.map((agent, index) => (
-                          <Cell key={`cell-${index}`} fill={agent.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={agent.color}
+                            fillOpacity={selectedAgentId && selectedAgentId !== agent.id ? 0.3 : 1}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -1558,7 +1569,8 @@ export default function SplitViewPage() {
                           dataKey={agent.name}
                           name={agent.name}
                           stroke={agent.color}
-                          strokeWidth={2}
+                          strokeWidth={selectedAgentId === agent.id ? 4 : 2}
+                          strokeOpacity={selectedAgentId && selectedAgentId !== agent.id ? 0.3 : 1}
                           dot={false}
                         />
                       ))}
