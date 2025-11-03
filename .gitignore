@@ -7,6 +7,9 @@ node_modules
 /lib/generated/prisma
 prisma/dev.db
 prisma/dev.db-journal
+dev.db
+dev.db-journal
+*.sql
 
 # Next.js
 .next
@@ -18,3 +21,4 @@ dist
 *.pem
 *.log
 npm-debug.log*
+.vercel

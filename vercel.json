@@ -4,5 +4,11 @@
   "framework": "nextjs",
   "git": {
     "deploymentEnabled": true
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/trading-cycle",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
