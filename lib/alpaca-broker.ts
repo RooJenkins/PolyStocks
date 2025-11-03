@@ -315,3 +315,59 @@ export async function isAlpacaMarketOpen(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Sync agent's portfolio with Alpaca account
+ * Returns the updated agent data
+ */
+export async function syncAgentWithAlpaca(agentId: string): Promise<{
+  accountValue: number;
+  cashBalance: number;
+  positions: Array<{
+    symbol: string;
+    name: string;
+    side: string;
+    quantity: number;
+    entryPrice: number;
+    currentPrice: number;
+    unrealizedPnL: number;
+    unrealizedPnLPercent: number;
+  }>;
+}> {
+  try {
+    console.log(`🔄 [Alpaca] Syncing agent ${agentId} with Alpaca...`);
+
+    // Get account info
+    const account = await getAlpacaAccount();
+
+    // Get positions
+    const alpacaPositions = await getAlpacaPositions();
+
+    // Convert Alpaca positions to our format
+    const positions = alpacaPositions.map(pos => ({
+      symbol: pos.symbol,
+      name: pos.symbol, // Alpaca doesn't provide company names, using symbol
+      side: 'LONG', // Alpaca paper trading doesn't support shorts
+      quantity: pos.qty,
+      entryPrice: pos.avg_entry_price,
+      currentPrice: pos.current_price,
+      unrealizedPnL: pos.unrealized_pl,
+      unrealizedPnLPercent: pos.unrealized_plpc * 100
+    }));
+
+    console.log(`✅ [Alpaca] Synced:`, {
+      accountValue: account.portfolio_value,
+      cashBalance: account.cash,
+      positionsCount: positions.length
+    });
+
+    return {
+      accountValue: account.portfolio_value,
+      cashBalance: account.cash,
+      positions
+    };
+  } catch (error: any) {
+    console.error(`❌ [Alpaca] Failed to sync agent:`, error.message);
+    throw error;
+  }
+}

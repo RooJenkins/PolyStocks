@@ -63,6 +63,7 @@ interface TradingDecision {
   riskAssessment?: string;
   targetPrice?: number;
   stopLoss?: number;
+  invalidationCondition?: string; // New: Exit condition if thesis breaks
 }
 
 function createPrompt(context: MarketContext, maxToolCalls: number = 15, useMCPTools: boolean = false): string {
@@ -116,8 +117,12 @@ function createPrompt(context: MarketContext, maxToolCalls: number = 15, useMCPT
 
   return `STOCK TRADER - S&P 500
 
+==== TIMESTAMP ====
+Market data as of: ${new Date().toISOString()}
+IMPORTANT: Price data is ordered OLDEST to NEWEST
+
 ==== PORTFOLIO ====
-Value: $${context.accountValue.toFixed(0)} | Cash: $${context.cashBalance.toFixed(0)}
+Value: $${context.accountValue.toFixed(0)} | Cash Available: $${context.cashBalance.toFixed(0)}
 Positions: ${positionsStr}
 
 ==== MARKET CONTEXT ====
@@ -131,18 +136,32 @@ Format: Symbol:Price (Today%) 7d:Week% MA7:vsMA7% MA30:vsMA30% Vol:status
 ==== YOUR PERFORMANCE ====
 ${agentStatsStr || 'No trade history yet'}
 
+==== POSITION SIZING BASED ON CONFIDENCE ====
+Your confidence score determines position size:
+- Confidence 0.9-1.0 (Very High): 25% of cash available
+- Confidence 0.8-0.9 (High): 20% of cash available
+- Confidence 0.7-0.8 (Medium): 15% of cash available
+- Confidence <0.7: DO NOT TRADE (reject the opportunity)
+
+Higher conviction = larger position. Lower conviction = smaller position or wait.
+
 ==== RISK RULES ====
-- Max 25% cash per trade
+- Max 25% cash per trade (for high confidence 0.9+)
 - Max 30% portfolio in single stock
 - Min 3 positions for diversification
-- Use stop-losses for risk management
+- AUTOMATIC EXIT ENFORCEMENT: Your stopLoss and targetPrice will execute WITHOUT your input
+  * When currentPrice ≤ stopLoss → Position AUTO-CLOSES
+  * When currentPrice ≥ targetPrice → Position AUTO-CLOSES
+  * These are PRE-REGISTERED commitments that WILL execute
 
 ==== TRADING PRINCIPLES ====
 ✓ Buy dips in strong uptrends with positive market sentiment
 ✓ Take profits on parabolic moves (>15% gains)
 ✓ Cut losses early on weak stocks (<-8%)
+✓ Fewer, larger, higher-conviction trades > many small trades
 ✗ Avoid chasing breakouts without confirmation
 ✗ Don't average down on falling stocks without support
+✗ Don't trade on low conviction (<0.7 confidence)
 
 ${useMCPTools ? `==== TOOL CALL BUDGET: ${maxToolCalls} maximum ====
 Use efficiently based on situation:
@@ -168,7 +187,27 @@ Use tools to gather data, then make ONE trading decision.
 Actions: BUY (long), SELL (close long), SELL_SHORT (bet on drop), BUY_TO_COVER (close short), HOLD
 
 Respond with JSON only:
-{"action":"BUY|SELL|SELL_SHORT|BUY_TO_COVER|HOLD","symbol":"AAPL","quantity":5,"reasoning":"Why this trade fits market context and your strategy","confidence":0.75,"riskAssessment":"Low|Med|High","targetPrice":200,"stopLoss":175}
+{
+  "action":"BUY|SELL|SELL_SHORT|BUY_TO_COVER|HOLD",
+  "symbol":"AAPL",
+  "quantity":5,
+  "reasoning":"Why this trade fits market context and strategy",
+  "confidence":0.85,
+  "riskAssessment":"Low|Med|High",
+  "targetPrice":200,
+  "stopLoss":175,
+  "invalidationCondition":"Exit if 4H RSI breaks below 40, signaling momentum failure"
+}
+
+CRITICAL EXIT PLANNING:
+- targetPrice: Price at which to take profits (WILL AUTO-EXECUTE)
+- stopLoss: Price at which to cut losses (WILL AUTO-EXECUTE)
+- invalidationCondition: Market condition that voids your thesis (e.g., "Break below support at $180", "Volume drops below 1M shares", "RSI reversal")
+
+For BUY trades:
+- targetPrice must be ABOVE currentPrice
+- stopLoss must be BELOW currentPrice
+- Both are required and will execute automatically
 
 For HOLD: {"action":"HOLD","reasoning":"Why waiting is best","confidence":0.7}`;
 }
@@ -447,6 +486,7 @@ function parseAIResponse(response: string): TradingDecision {
       riskAssessment: decision.riskAssessment,
       targetPrice: decision.targetPrice,
       stopLoss: decision.stopLoss,
+      invalidationCondition: decision.invalidationCondition,
     };
   } catch (error) {
     console.error('  ⚠️  Failed to parse AI response, defaulting to HOLD:', error);

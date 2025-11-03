@@ -1,0 +1,2129 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import PerformanceChartOption3 from '@/components/PerformanceChartOption3';
+import ModelIcon from '@/components/ModelIcon';
+import type { AIAgent } from '@/types';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
+
+// Company logo helper function
+const StockLogo = ({ symbol, size = 14 }: { symbol: string; size?: number }) => {
+  const logos: Record<string, React.ReactElement> = {
+    AAPL: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+      </svg>
+    ),
+    NVDA: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8.61 3L3 21h3.55l1.05-3.28h6.71L15.36 21h3.64L13.39 3H8.61zm1.39 11.71l2-6.28 2 6.28h-4z"/>
+      </svg>
+    ),
+    GOOGL: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+      </svg>
+    ),
+    MSFT: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/>
+      </svg>
+    ),
+    AMZN: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14.31 18.52c-2.94 2.17-7.21 3.32-10.87 3.32-5.14 0-9.77-1.90-13.27-5.07-.28-.25-.03-.58.30-.39 3.80 2.21 8.50 3.54 13.36 3.54 3.27 0 6.87-.68 10.18-2.08.50-.21.91.33.44.68h-.14zM16 16.5c-.37-.48-2.46-.23-3.39-.11-.28.03-.32-.21-.07-.39 1.66-1.17 4.39-.83 4.71-.44.32.39-.09 3.12-1.64 4.42-.24.20-.47.09-.36-.17.35-.87 1.13-2.83.75-3.31z"/>
+        <path d="M15.12 10.74V9.58c0-.18.13-.29.29-.29h5.16c.17 0 .30.12.30.29v1.00c0 .17-.14.39-.39.74l-2.67 3.81c.99-.02 2.04.12 2.95.64.20.12.26.29.27.46v1.24c0 .17-.19.37-.39.27-1.63-.86-3.79-.95-5.59.01-.18.09-.37-.10-.37-.27v-1.18c0-.19 0-.52.20-.81l3.09-4.42h-2.69c-.16 0-.29-.12-.29-.29h.13z"/>
+      </svg>
+    ),
+    TSLA: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 5.362l2.475-3.026s4.245.09 8.471 2.054c-1.082 1.636-3.231 2.438-3.231 2.438-.146-1.439-1.154-1.79-4.354-1.79L12 24 8.619 5.034c-3.18 0-4.188.354-4.335 1.792 0 0-2.146-.795-3.229-2.43C5.28 2.431 9.525 2.34 9.525 2.34L12 5.362z"/>
+      </svg>
+    ),
+    META: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      </svg>
+    ),
+    JPM: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14.357 18.44c-.11 0-.175-.065-.175-.175v-3.725c0-.11.065-.175.175-.175h1.43c1.1 0 1.87.33 2.31.99.33.495.495 1.155.495 1.98s-.165 1.485-.495 1.98c-.44.66-1.21.99-2.31.99h-1.43zm1.43-3.52h-.88v2.97h.88c.66 0 1.155-.22 1.485-.66.22-.33.33-.77.33-1.32 0-.55-.11-.99-.33-1.32-.33-.44-.825-.66-1.485-.66h0zm-4.95 3.52c-.11 0-.175-.065-.175-.175v-3.725c0-.11.065-.175.175-.175h1.43c1.1 0 1.87.33 2.31.99.33.495.495 1.155.495 1.98s-.165 1.485-.495 1.98c-.44.66-1.21.99-2.31.99h-1.43zm1.43-3.52h-.88v2.97h.88c.66 0 1.155-.22 1.485-.66.22-.33.33-.77.33-1.32 0-.55-.11-.99-.33-1.32-.33-.44-.825-.66-1.485-.66h0z"/>
+      </svg>
+    ),
+  };
+
+  return logos[symbol] || (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 11L5 7L8 9L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9 3H12V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+};
+
+// Generate mock performance data
+const generateMockPerformanceData = (agents: AIAgent[]) => {
+  const now = Date.now();
+  const points = 48;
+  const data: any[] = [];
+  const baseValues: Record<string, number> = {};
+
+  agents.forEach(agent => {
+    baseValues[agent.id] = 10000;
+  });
+
+  for (let i = 0; i < points; i++) {
+    const timestamp = new Date(now - (points - i) * 3600000);
+    const point: any = { timestamp: timestamp.toISOString() };
+    agents.forEach(agent => {
+      const volatility = 50 + Math.random() * 50;
+      const trend = agent.roi / 100;
+      const change = (Math.random() - 0.48) * volatility + (trend * 20);
+      baseValues[agent.id] = Math.max(8000, Math.min(12000, baseValues[agent.id] + change));
+      point[agent.id] = Math.round(baseValues[agent.id] * 100) / 100;
+    });
+    data.push(point);
+  }
+  return data;
+};
+
+// Stock market data (not crypto)
+const STOCK_TICKERS = [
+  { symbol: 'AAPL', name: 'Apple Inc', price: 178.23, change: 2.34, changePercent: 1.33 },
+  { symbol: 'MSFT', name: 'Microsoft Corp', price: 378.45, change: -3.21, changePercent: -0.84 },
+  { symbol: 'NVDA', name: 'NVIDIA Corp', price: 495.67, change: 8.92, changePercent: 1.83 },
+  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 141.80, change: 1.25, changePercent: 0.89 },
+  { symbol: 'AMZN', name: 'Amazon.com Inc', price: 178.35, change: -2.15, changePercent: -1.19 },
+  { symbol: 'TSLA', name: 'Tesla Inc', price: 242.84, change: 5.67, changePercent: 2.39 },
+  { symbol: 'META', name: 'Meta Platforms', price: 492.15, change: 3.45, changePercent: 0.71 },
+  { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.56, change: -1.23, changePercent: -0.62 },
+];
+
+// Mock chat/reasoning data
+const MOCK_CHAT_HISTORY: Record<string, Array<{timestamp: string, message: string, type: 'decision' | 'analysis' | 'trade'}>> = {
+  '1': [
+    { timestamp: '2m ago', message: 'Analyzing AAPL technicals: RSI at 68, approaching overbought. MACD showing bullish crossover. Will monitor for entry.', type: 'analysis' },
+    { timestamp: '5m ago', message: 'DECISION: Taking profit on MSFT position (+15.2%). Market showing signs of consolidation, reducing exposure.', type: 'decision' },
+    { timestamp: '12m ago', message: 'EXECUTED: SELL 30 shares MSFT @ $378.45. Profit target reached. Moving to cash position.', type: 'trade' },
+  ],
+  '2': [
+    { timestamp: '3m ago', message: 'Strong momentum in semiconductor sector. NVDA breaking resistance at $495. Initiating position.', type: 'analysis' },
+    { timestamp: '8m ago', message: 'DECISION: Buying NVDA based on AI chip demand surge and favorable technical setup.', type: 'decision' },
+    { timestamp: '12m ago', message: 'EXECUTED: BUY 25 shares NVDA @ $495.67. Target: $520, Stop: $485.', type: 'trade' },
+  ],
+  '3': [
+    { timestamp: '1m ago', message: 'High volatility detected. Drawing down positions. Current max drawdown at -4.8%, approaching risk limits.', type: 'analysis' },
+    { timestamp: '6m ago', message: 'DECISION: Risk-off mode activated. Win rate below target at 46.7%. Reassessing strategy.', type: 'decision' },
+  ],
+  '4': [
+    { timestamp: '4m ago', message: 'Excellent session: 70% win rate, Sharpe 1.89. Best performer today with +4.12% ROI.', type: 'analysis' },
+    { timestamp: '9m ago', message: 'DECISION: GOOGL showing oversold conditions on RSI. Strong value play here.', type: 'decision' },
+    { timestamp: '25m ago', message: 'EXECUTED: BUY 40 shares GOOGL @ $141.80. Entry confirmed at support level.', type: 'trade' },
+  ],
+  '5': [
+    { timestamp: '7m ago', message: 'Struggling session. ROI at -1.24%. Need to improve entry timing and risk management.', type: 'analysis' },
+    { timestamp: '15m ago', message: 'DECISION: Bearish pattern forming on TSLA. Selling position to limit further losses.', type: 'decision' },
+  ],
+  '6': [
+    { timestamp: '1m ago', message: 'Solid performance: 54.5% win rate, ROI +0.89%. Conservative approach paying off.', type: 'analysis' },
+    { timestamp: '5m ago', message: 'DECISION: AAPL earnings beat expectations. Fundamental strength confirmed. Entering position.', type: 'decision' },
+    { timestamp: '5m ago', message: 'EXECUTED: BUY 50 shares AAPL @ $178.23. Conviction: 87%. Target: $185.', type: 'trade' },
+  ],
+};
+
+// Mock trades
+const MOCK_TRADES = [
+  { id: '1', symbol: 'AAPL', side: 'BUY', quantity: 50, entryPrice: 175.20, exitPrice: 178.23, pnl: 151.50, pnlPercent: 1.73, timestamp: '5m ago', agentId: '6', agentName: 'DeepSeek', holdTime: '2h 15m', confidence: 87 },
+  { id: '2', symbol: 'NVDA', side: 'BUY', quantity: 25, entryPrice: 490.10, exitPrice: 495.67, pnl: 139.25, pnlPercent: 1.14, timestamp: '12m ago', agentId: '2', agentName: 'Claude Haiku', holdTime: '4h 22m', confidence: 92 },
+  { id: '3', symbol: 'MSFT', side: 'SELL', quantity: 30, entryPrice: 390.20, exitPrice: 378.45, pnl: 352.50, pnlPercent: 3.01, timestamp: '18m ago', agentId: '1', agentName: 'GPT-4o Mini', holdTime: '1h 45m', confidence: 78 },
+  { id: '4', symbol: 'GOOGL', side: 'BUY', quantity: 40, entryPrice: 139.50, exitPrice: 141.80, pnl: 92.00, pnlPercent: 1.65, timestamp: '25m ago', agentId: '4', agentName: 'Gemini Flash', holdTime: '3h 12m', confidence: 85 },
+  { id: '5', symbol: 'TSLA', side: 'SELL', quantity: 15, entryPrice: 256.40, exitPrice: 242.84, pnl: 203.40, pnlPercent: 5.29, timestamp: '32m ago', agentId: '5', agentName: 'Qwen', holdTime: '45m', confidence: 74 },
+  { id: '6', symbol: 'AMZN', side: 'BUY', quantity: 35, entryPrice: 176.20, exitPrice: 178.35, pnl: 75.25, pnlPercent: 1.22, timestamp: '41m ago', agentId: '1', agentName: 'GPT-4o Mini', holdTime: '5h 33m', confidence: 81 },
+  { id: '7', symbol: 'META', side: 'BUY', quantity: 20, entryPrice: 485.30, exitPrice: 492.15, pnl: 137.00, pnlPercent: 1.41, timestamp: '55m ago', agentId: '4', agentName: 'Gemini Flash', holdTime: '2h 18m', confidence: 89 },
+];
+
+// Mock open positions
+const MOCK_POSITIONS = [
+  {
+    symbol: 'AAPL',
+    quantity: 50,
+    entryPrice: 178.23,
+    currentPrice: 179.45,
+    pnl: 61.00,
+    pnlPercent: 0.68,
+    agentId: '6',
+    agentName: 'DeepSeek',
+    exitPlan: 'Target: $185 (+3.8%). Stop loss at $175 (-1.8%). Trailing stop active.',
+    reasoning: 'Entered on earnings beat. Strong technicals with RSI at 68. Holding for breakout above $180 resistance.'
+  },
+  {
+    symbol: 'NVDA',
+    quantity: 25,
+    entryPrice: 495.67,
+    currentPrice: 498.20,
+    pnl: 63.25,
+    pnlPercent: 0.51,
+    agentId: '2',
+    agentName: 'Claude Haiku',
+    exitPlan: 'Target: $520 (+4.4%). Stop loss at $485 (-2.2%). Exit if sector momentum weakens.',
+    reasoning: 'AI chip demand surge. MACD bullish crossover. Expecting continuation to $520 resistance level.'
+  },
+  {
+    symbol: 'GOOGL',
+    quantity: 40,
+    entryPrice: 141.80,
+    currentPrice: 142.45,
+    pnl: 26.00,
+    pnlPercent: 0.46,
+    agentId: '4',
+    agentName: 'Gemini Flash',
+    exitPlan: 'Target: $148 (+3.9%). Stop loss at $139 (-2.5%). Taking profits at key resistance.',
+    reasoning: 'Oversold bounce play. Strong support at $140. Cloud revenue growth driving upside momentum.'
+  },
+];
+
+// Mock agents with comprehensive metrics
+const MOCK_AGENTS = [
+  {
+    id: '1',
+    name: 'GPT-4o Mini',
+    model: 'gpt-4o-mini',
+    accountValue: 10234,
+    roi: 2.34,
+    color: '#3B9B9B',
+    tradeCount: 12,
+    winRate: 58.3,
+    sharpeRatio: 1.42,
+    maxDrawdown: -3.2,
+    biggestWin: 425.50,
+    biggestLoss: -187.30,
+    totalPnL: 234,
+    fees: 67.20,
+    avgTradeSize: 3250,
+    medianTradeSize: 2890,
+    avgHoldTime: '3h 25m',
+    medianHoldTime: '2h 45m',
+    percentLong: 75,
+    expectancy: 19.50,
+    medianLeverage: 1.0,
+    avgLeverage: 1.2,
+    avgConfidence: 82.5,
+    medianConfidence: 85.0,
+    startingValue: 10000
+  },
+  {
+    id: '2',
+    name: 'Claude Haiku',
+    model: 'claude-3-5-haiku-20241022',
+    accountValue: 10156,
+    roi: 1.56,
+    color: '#D97757',
+    tradeCount: 8,
+    winRate: 62.5,
+    sharpeRatio: 1.28,
+    maxDrawdown: -2.1,
+    biggestWin: 512.00,
+    biggestLoss: -156.20,
+    totalPnL: 156,
+    fees: 45.30,
+    avgTradeSize: 4120,
+    medianTradeSize: 3850,
+    avgHoldTime: '5h 12m',
+    medianHoldTime: '4h 30m',
+    percentLong: 88,
+    expectancy: 19.50,
+    medianLeverage: 1.0,
+    avgLeverage: 1.1,
+    avgConfidence: 87.3,
+    medianConfidence: 88.0,
+    startingValue: 10000
+  },
+  {
+    id: '3',
+    name: 'Grok',
+    model: 'grok-beta',
+    accountValue: 9987,
+    roi: -0.13,
+    color: '#C77B6A',
+    tradeCount: 15,
+    winRate: 46.7,
+    sharpeRatio: 0.87,
+    maxDrawdown: -4.8,
+    biggestWin: 298.40,
+    biggestLoss: -445.60,
+    totalPnL: -13,
+    fees: 89.50,
+    avgTradeSize: 2780,
+    medianTradeSize: 2450,
+    avgHoldTime: '2h 18m',
+    medianHoldTime: '1h 55m',
+    percentLong: 53,
+    expectancy: -0.87,
+    medianLeverage: 1.0,
+    avgLeverage: 1.3,
+    avgConfidence: 71.2,
+    medianConfidence: 72.0,
+    startingValue: 10000
+  },
+  {
+    id: '4',
+    name: 'Gemini Flash',
+    model: 'gemini-2.0-flash-exp',
+    accountValue: 10412,
+    roi: 4.12,
+    color: '#FFB224',
+    tradeCount: 10,
+    winRate: 70.0,
+    sharpeRatio: 1.89,
+    maxDrawdown: -1.8,
+    biggestWin: 678.90,
+    biggestLoss: -123.50,
+    totalPnL: 412,
+    fees: 58.40,
+    avgTradeSize: 3890,
+    medianTradeSize: 3650,
+    avgHoldTime: '4h 05m',
+    medianHoldTime: '3h 40m',
+    percentLong: 90,
+    expectancy: 41.20,
+    medianLeverage: 1.0,
+    avgLeverage: 1.0,
+    avgConfidence: 86.8,
+    medianConfidence: 87.0,
+    startingValue: 10000
+  },
+  {
+    id: '5',
+    name: 'Qwen',
+    model: 'qwen-2.5-72b',
+    accountValue: 9876,
+    roi: -1.24,
+    color: '#E93CAC',
+    tradeCount: 7,
+    winRate: 42.9,
+    sharpeRatio: 0.65,
+    maxDrawdown: -5.2,
+    biggestWin: 234.10,
+    biggestLoss: -389.20,
+    totalPnL: -124,
+    fees: 42.80,
+    avgTradeSize: 2950,
+    medianTradeSize: 2720,
+    avgHoldTime: '1h 45m',
+    medianHoldTime: '1h 30m',
+    percentLong: 57,
+    expectancy: -17.71,
+    medianLeverage: 1.0,
+    avgLeverage: 1.4,
+    avgConfidence: 68.9,
+    medianConfidence: 70.0,
+    startingValue: 10000
+  },
+  {
+    id: '6',
+    name: 'DeepSeek',
+    model: 'deepseek-chat',
+    accountValue: 10089,
+    roi: 0.89,
+    color: '#8B5CF6',
+    tradeCount: 11,
+    winRate: 54.5,
+    sharpeRatio: 1.12,
+    maxDrawdown: -2.9,
+    biggestWin: 356.70,
+    biggestLoss: -198.40,
+    totalPnL: 89,
+    fees: 52.30,
+    avgTradeSize: 3120,
+    medianTradeSize: 2980,
+    avgHoldTime: '2h 50m',
+    medianHoldTime: '2h 35m',
+    percentLong: 73,
+    expectancy: 8.09,
+    medianLeverage: 1.0,
+    avgLeverage: 1.2,
+    avgConfidence: 79.4,
+    medianConfidence: 80.0,
+    startingValue: 10000
+  },
+];
+
+export default function SplitViewPage() {
+  const [agents, setAgents] = useState<AIAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<'trades' | 'chat' | 'positions' | 'analysis'>('trades');
+  const [mockPerformanceData, setMockPerformanceData] = useState<any[]>([]);
+  const [mainTab, setMainTab] = useState<'performance' | 'overall' | 'advanced'>('performance');
+  const [timeFilter, setTimeFilter] = useState<'all' | '72h' | '24h'>('all');
+  const [tradeFilter, setTradeFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch('/api/agents');
+        if (!response.ok) throw new Error('Failed to fetch agents');
+        const data = await response.json();
+
+        // Use mock data if API returns empty array
+        if (data.length === 0) {
+          setAgents(MOCK_AGENTS as any);
+          setMockPerformanceData(generateMockPerformanceData(MOCK_AGENTS as any));
+        } else {
+          setAgents(data);
+          setMockPerformanceData(generateMockPerformanceData(data));
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+        setAgents(MOCK_AGENTS as any);
+        setMockPerformanceData(generateMockPerformanceData(MOCK_AGENTS as any));
+        setLoading(false);
+      }
+    };
+    fetchAgents();
+    const interval = setInterval(fetchAgents, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalValue = agents.reduce((sum, agent) => sum + agent.accountValue, 0);
+  const totalGain = totalValue - (agents.length * 10000);
+  const totalGainPercent = (totalGain / (agents.length * 10000)) * 100;
+  const sortedAgents = [...agents].sort((a, b) => b.roi - a.roi);
+  const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
+
+  const highestAgent = sortedAgents[0];
+  const lowestAgent = sortedAgents[sortedAgents.length - 1];
+
+  const filteredTrades = tradeFilter === 'all'
+    ? MOCK_TRADES
+    : MOCK_TRADES.filter(t => t.agentId === tradeFilter);
+
+  return (
+    <div className="h-screen flex flex-col overflow-hidden" style={{
+      backgroundColor: '#FFF1E5',
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      color: '#33302E'
+    }}>
+      {/* Custom Pill-Shaped Scrollbar Styles */}
+      <style>
+        {`
+          /* Webkit browsers (Chrome, Safari, Edge) */
+          ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+          }
+
+          ::-webkit-scrollbar-track {
+            background: #E9DECF;
+            border-radius: 10px;
+            margin: 4px;
+          }
+
+          ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #990F3D 0%, #b8123f 100%);
+            border-radius: 10px;
+            border: 2px solid #E9DECF;
+            transition: all 0.2s ease;
+          }
+
+          ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #7a0c30 0%, #990F3D 100%);
+            border: 2px solid #CCC1B7;
+          }
+
+          ::-webkit-scrollbar-thumb:active {
+            background: #7a0c30;
+          }
+
+          /* For horizontal scrollbars */
+          ::-webkit-scrollbar-corner {
+            background: #E9DECF;
+          }
+        `}
+      </style>
+      {/* Sleek Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+        color: '#262A33',
+        padding: '16px 28px',
+        borderBottom: '2px solid #990F3D',
+        flexShrink: 0,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <Link href="/" style={{
+            color: '#262A33',
+            fontSize: '12px',
+            textDecoration: 'none',
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: '600',
+            padding: '6px 16px',
+            backgroundColor: 'rgba(38, 42, 51, 0.08)',
+            borderRadius: '20px',
+            transition: 'all 0.2s',
+            border: '1px solid rgba(38, 42, 51, 0.15)'
+          }}>
+            ← Live Arena
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+            <div style={{
+              fontSize: '10px',
+              fontWeight: '700',
+              color: '#990F3D',
+              textTransform: 'uppercase',
+              letterSpacing: '1.2px',
+              fontFamily: 'system-ui, sans-serif',
+              padding: '3px 10px',
+              backgroundColor: 'rgba(153, 15, 61, 0.15)',
+              borderRadius: '12px',
+              border: '1px solid rgba(153, 15, 61, 0.3)'
+            }}>
+              AI Trading Arena
+            </div>
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: '500',
+              margin: 0,
+              letterSpacing: '-0.5px',
+              lineHeight: '1.1',
+              color: '#262A33'
+            }}>
+              Model Leaderboard
+            </h1>
+          </div>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontFamily: 'system-ui, sans-serif',
+            textAlign: 'right',
+            color: '#66605C',
+            padding: '8px 16px',
+            backgroundColor: 'rgba(38, 42, 51, 0.05)',
+            borderRadius: '20px',
+            border: '1px solid #CCC1B7'
+          }}>
+            <div style={{ marginBottom: '2px', fontSize: '10px' }}>Portfolio</div>
+            <div style={{ color: '#262A33', fontWeight: '700', fontSize: '14px' }}>
+              ${totalValue.toLocaleString()}
+            </div>
+          </div>
+          <div style={{
+            color: totalGainPercent >= 0 ? '#0F7B3A' : '#CC0000',
+            fontWeight: '700',
+            fontSize: '14px',
+            padding: '8px 16px',
+            backgroundColor: totalGainPercent >= 0 ? 'rgba(15, 123, 58, 0.15)' : 'rgba(204, 0, 0, 0.15)',
+            borderRadius: '20px',
+            border: `1px solid ${totalGainPercent >= 0 ? 'rgba(15, 123, 58, 0.3)' : 'rgba(204, 0, 0, 0.3)'}`
+          }}>
+            {totalGainPercent >= 0 ? '▲' : '▼'} {Math.abs(totalGainPercent).toFixed(2)}%
+          </div>
+        </div>
+      </div>
+
+      {/* Pill-Shaped Carousel Ticker */}
+      <div style={{
+        backgroundColor: '#FFF1E5',
+        borderBottom: '1px solid #CCC1B7',
+        overflow: 'hidden',
+        flexShrink: 0,
+        position: 'relative',
+        padding: '12px 0'
+      }}>
+        <style>
+          {`
+            @keyframes scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .ticker-scroll {
+              animation: scroll 30s linear infinite;
+            }
+            .ticker-scroll:hover {
+              animation-play-state: paused;
+            }
+          `}
+        </style>
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          paddingLeft: '12px'
+        }} className="ticker-scroll">
+          {[...STOCK_TICKERS, ...STOCK_TICKERS].map((stock, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 18px',
+              backgroundColor: '#F5E6D3',
+              borderRadius: '28px',
+              border: '1px solid #CCC1B7',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                fontFamily: 'system-ui, sans-serif',
+                color: '#262A33',
+                letterSpacing: '0.3px'
+              }}>
+                {stock.symbol}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                fontFamily: 'system-ui, sans-serif',
+                color: '#33302E'
+              }}>
+                ${stock.price.toFixed(2)}
+              </div>
+              <div style={{
+                fontSize: '10px',
+                fontWeight: '700',
+                fontFamily: 'system-ui, sans-serif',
+                color: stock.changePercent >= 0 ? '#0F7B3A' : '#CC0000',
+                padding: '3px 8px',
+                backgroundColor: stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                borderRadius: '12px',
+                border: `1px solid ${stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
+              }}>
+                {stock.changePercent >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* Left Side - Main Content with Tabs */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px', paddingRight: '8px' }}>
+
+          {/* Pill-Shaped Tabs */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '12px',
+            padding: '4px',
+            backgroundColor: '#E9DECF',
+            borderRadius: '24px',
+            border: '1px solid #CCC1B7'
+          }}>
+            {[
+              { id: 'performance' as const, label: 'Performance' },
+              { id: 'overall' as const, label: 'Overall Stats' },
+              { id: 'advanced' as const, label: 'Advanced Analytics' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setMainTab(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  backgroundColor: mainTab === tab.id ? '#990F3D' : 'transparent',
+                  color: mainTab === tab.id ? '#FFF1E5' : '#66605C',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontFamily: 'system-ui, sans-serif',
+                  transition: 'all 0.2s ease',
+                  letterSpacing: '0.3px',
+                  boxShadow: mainTab === tab.id ? '0 2px 6px rgba(153, 15, 61, 0.3)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (mainTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(153, 15, 61, 0.1)';
+                    e.currentTarget.style.color = '#990F3D';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (mainTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#66605C';
+                  }
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sleek Model Selector Cards - Two-Line Pills */}
+          <div style={{
+            display: 'flex',
+            gap: '6px',
+            marginBottom: '16px',
+            paddingBottom: '4px',
+            flexWrap: 'nowrap'
+          }}>
+            {sortedAgents.map((agent) => (
+              <button
+                key={agent.id}
+                onClick={() => setSelectedAgentId(agent.id === selectedAgentId ? null : agent.id)}
+                style={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  padding: '7px 12px',
+                  background: selectedAgentId === agent.id
+                    ? 'linear-gradient(135deg, #E9DECF 0%, #F0E4D4 100%)'
+                    : 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+                  border: selectedAgentId === agent.id ? '2px solid #990F3D' : '1px solid #CCC1B7',
+                  borderRadius: '24px',
+                  cursor: 'pointer',
+                  fontFamily: 'system-ui, sans-serif',
+                  transition: 'all 0.2s ease',
+                  boxShadow: selectedAgentId === agent.id
+                    ? '0 4px 12px rgba(153, 15, 61, 0.15)'
+                    : '0 2px 6px rgba(0, 0, 0, 0.05)',
+                  transform: selectedAgentId === agent.id ? 'translateY(-2px)' : 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '5px',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedAgentId !== agent.id) {
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedAgentId !== agent.id) {
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.05)';
+                    e.currentTarget.style.transform = 'none';
+                  }
+                }}
+              >
+                {/* Top line: Icon + Model name */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}>
+                  <div style={{
+                    width: '22px',
+                    height: '22px',
+                    minWidth: '22px',
+                    borderRadius: '50%',
+                    backgroundColor: agent.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 2px 4px ${agent.color}60`
+                  }}>
+                    <ModelIcon model={agent.model} size={11} />
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: '#262A33',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {agent.name}
+                  </div>
+                </div>
+
+                {/* Bottom line: Value, ROI */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    fontFamily: 'monospace',
+                    color: '#262A33',
+                    backgroundColor: agent.color,
+                    padding: '4px 9px',
+                    borderRadius: '12px',
+                    boxShadow: `0 1px 3px ${agent.color}60`,
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '24px'
+                  }}>
+                    ${(agent.accountValue / 1000).toFixed(1)}k
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    color: agent.roi >= 0 ? '#0F7B3A' : '#CC0000',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    backgroundColor: agent.roi >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                    border: `1px solid ${agent.roi >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`,
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '24px'
+                  }}>
+                    {agent.roi >= 0 ? '▲' : '▼'} {Math.abs(agent.roi).toFixed(1)}%
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Performance Tab - Sleek Chart */}
+          {mainTab === 'performance' && (
+            <div style={{
+              flex: 1,
+              background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+              border: '1px solid #CCC1B7',
+              borderRadius: '20px',
+              padding: '24px',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px'
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  margin: 0,
+                  color: '#262A33',
+                  fontFamily: 'Georgia, serif',
+                  letterSpacing: '-0.3px'
+                }}>
+                  {selectedAgent ? `${selectedAgent.name} Performance` : 'Portfolio Performance'}
+                </h3>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setTimeFilter('all')}
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      fontFamily: 'system-ui, sans-serif',
+                      backgroundColor: timeFilter === 'all' ? '#990F3D' : 'rgba(255, 255, 255, 0.6)',
+                      color: timeFilter === 'all' ? '#FFF1E5' : '#66605C',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: timeFilter === 'all' ? '0 2px 4px rgba(153, 15, 61, 0.2)' : 'none'
+                    }}
+                  >
+                    ALL
+                  </button>
+                  <button
+                    onClick={() => setTimeFilter('72h')}
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      fontFamily: 'system-ui, sans-serif',
+                      backgroundColor: timeFilter === '72h' ? '#990F3D' : 'rgba(255, 255, 255, 0.6)',
+                      color: timeFilter === '72h' ? '#FFF1E5' : '#66605C',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: timeFilter === '72h' ? '0 2px 4px rgba(153, 15, 61, 0.2)' : 'none'
+                    }}
+                  >
+                    72H
+                  </button>
+                  {selectedAgent && (
+                    <button
+                      onClick={() => setSelectedAgentId(null)}
+                      style={{
+                        padding: '8px 18px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        fontFamily: 'system-ui, sans-serif',
+                        backgroundColor: '#2E5C8A',
+                        color: '#FFF1E5',
+                        border: 'none',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 4px rgba(46, 92, 138, 0.2)'
+                      }}
+                    >
+                      View All Models
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <PerformanceChartOption3
+                  agents={selectedAgentId ? agents.filter(a => a.id === selectedAgentId) : agents}
+                  mockData={mockPerformanceData}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Overall Stats Tab - Refined Table */}
+          {mainTab === 'overall' && (
+            <div style={{
+              flex: 1,
+              background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+              border: '1px solid #CCC1B7',
+              borderRadius: '20px',
+              overflow: 'auto',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+            }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '13px',
+                fontFamily: 'system-ui, sans-serif'
+              }}>
+                <thead style={{
+                  position: 'sticky',
+                  top: 0,
+                  background: 'linear-gradient(to bottom, #E0D4C3 0%, #E9DECF 100%)',
+                  borderBottom: '2px solid #990F3D',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <tr>
+                    <th style={{ padding: '14px 12px', textAlign: 'left', fontWeight: '700' }}>Rank</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'left', fontWeight: '700' }}>Model</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Account Value</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Return %</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>P&L</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Fees</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Win Rate</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Biggest Win</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Biggest Loss</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Sharpe</th>
+                    <th style={{ padding: '14px 12px', textAlign: 'right', fontWeight: '700' }}>Trades</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAgents.map((agent, index) => (
+                    <tr
+                      key={agent.id}
+                      onClick={() => setSelectedAgentId(agent.id === selectedAgentId ? null : agent.id)}
+                      style={{
+                        borderBottom: '1px solid #E9DECF',
+                        cursor: 'pointer',
+                        backgroundColor: selectedAgentId === agent.id ? '#E9DECF' : '#F5E6D3'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedAgentId !== agent.id) {
+                          e.currentTarget.style.backgroundColor = '#EBE0D0';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedAgentId !== agent.id) {
+                          e.currentTarget.style.backgroundColor = '#F5E6D3';
+                        }
+                      }}
+                    >
+                      <td style={{ padding: '14px 12px' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '700',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          {index + 1}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: agent.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <ModelIcon model={agent.model} size={12} />
+                          </div>
+                          <div style={{
+                            padding: '6px 12px',
+                            backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                            borderRadius: '16px',
+                            fontWeight: '600',
+                            border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                          }}>
+                            {agent.name}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '700',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          ${agent.accountValue.toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: agent.roi >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                          color: agent.roi >= 0 ? '#0F7B3A' : '#CC0000',
+                          borderRadius: '16px',
+                          fontWeight: '700'
+                        }}>
+                          {agent.roi >= 0 ? '+' : ''}{agent.roi.toFixed(2)}%
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: (agent.totalPnL || 0) >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                          color: (agent.totalPnL || 0) >= 0 ? '#0F7B3A' : '#CC0000',
+                          borderRadius: '16px',
+                          fontWeight: '700'
+                        }}>
+                          ${agent.totalPnL?.toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          ${(agent as any).fees?.toFixed(2) || '0'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          {agent.winRate?.toFixed(1)}%
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: 'rgba(15, 123, 58, 0.1)',
+                          color: '#0F7B3A',
+                          borderRadius: '16px',
+                          fontWeight: '700'
+                        }}>
+                          ${agent.biggestWin?.toFixed(0)}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: 'rgba(204, 0, 0, 0.1)',
+                          color: '#CC0000',
+                          borderRadius: '16px',
+                          fontWeight: '700'
+                        }}>
+                          ${Math.abs(agent.biggestLoss || 0).toFixed(0)}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          {agent.sharpeRatio?.toFixed(3)}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '6px 12px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '16px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
+                        }}>
+                          {agent.tradeCount}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Advanced Analytics Tab - Refined Table */}
+          {mainTab === 'advanced' && (
+            <div style={{
+              flex: 1,
+              background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+              border: '1px solid #CCC1B7',
+              borderRadius: '20px',
+              overflow: 'auto',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {/* Charts Section */}
+              <div style={{
+                padding: '20px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px',
+                borderBottom: '2px solid #990F3D'
+              }}>
+                {/* Risk-Return Scatter Plot */}
+                <div style={{
+                  backgroundColor: '#F8EBD8',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1px solid #CCC1B7'
+                }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                    Risk vs Return Analysis
+                  </h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <ScatterChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                      <XAxis
+                        type="number"
+                        dataKey="risk"
+                        name="Risk"
+                        label={{ value: 'Max Drawdown (%)', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                      />
+                      <YAxis
+                        type="number"
+                        dataKey="roi"
+                        name="ROI"
+                        label={{ value: 'ROI (%)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                        formatter={(value: any) => [`${Number(value).toFixed(2)}%`]}
+                      />
+                      <Scatter
+                        data={sortedAgents.map(agent => ({
+                          risk: Math.abs(agent.maxDrawdown),
+                          roi: agent.roi,
+                          name: agent.name,
+                          fill: agent.color,
+                          trades: agent.tradeCount
+                        }))}
+                        fill="#8884d8"
+                      >
+                        {sortedAgents.map((agent, index) => (
+                          <Cell key={`cell-${index}`} fill={agent.color} />
+                        ))}
+                      </Scatter>
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Win Rate Comparison Bar Chart */}
+                <div style={{
+                  backgroundColor: '#F8EBD8',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1px solid #CCC1B7'
+                }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                    Win Rate Rankings
+                  </h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={[...sortedAgents].sort((a, b) => (b.winRate || 0) - (a.winRate || 0))}
+                      margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                        label={{ value: 'Win Rate (%)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                        formatter={(value: any) => [`${Number(value).toFixed(1)}%`]}
+                      />
+                      <Bar dataKey="winRate" radius={[8, 8, 0, 0]}>
+                        {sortedAgents.map((agent, index) => (
+                          <Cell key={`cell-${index}`} fill={agent.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Model Comparison Radar Chart */}
+                <div style={{
+                  backgroundColor: '#F8EBD8',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1px solid #CCC1B7'
+                }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                    Head-to-Head: All Models
+                  </h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <RadarChart data={[
+                      {
+                        metric: 'ROI',
+                        ...Object.fromEntries(sortedAgents.map(a => [a.name, (a.roi / 5) * 100]))
+                      },
+                      {
+                        metric: 'Win Rate',
+                        ...Object.fromEntries(sortedAgents.map(a => [a.name, a.winRate]))
+                      },
+                      {
+                        metric: 'Sharpe',
+                        ...Object.fromEntries(sortedAgents.map(a => [a.name, (a.sharpeRatio / 2) * 100]))
+                      },
+                      {
+                        metric: 'Trades',
+                        ...Object.fromEntries(sortedAgents.map(a => [a.name, (a.tradeCount / 20) * 100]))
+                      },
+                      {
+                        metric: 'Risk Ctrl',
+                        ...Object.fromEntries(sortedAgents.map(a => [a.name, 100 - Math.abs(a.maxDrawdown) * 10]))
+                      }
+                    ]}>
+                      <PolarGrid stroke="#CCC1B7" />
+                      <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#66605C' }} />
+                      <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#66605C' }} />
+                      {sortedAgents.map((agent, index) => (
+                        <Radar
+                          key={agent.id}
+                          name={agent.name}
+                          dataKey={agent.name}
+                          stroke={agent.color}
+                          fill={agent.color}
+                          fillOpacity={0.2}
+                        />
+                      ))}
+                      <Legend wrapperStyle={{ fontSize: '9px' }} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Sharpe Ratio Rankings */}
+                <div style={{
+                  backgroundColor: '#F8EBD8',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  border: '1px solid #CCC1B7'
+                }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                    Risk-Adjusted Performance (Sharpe)
+                  </h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={[...sortedAgents].sort((a, b) => (b.sharpeRatio || 0) - (a.sharpeRatio || 0))}
+                      layout="vertical"
+                      margin={{ top: 5, right: 20, bottom: 5, left: 60 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: '#66605C' }}
+                        stroke="#66605C"
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                        formatter={(value: any) => [`${Number(value).toFixed(3)}`]}
+                      />
+                      <Bar dataKey="sharpeRatio" radius={[0, 8, 8, 0]}>
+                        {sortedAgents.map((agent, index) => (
+                          <Cell key={`cell-${index}`} fill={agent.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Table Section */}
+              <div style={{ flex: 1, overflow: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '12px',
+                fontFamily: 'system-ui, sans-serif',
+                tableLayout: 'fixed'
+              }}>
+                <thead style={{
+                  position: 'sticky',
+                  top: 0,
+                  background: 'linear-gradient(to bottom, #E0D4C3 0%, #E9DECF 100%)',
+                  borderBottom: '2px solid #990F3D',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <tr>
+                    <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '700', width: '60px' }}>Rank</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '700', width: '180px' }}>Model</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '110px' }}>Account Value</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '105px' }}>Avg Trade Size</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '120px' }}>Median Trade Size</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '100px' }}>Avg Hold Time</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '120px' }}>Median Hold Time</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '70px' }}>% Long</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '100px' }}>Expectancy</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '100px' }}>Avg Leverage</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', width: '120px' }}>Avg Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAgents.map((agent, index) => (
+                    <tr
+                      key={agent.id}
+                      onClick={() => setSelectedAgentId(agent.id === selectedAgentId ? null : agent.id)}
+                      style={{
+                        borderBottom: '1px solid #E9DECF',
+                        cursor: 'pointer',
+                        backgroundColor: selectedAgentId === agent.id ? '#E9DECF' : '#F5E6D3'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedAgentId !== agent.id) {
+                          e.currentTarget.style.backgroundColor = '#EBE0D0';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedAgentId !== agent.id) {
+                          e.currentTarget.style.backgroundColor = '#F5E6D3';
+                        }
+                      }}
+                    >
+                      <td style={{ padding: '8px 8px' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '700',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {index + 1}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: agent.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <ModelIcon model={agent.model} size={10} />
+                          </div>
+                          <div style={{
+                            padding: '4px 10px',
+                            backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                            borderRadius: '14px',
+                            fontWeight: '600',
+                            border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                            fontSize: '11px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {agent.name}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '700',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          ${agent.accountValue.toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          ${(agent as any).avgTradeSize?.toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          ${(agent as any).medianTradeSize?.toLocaleString()}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {(agent as any).avgHoldTime}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {(agent as any).medianHoldTime}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {(agent as any).percentLong}%
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: ((agent as any).expectancy || 0) >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                          color: ((agent as any).expectancy || 0) >= 0 ? '#0F7B3A' : '#CC0000',
+                          borderRadius: '14px',
+                          fontWeight: '700',
+                          fontSize: '11px'
+                        }}>
+                          ${((agent as any).expectancy || 0).toFixed(2)}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {((agent as any).avgLeverage || 1).toFixed(1)}x
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          backgroundColor: selectedAgentId === agent.id ? '#F8EBD8' : '#E9DECF',
+                          borderRadius: '14px',
+                          fontWeight: '600',
+                          border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none',
+                          fontSize: '11px'
+                        }}>
+                          {((agent as any).avgConfidence || 0).toFixed(1)}%
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Sidebar - Sleek Activity Feed */}
+        <div style={{
+          width: '380px',
+          background: 'linear-gradient(to bottom, #F5E6D3 0%, #F8EBD8 100%)',
+          borderLeft: '2px solid #CCC1B7',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          boxShadow: '-2px 0 8px rgba(0, 0, 0, 0.05)'
+        }}>
+          {/* Pill-Shaped Tabs */}
+          <div style={{
+            display: 'flex',
+            gap: '6px',
+            padding: '12px 12px 8px',
+            flexShrink: 0,
+            background: 'linear-gradient(to bottom, #E0D4C3 0%, #E9DECF 100%)'
+          }}>
+            {[
+              { id: 'trades' as const, label: 'Trades' },
+              { id: 'chat' as const, label: 'Reasoning' },
+              { id: 'positions' as const, label: 'Positions' },
+              { id: 'analysis' as const, label: 'Analysis' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setDetailTab(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  fontFamily: 'system-ui, sans-serif',
+                  backgroundColor: detailTab === tab.id ? '#990F3D' : 'rgba(255, 255, 255, 0.6)',
+                  color: detailTab === tab.id ? '#FFF1E5' : '#66605C',
+                  border: '1px solid #CCC1B7',
+                  borderRadius: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: detailTab === tab.id ? '0 4px 12px rgba(153, 15, 61, 0.25)' : '0 2px 6px rgba(0, 0, 0, 0.08)',
+                  transform: detailTab === tab.id ? 'translateY(-1px)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (detailTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(153, 15, 61, 0.1)';
+                    e.currentTarget.style.color = '#990F3D';
+                    e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.12)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (detailTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+                    e.currentTarget.style.color = '#66605C';
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.08)';
+                    e.currentTarget.style.transform = 'none';
+                  }
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '20px', fontFamily: 'system-ui, sans-serif' }}>
+
+            {/* TRADES TAB */}
+            {detailTab === 'trades' && (
+              <div>
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '14px',
+                  backgroundColor: '#E9DECF',
+                  border: '1px solid #CCC1B7',
+                  borderRadius: '20px',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                }}>
+                  <label style={{ fontSize: '10px', fontWeight: '700', display: 'block', marginBottom: '8px', color: '#66605C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Filter by Model
+                  </label>
+                  <select
+                    value={tradeFilter}
+                    onChange={(e) => setTradeFilter(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      fontSize: '12px',
+                      border: '1px solid #CCC1B7',
+                      backgroundColor: '#F5E6D3',
+                      fontFamily: 'system-ui, sans-serif',
+                      borderRadius: '20px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="all">All Models</option>
+                    {agents.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '16px' }}>
+                  Showing {filteredTrades.length} recent trades
+                </div>
+                {filteredTrades.map((trade) => (
+                  <div
+                    key={trade.id}
+                    style={{
+                      padding: '16px',
+                      marginBottom: '12px',
+                      backgroundColor: '#EBE0D0',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: '10px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          color: '#262A33'
+                        }}>
+                          {trade.agentName}
+                        </span>
+                        <span style={{
+                          fontSize: '10px',
+                          padding: '4px 10px',
+                          backgroundColor: trade.side === 'BUY' ? '#E8F5E9' : '#FFEBEE',
+                          color: trade.side === 'BUY' ? '#0F7B3A' : '#CC0000',
+                          fontWeight: '700',
+                          borderRadius: '12px'
+                        }}>
+                          {trade.side === 'BUY' ? 'LONG' : 'SHORT'}
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: '700' }}>
+                          {trade.symbol}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#66605C' }}>
+                        {trade.timestamp}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
+                      Entry: ${trade.entryPrice.toFixed(2)} → Exit: ${trade.exitPrice.toFixed(2)}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
+                      Quantity: {trade.quantity} shares
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '10px' }}>
+                      Hold time: {trade.holdTime}
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: trade.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                    }}>
+                      P&L: {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)} ({trade.pnl >= 0 ? '+' : ''}{trade.pnlPercent.toFixed(2)}%)
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* CHAT TAB */}
+            {detailTab === 'chat' && (
+              <div>
+                {!selectedAgent ? (
+                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#66605C' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px' }}>
+                      Select a model to view reasoning
+                    </div>
+                    <div style={{ fontSize: '12px' }}>
+                      Click on any model in the table or selector below
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h4 style={{
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      marginBottom: '16px',
+                      color: '#262A33'
+                    }}>
+                      {selectedAgent.name} — AI Reasoning
+                    </h4>
+                    {MOCK_CHAT_HISTORY[selectedAgent.id]?.map((entry, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          marginBottom: '14px',
+                          padding: '16px',
+                          backgroundColor: entry.type === 'trade' ? '#F0E4CE' : (entry.type === 'decision' ? '#E5DFD0' : '#EBE0D0'),
+                          border: '1px solid #CCC1B7',
+                          borderRadius: '20px',
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: '8px'
+                        }}>
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            color: '#990F3D',
+                            textTransform: 'uppercase'
+                          }}>
+                            {entry.type}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#66605C' }}>
+                            {entry.timestamp}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#33302E' }}>
+                          {entry.message}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* POSITIONS TAB */}
+            {detailTab === 'positions' && (
+              <div>
+                <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                  Active Positions
+                </h4>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                {MOCK_POSITIONS.map((position, idx) => {
+                  const agent = MOCK_AGENTS.find(a => a.id === position.agentId);
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '14px 16px',
+                        backgroundColor: '#EBE0D0',
+                        border: '1px solid #CCC1B7',
+                        borderRadius: '24px',
+                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '10px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
+                          alignItems: 'center'
+                        }}>
+                          {/* Stock symbol in pill with icon */}
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            backgroundColor: '#990F3D',
+                            color: '#FFF1E5',
+                            borderRadius: '16px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            height: '28px'
+                          }}>
+                            <StockLogo symbol={position.symbol} size={13} />
+                            {position.symbol}
+                          </div>
+                          {/* Model icon and name in same pill */}
+                          {agent && (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '6px 12px',
+                              backgroundColor: agent.color,
+                              color: '#FFF',
+                              borderRadius: '16px',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              height: '28px'
+                            }}>
+                              <ModelIcon model={agent.model} size={11} />
+                              <span>{position.agentName}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{
+                          textAlign: 'right'
+                        }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            color: position.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                          }}>
+                            {position.pnl >= 0 ? '+' : ''}${position.pnl.toFixed(2)}
+                          </div>
+                          <div style={{
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: position.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                          }}>
+                            ({position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%)
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '12px',
+                        fontSize: '11px',
+                        paddingTop: '10px',
+                        borderTop: '1px solid #CCC1B7',
+                        marginBottom: '12px'
+                      }}>
+                        <div>
+                          <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Quantity</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>{position.quantity}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Entry</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${position.entryPrice.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Current</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${position.currentPrice.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Value</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>
+                            ${(position.quantity * position.currentPrice).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Exit Plan */}
+                      <div style={{
+                        backgroundColor: '#E0D4C3',
+                        padding: '10px 12px',
+                        borderRadius: '16px',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          color: '#990F3D',
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Exit Plan
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#262A33',
+                          lineHeight: '1.5'
+                        }}>
+                          {(position as any).exitPlan}
+                        </div>
+                      </div>
+
+                      {/* Reasoning */}
+                      <div style={{
+                        backgroundColor: '#E0D4C3',
+                        padding: '10px 12px',
+                        borderRadius: '16px'
+                      }}>
+                        <div style={{
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          color: '#990F3D',
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Trade Reasoning
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#262A33',
+                          lineHeight: '1.5'
+                        }}>
+                          {(position as any).reasoning}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                </div>
+              </div>
+            )}
+
+            {/* ANALYSIS TAB */}
+            {detailTab === 'analysis' && (
+              <div>
+                {!selectedAgent ? (
+                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#66605C' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px' }}>
+                      Select a model to view analysis
+                    </div>
+                    <div style={{ fontSize: '12px' }}>
+                      Click on any model in the table or selector below
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{
+                      padding: '18px',
+                      backgroundColor: '#E9DECF',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                        Performance Summary — {selectedAgent.name}
+                      </h4>
+                      <div style={{ fontSize: '12px', lineHeight: '2' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Account Value:</span>
+                          <span style={{ fontWeight: '700' }}>${selectedAgent.accountValue.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Total P&L:</span>
+                          <span style={{ fontWeight: '700', color: (selectedAgent.totalPnL || 0) >= 0 ? '#0F7B3A' : '#CC0000' }}>
+                            ${selectedAgent.totalPnL?.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Return:</span>
+                          <span style={{ fontWeight: '700', color: selectedAgent.roi >= 0 ? '#0F7B3A' : '#CC0000' }}>
+                            {selectedAgent.roi >= 0 ? '+' : ''}{selectedAgent.roi.toFixed(2)}%
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Trades:</span>
+                          <span style={{ fontWeight: '700' }}>{selectedAgent.tradeCount}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Win Rate:</span>
+                          <span style={{ fontWeight: '700' }}>{selectedAgent.winRate?.toFixed(1)}%</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Sharpe Ratio:</span>
+                          <span style={{ fontWeight: '700' }}>{selectedAgent.sharpeRatio?.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#66605C' }}>Max Drawdown:</span>
+                          <span style={{ fontWeight: '700', color: '#CC0000' }}>{selectedAgent.maxDrawdown?.toFixed(2)}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cumulative P&L Chart */}
+                    <div style={{
+                      padding: '18px',
+                      backgroundColor: '#E9DECF',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                        Cumulative P&L
+                      </h4>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <AreaChart
+                          data={(() => {
+                            // Generate mock cumulative P&L data
+                            const dataPoints = [];
+                            const startValue = selectedAgent.startingValue;
+                            const endValue = selectedAgent.accountValue;
+                            const steps = 20;
+                            const volatility = 0.02;
+
+                            let currentValue = startValue;
+                            const totalChange = endValue - startValue;
+                            const avgChange = totalChange / steps;
+
+                            for (let i = 0; i <= steps; i++) {
+                              const progress = i / steps;
+                              const expectedValue = startValue + (totalChange * progress);
+                              const randomWalk = (Math.random() - 0.5) * 2 * volatility * startValue;
+                              currentValue = expectedValue + randomWalk;
+
+                              // Ensure we end at the correct value
+                              if (i === steps) currentValue = endValue;
+
+                              dataPoints.push({
+                                day: i,
+                                value: currentValue,
+                                profit: currentValue - startValue
+                              });
+                            }
+                            return dataPoints;
+                          })()}
+                          margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                        >
+                          <defs>
+                            <linearGradient id={`colorPnL-${selectedAgent.id}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={selectedAgent.color} stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor={selectedAgent.color} stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                          <XAxis
+                            dataKey="day"
+                            tick={{ fontSize: 10, fill: '#66605C' }}
+                            stroke="#66605C"
+                            label={{ value: 'Trading Days', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: '#66605C' }}
+                            stroke="#66605C"
+                            domain={['dataMin - 1000', 'dataMax + 1000']}
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                          />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                            formatter={(value: any, name: string) => {
+                              if (name === 'value') return [`$${Number(value).toLocaleString()}`, 'Account Value'];
+                              return [value, name];
+                            }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke={selectedAgent.color}
+                            strokeWidth={2}
+                            fill={`url(#colorPnL-${selectedAgent.id})`}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Trade Outcome Donut Chart */}
+                    <div style={{
+                      padding: '18px',
+                      backgroundColor: '#E9DECF',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                        Trade Distribution
+                      </h4>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              {
+                                name: 'Winning Trades',
+                                value: Math.round(selectedAgent.tradeCount * (selectedAgent.winRate || 0) / 100),
+                                color: '#0F7B3A'
+                              },
+                              {
+                                name: 'Losing Trades',
+                                value: Math.round(selectedAgent.tradeCount * (1 - (selectedAgent.winRate || 0) / 100)),
+                                color: '#CC0000'
+                              }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={(entry) => `${entry.name}: ${entry.value}`}
+                            labelLine={{ stroke: '#66605C', strokeWidth: 1 }}
+                          >
+                            {[
+                              { name: 'Winning Trades', value: Math.round(selectedAgent.tradeCount * (selectedAgent.winRate || 0) / 100), color: '#0F7B3A' },
+                              { name: 'Losing Trades', value: Math.round(selectedAgent.tradeCount * (1 - (selectedAgent.winRate || 0) / 100)), color: '#CC0000' }
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

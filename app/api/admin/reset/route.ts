@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Simple auth check - require a secret key
-    if (body.secret !== 'polystocks-reset-2024') {
+    if (body.secret !== 'sapyn-reset-2024') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -32,23 +32,49 @@ export async function POST(request: Request) {
     const deletedStockPrices = await prisma.stockPrice.deleteMany({});
     console.log(`✅ Deleted ${deletedStockPrices.count} stock prices`);
 
-    // 6. Reset all agents to $10,000 each
+    // 6. Reset all agents to $100,000 each and configure broker assignments
     const agents = await prisma.agent.findMany();
-    console.log(`💰 Resetting ${agents.length} agents to $10,000 each`);
+    console.log(`💰 Resetting ${agents.length} agents to $100,000 each`);
+
+    // Broker Battle Royale configuration - each AI gets a different broker
+    const brokerAssignments: Record<string, string> = {
+      'DeepSeek': 'alpaca',              // Phase 1: Live with Alpaca
+      'GPT-4o': 'simulation',            // Phase 1: Will be 'tradier' when implemented
+      'Claude': 'simulation',            // Phase 1: Will be 'webull' when implemented
+      'Grok': 'simulation',              // Phase 2: Will be 'td-ameritrade' when implemented
+      'Gemini': 'simulation',            // Phase 2: Will be 'interactive-brokers' when implemented
+      'Qwen': 'simulation',              // Stays simulation permanently
+    };
+
+    const liveAgents: string[] = [];
 
     for (const agent of agents) {
+      const broker = brokerAssignments[agent.name] || 'simulation';
+      const isLive = broker !== 'simulation';
+
       await prisma.agent.update({
         where: { id: agent.id },
         data: {
-          cashBalance: 10000,
-          accountValue: 10000
+          cashBalance: 100000,
+          accountValue: 100000,
+          startingValue: 100000,
+          broker,
+          isLive, // Keep for backward compatibility
+          lastSyncAt: null
         }
       });
+
+      if (isLive) {
+        liveAgents.push(`${agent.name} (${broker})`);
+        console.log(`🔴 ${agent.name} configured for LIVE trading via ${broker.toUpperCase()}`);
+      } else {
+        console.log(`🟢 ${agent.name} configured for SIMULATION`);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Production database reset complete',
+      message: 'Production database reset complete - Broker Battle Royale configured',
       deleted: {
         positions: deletedPositions.count,
         trades: deletedTrades.count,
@@ -57,7 +83,9 @@ export async function POST(request: Request) {
         stockPrices: deletedStockPrices.count
       },
       agents: agents.length,
-      totalCapital: agents.length * 10000
+      totalCapital: agents.length * 100000,
+      liveAgents: liveAgents.length > 0 ? liveAgents : ['None - all agents in simulation'],
+      brokerAssignments
     });
   } catch (error: any) {
     console.error('❌ Error resetting:', error);

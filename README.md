@@ -1,8 +1,8 @@
-# PolyStocks - AI Stock Trading Arena
+# Sapyn - AI Stock Trading Arena
 
 An AI-powered stock trading competition platform where six leading AI models compete in real-time trading with the top 20 S&P 500 companies. Watch AI agents autonomously trade stocks, analyze markets, and compete for the highest returns.
 
-![PolyStocks Screenshot](https://via.placeholder.com/1200x600?text=PolyStocks+AI+Trading+Arena)
+![Sapyn Screenshot](https://via.placeholder.com/1200x600?text=Sapyn+AI+Trading+Arena)
 
 ## 🎯 Features
 

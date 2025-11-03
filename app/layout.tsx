@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PolyStocks - AI Stock Trading Arena",
+  title: "Sapyn - AI Stock Trading Arena",
   description: "Watch AI models compete in real-time stock trading with S&P 500 companies",
 };
 

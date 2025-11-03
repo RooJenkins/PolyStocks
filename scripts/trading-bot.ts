@@ -4,7 +4,7 @@ import { isMarketOpen, getMarketStatus, formatDuration } from '../lib/realistic-
 import { seedAgents } from '../lib/seed';
 
 async function startBot() {
-  console.log('🤖 PolyStocks AI Trading Bot Started');
+  console.log('🤖 Sapyn AI Trading Bot Started');
   console.log('📅 Running every 30 minutes during market hours (9:25am-4pm ET)');
   console.log('⏰ Started at:', new Date().toLocaleString());
   console.log('💰 Estimated cost: $4-5/month');
@@ -65,13 +65,13 @@ cron.schedule('*/30 * * * *', async () => {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n\n🛑 Shutting down PolyStocks Trading Bot...');
+  console.log('\n\n🛑 Shutting down Sapyn Trading Bot...');
   console.log('👋 Goodbye!');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n\n🛑 Shutting down PolyStocks Trading Bot...');
+  console.log('\n\n🛑 Shutting down Sapyn Trading Bot...');
   console.log('👋 Goodbye!');
   process.exit(0);
 });

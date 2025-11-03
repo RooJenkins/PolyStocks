@@ -3,23 +3,24 @@ import { fetchStockPrices, fetchStockQuote, fetchStockNews } from './stock-api';
 import { getAIDecision } from './ai-models';
 import type { Stock} from '@/types';
 import {
-  executeBuy as realisticBuy,
-  executeSell as realisticSell,
   isMarketOpen,
   getMarketStatus,
 } from './realistic-execution';
-import {
-  executeAlpacaBuy,
-  executeAlpacaSell,
-} from './alpaca-broker';
-import { validateTrade, logSafetyViolation } from './safety-limits';
+import { getBroker, getBrokerDisplayName, type BrokerType } from './brokers';
+import { validateTrade, validateExitParameters, logSafetyViolation } from './safety-limits';
+import { checkAndExecuteExits } from './exit-manager';
 
-// Get trading mode from environment
-const TRADING_MODE = process.env.TRADING_MODE || 'simulated';
-
-// Wrapper functions that route to correct execution method
+// Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
-  console.log(`  📍 Trading Mode: ${TRADING_MODE}`);
+  // Get agent's broker configuration
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { broker: true }
+  });
+
+  const brokerType = (agent?.broker || 'simulation') as BrokerType;
+  const brokerDisplayName = getBrokerDisplayName(brokerType);
+  console.log(`  📍 Broker: ${brokerDisplayName}`);
 
   // Check safety limits first
   const validation = await validateTrade(agentId, agentName, 'BUY', symbol, quantity, marketPrice);
@@ -36,18 +37,22 @@ async function executeBuyTrade(agentId: string, agentName: string, symbol: strin
     };
   }
 
-  // Route to appropriate execution method
-  if (TRADING_MODE === 'paper' || TRADING_MODE === 'live') {
-    console.log(`  🔌 Using Alpaca API (${TRADING_MODE} mode)`);
-    return await executeAlpacaBuy(symbol, quantity, agentId);
-  } else {
-    // Simulated mode (default)
-    return await realisticBuy(symbol, quantity, marketPrice);
-  }
+  // Route to appropriate broker
+  const broker = getBroker(brokerType, agentName);
+  console.log(`  🔌 Using ${broker.name} for trade execution`);
+  return await broker.executeBuy(symbol, quantity, agentId);
 }
 
 async function executeSellTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
-  console.log(`  📍 Trading Mode: ${TRADING_MODE}`);
+  // Get agent's broker configuration
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { broker: true }
+  });
+
+  const brokerType = (agent?.broker || 'simulation') as BrokerType;
+  const brokerDisplayName = getBrokerDisplayName(brokerType);
+  console.log(`  📍 Broker: ${brokerDisplayName}`);
 
   // Check safety limits first
   const validation = await validateTrade(agentId, agentName, 'SELL', symbol, quantity, marketPrice);
@@ -64,14 +69,10 @@ async function executeSellTrade(agentId: string, agentName: string, symbol: stri
     };
   }
 
-  // Route to appropriate execution method
-  if (TRADING_MODE === 'paper' || TRADING_MODE === 'live') {
-    console.log(`  🔌 Using Alpaca API (${TRADING_MODE} mode)`);
-    return await executeAlpacaSell(symbol, quantity, agentId);
-  } else {
-    // Simulated mode (default)
-    return await realisticSell(symbol, quantity, marketPrice);
-  }
+  // Route to appropriate broker
+  const broker = getBroker(brokerType, agentName);
+  console.log(`  🔌 Using ${broker.name} for trade execution`);
+  return await broker.executeSell(symbol, quantity, agentId);
 }
 
 // Helper: Calculate market trend from stocks
@@ -237,14 +238,17 @@ export async function runTradingCycle() {
     stocks = await enrichStocksWithTrends(stocks);
     console.log(`✓ Added 7-day trends and moving averages\n`);
 
-    // 3. Calculate market trend
+    // 3. Check positions for automatic exits (Alpha Arena Phase 1)
+    await checkAndExecuteExits(stocks);
+
+    // 4. Calculate market trend
     const marketTrend = calculateMarketTrend(stocks);
     console.log(`📊 Market trend: ${marketTrend.daily >= 0 ? '+' : ''}${marketTrend.daily.toFixed(2)}% today\n`);
 
-    // 4. Fetch news for big movers (>3% change)
+    // 5. Fetch news for big movers (>3% change)
     const news = await fetchNewsForBigMovers(stocks);
 
-    // 5. Get all agents
+    // 6. Get all agents
     const agents = await prisma.agent.findMany({
       include: {
         positions: true,
@@ -253,12 +257,12 @@ export async function runTradingCycle() {
 
     console.log(`🤖 Processing ${agents.length} AI agents\n`);
 
-    // 6. Process each agent
+    // 7. Process each agent
     for (const agent of agents) {
       await processAgentTrading(agent, stocks, marketTrend, news);
     }
 
-    // 4. Update all performance metrics
+    // 8. Update all performance metrics
     await updatePerformanceMetrics();
 
     console.log('\n✅ ===== TRADING CYCLE COMPLETE =====\n');
@@ -360,6 +364,12 @@ async function processAgentTrading(
     console.log(`  🎯 Decision: ${decision.action}`);
     console.log(`  💭 Reasoning: ${decision.reasoning}`);
     console.log(`  📊 Confidence: ${(decision.confidence * 100).toFixed(1)}%`);
+    if (decision.targetPrice) {
+      console.log(`  🎯 Target Price: $${decision.targetPrice.toFixed(2)}`);
+    }
+    if (decision.stopLoss) {
+      console.log(`  🛡️  Stop Loss: $${decision.stopLoss.toFixed(2)}`);
+    }
 
     // Execute trade based on decision
     if (decision.action === 'BUY') {
@@ -372,8 +382,8 @@ async function processAgentTrading(
       await executeCover(agent, decision, stocks);
     }
 
-    // Log the decision
-    await prisma.decision.create({
+    // Log the decision (Alpha Arena: store invalidationCondition)
+    const decisionRecord = await prisma.decision.create({
       data: {
         agentId: agent.id,
         action: decision.action,
@@ -384,6 +394,7 @@ async function processAgentTrading(
         riskAssessment: decision.riskAssessment || 'N/A',
         targetPrice: decision.targetPrice,
         stopLoss: decision.stopLoss,
+        invalidationCondition: decision.invalidationCondition,
         portfolioValue,
         cashBalance: agent.cashBalance,
         marketDataSnapshot: JSON.stringify(
@@ -395,14 +406,17 @@ async function processAgentTrading(
         ),
       },
     });
+
+    // Store decision ID for linking trades back to decisions
+    (decision as any).decisionId = decisionRecord.id;
   } catch (error: any) {
     console.error(`  ❌ Error processing ${agent.name}:`, error.message);
   }
 }
 
 async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
-  if (!decision.symbol || !decision.quantity) {
-    console.log('  ⚠️  Invalid BUY decision (missing symbol or quantity)');
+  if (!decision.symbol) {
+    console.log('  ⚠️  Invalid BUY decision (missing symbol)');
     return;
   }
 
@@ -412,7 +426,49 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
     return;
   }
 
-  const estimatedCost = stock.price * decision.quantity;
+  // ALPHA ARENA PHASE 2: Conviction-Based Position Sizing
+  // Use confidence score to determine position size as percentage of cash
+  let positionSizePercent = 0;
+  const confidence = decision.confidence || 0.5;
+
+  if (confidence >= 0.9) {
+    positionSizePercent = 0.25; // 25% for very high confidence
+  } else if (confidence >= 0.8) {
+    positionSizePercent = 0.20; // 20% for high confidence
+  } else if (confidence >= 0.7) {
+    positionSizePercent = 0.15; // 15% for medium confidence
+  } else {
+    console.log(`  ⚠️  Confidence too low (${(confidence * 100).toFixed(0)}% < 70%) - rejecting trade`);
+    return;
+  }
+
+  const maxInvestment = agent.cashBalance * positionSizePercent;
+  const quantity = Math.floor(maxInvestment / stock.price);
+
+  if (quantity === 0) {
+    console.log(`  ⚠️  Position size too small for ${positionSizePercent * 100}% allocation`);
+    return;
+  }
+
+  const estimatedCost = stock.price * quantity;
+  console.log(
+    `  💰 Position sizing: ${(confidence * 100).toFixed(0)}% confidence → ${(positionSizePercent * 100).toFixed(0)}% of cash ($${maxInvestment.toFixed(0)})`
+  );
+
+  // ALPHA ARENA PHASE 6: Validate exit parameters
+  const exitValidation = validateExitParameters(
+    'BUY',
+    stock.price,
+    decision.targetPrice,
+    decision.stopLoss,
+    decision.confidence
+  );
+
+  if (!exitValidation.allowed) {
+    console.log(`  ❌ Exit parameter validation failed: ${exitValidation.reason}`);
+    await logSafetyViolation(agent.id, agent.name, exitValidation.reason!, exitValidation.warningLevel!);
+    return;
+  }
 
   // Check if agent has enough cash (with buffer for slippage)
   if (estimatedCost * 1.01 > agent.cashBalance) {
@@ -424,14 +480,14 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
 
   // Execute with realistic constraints (bid-ask spread, market hours, delays, partial fills)
   // Uses Alpaca API if TRADING_MODE is "paper" or "live", otherwise simulates
-  const execution = await executeBuyTrade(agent.id, agent.name, stock.symbol, decision.quantity, stock.price);
+  const execution = await executeBuyTrade(agent.id, agent.name, stock.symbol, quantity, stock.price);
 
   if (!execution.success) {
     console.log(`  ❌ Execution failed: ${execution.error}`);
     return;
   }
 
-  const totalCost = execution.executedPrice * execution.executedQuantity + execution.commission;
+  const totalCost = execution.executedPrice! * execution.executedQuantity! + execution.commission!;
 
   // Check actual cost after execution
   if (totalCost > agent.cashBalance) {
@@ -445,10 +501,10 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
   const existingPosition = agent.positions.find((p: any) => p.symbol === stock.symbol);
   if (existingPosition) {
     // Update existing position (average down/up)
-    const newQuantity = existingPosition.quantity + execution.executedQuantity;
+    const newQuantity = existingPosition.quantity + execution.executedQuantity!;
     const newEntryPrice =
       (existingPosition.entryPrice * existingPosition.quantity +
-        execution.executedPrice * execution.executedQuantity) /
+        execution.executedPrice! * execution.executedQuantity!) /
       newQuantity;
 
     await prisma.position.update({
@@ -456,59 +512,61 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
       data: {
         quantity: newQuantity,
         entryPrice: newEntryPrice,
-        currentPrice: execution.executedPrice,
+        currentPrice: execution.executedPrice!,
         unrealizedPnL: 0,
         unrealizedPnLPercent: 0,
       },
     });
 
     console.log(
-      `  ✅ Added to position: ${execution.executedQuantity} shares of ${stock.symbol} @ $${execution.executedPrice.toFixed(2)}`
+      `  ✅ Added to position: ${execution.executedQuantity!} shares of ${stock.symbol} @ $${execution.executedPrice!.toFixed(2)}`
     );
   } else {
-    // Create new position
+    // Create new position (Alpha Arena: store exit parameters and decision link)
     await prisma.position.create({
       data: {
         agentId: agent.id,
         symbol: stock.symbol,
         name: stock.name,
         side: 'LONG',
-        quantity: execution.executedQuantity,
-        entryPrice: execution.executedPrice,
-        currentPrice: execution.executedPrice,
+        quantity: execution.executedQuantity!,
+        entryPrice: execution.executedPrice!,
+        currentPrice: execution.executedPrice!,
         unrealizedPnL: 0,
         unrealizedPnLPercent: 0,
+        // targetPrice, stopLoss, invalidationCondition, entryDecisionId removed - not in production schema
       },
     });
 
     console.log(
-      `  ✅ Bought ${execution.executedQuantity} shares of ${stock.symbol} @ $${execution.executedPrice.toFixed(2)}`
+      `  ✅ Bought ${execution.executedQuantity!} shares of ${stock.symbol} @ $${execution.executedPrice!.toFixed(2)}`
     );
   }
 
   // Show execution details
-  if (execution.slippage > 0.01) {
-    console.log(`  📊 Slippage: $${execution.slippage.toFixed(2)}`);
+  if (execution.slippage! > 0.01) {
+    console.log(`  📊 Slippage: $${execution.slippage!.toFixed(2)}`);
   }
-  if (execution.executedQuantity < decision.quantity) {
-    console.log(`  ⚠️  Partial fill: ${execution.executedQuantity}/${decision.quantity} shares`);
+  if (execution.executedQuantity! < decision.quantity) {
+    console.log(`  ⚠️  Partial fill: ${execution.executedQuantity!}/${decision.quantity} shares`);
   }
   if (execution.executionTime > 200) {
     console.log(`  ⏱️  Execution time: ${execution.executionTime.toFixed(0)}ms`);
   }
 
-  // Create trade record
+  // Create trade record (Alpha Arena: link to decision)
   await prisma.trade.create({
     data: {
       agentId: agent.id,
       symbol: stock.symbol,
       name: stock.name,
       action: 'BUY',
-      quantity: execution.executedQuantity,
-      price: execution.executedPrice,
+      quantity: execution.executedQuantity!,
+      price: execution.executedPrice!,
       total: totalCost,
       reasoning: decision.reasoning,
       confidence: decision.confidence,
+      // decisionId removed - not in production schema
     },
   });
 
@@ -551,23 +609,24 @@ async function executeSell(agent: any, decision: any, stocks: Stock[]) {
     return;
   }
 
-  const saleProceeds = execution.executedPrice * execution.executedQuantity - execution.commission;
-  const realizedPnL = (execution.executedPrice - position.entryPrice) * execution.executedQuantity - execution.commission;
-  const realizedPnLPercent = ((execution.executedPrice - position.entryPrice) / position.entryPrice) * 100;
+  const saleProceeds = execution.executedPrice! * execution.executedQuantity! - execution.commission!;
+  const realizedPnL = (execution.executedPrice! - position.entryPrice) * execution.executedQuantity! - execution.commission!;
+  const realizedPnLPercent = ((execution.executedPrice! - position.entryPrice) / position.entryPrice) * 100;
 
-  // Create trade record
+  // Create trade record (Alpha Arena: link to decision and mark as manual exit)
   await prisma.trade.create({
     data: {
       agentId: agent.id,
       symbol: stock.symbol,
       name: stock.name,
       action: 'SELL',
-      quantity: execution.executedQuantity,
-      price: execution.executedPrice,
+      quantity: execution.executedQuantity!,
+      price: execution.executedPrice!,
       total: saleProceeds,
       realizedPnL,
       reasoning: decision.reasoning,
       confidence: decision.confidence,
+      // decisionId, exitReason removed - not in production schema
     },
   });
 
@@ -585,18 +644,18 @@ async function executeSell(agent: any, decision: any, stocks: Stock[]) {
   });
 
   console.log(
-    `  ✅ Sold ${execution.executedQuantity} shares of ${stock.symbol} @ $${execution.executedPrice.toFixed(2)}`
+    `  ✅ Sold ${execution.executedQuantity!} shares of ${stock.symbol} @ $${execution.executedPrice!.toFixed(2)}`
   );
   console.log(
     `  📊 Realized P&L: ${realizedPnL >= 0 ? '+' : ''}$${realizedPnL.toFixed(2)} (${realizedPnLPercent >= 0 ? '+' : ''}${realizedPnLPercent.toFixed(2)}%)`
   );
 
   // Show execution details
-  if (execution.slippage > 0.01) {
-    console.log(`  📊 Slippage: -$${execution.slippage.toFixed(2)}`);
+  if (execution.slippage! > 0.01) {
+    console.log(`  📊 Slippage: -$${execution.slippage!.toFixed(2)}`);
   }
-  if (execution.executedQuantity < position.quantity) {
-    console.log(`  ⚠️  Partial fill: ${execution.executedQuantity}/${position.quantity} shares`);
+  if (execution.executedQuantity! < position.quantity) {
+    console.log(`  ⚠️  Partial fill: ${execution.executedQuantity!}/${position.quantity} shares`);
   }
   if (execution.executionTime > 200) {
     console.log(`  ⏱️  Execution time: ${execution.executionTime.toFixed(0)}ms`);
@@ -614,6 +673,21 @@ async function executeShort(agent: any, decision: any, stocks: Stock[]) {
   const stock = stocks.find((s) => s.symbol === decision.symbol);
   if (!stock) {
     console.log(`  ❌ Stock ${decision.symbol} not found`);
+    return;
+  }
+
+  // ALPHA ARENA PHASE 6: Validate exit parameters for SHORT
+  const exitValidation = validateExitParameters(
+    'SELL_SHORT',
+    stock.price,
+    decision.targetPrice,
+    decision.stopLoss,
+    decision.confidence
+  );
+
+  if (!exitValidation.allowed) {
+    console.log(`  ❌ Exit parameter validation failed: ${exitValidation.reason}`);
+    await logSafetyViolation(agent.id, agent.name, exitValidation.reason!, exitValidation.warningLevel!);
     return;
   }
 
@@ -648,6 +722,7 @@ async function executeShort(agent: any, decision: any, stocks: Stock[]) {
       currentPrice: stock.price,
       unrealizedPnL: 0,
       unrealizedPnLPercent: 0,
+      // targetPrice, stopLoss, invalidationCondition, entryDecisionId removed - not in production schema
     },
   });
 
@@ -655,7 +730,7 @@ async function executeShort(agent: any, decision: any, stocks: Stock[]) {
     `  ✅ Shorted ${decision.quantity} shares of ${stock.symbol} @ $${stock.price.toFixed(2)}`
   );
 
-  // Create trade record
+  // Create trade record (Alpha Arena: link to decision)
   await prisma.trade.create({
     data: {
       agentId: agent.id,
@@ -667,6 +742,7 @@ async function executeShort(agent: any, decision: any, stocks: Stock[]) {
       total: totalValue,
       reasoning: decision.reasoning,
       confidence: decision.confidence,
+      // decisionId removed - not in production schema
     },
   });
 
@@ -714,7 +790,7 @@ async function executeCover(agent: any, decision: any, stocks: Stock[]) {
     return;
   }
 
-  // Create trade record
+  // Create trade record (Alpha Arena: link to decision and mark as manual exit)
   await prisma.trade.create({
     data: {
       agentId: agent.id,
@@ -727,6 +803,7 @@ async function executeCover(agent: any, decision: any, stocks: Stock[]) {
       realizedPnL,
       reasoning: decision.reasoning,
       confidence: decision.confidence,
+      // decisionId, exitReason removed - not in production schema
     },
   });
 

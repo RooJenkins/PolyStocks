@@ -11,14 +11,14 @@ const prisma = new PrismaClient();
 
 export const SAFETY_LIMITS = {
   // Per-agent limits
-  MAX_POSITION_PER_AGENT: 100,           // $100 max account value per agent
-  MAX_SINGLE_TRADE_VALUE: 50,            // $50 max per single trade
-  MAX_DAILY_LOSS_PER_AGENT: 20,          // Stop agent if loses $20 in a day
+  MAX_POSITION_PER_AGENT: 10000,         // $10,000 max account value per agent
+  MAX_SINGLE_TRADE_VALUE: 5000,          // $5,000 max per single trade (50% of account)
+  MAX_DAILY_LOSS_PER_AGENT: 500,         // Stop agent if loses $500 in a day (5% of account)
   MAX_DAILY_TRADES_PER_AGENT: 3,         // Max 3 day trades per 5 days (PDT rule)
 
   // Global limits
-  MAX_TOTAL_ACCOUNT_VALUE: 600,          // $600 total across all agents
-  HALT_ON_TOTAL_DAILY_LOSS: 100,         // Stop ALL trading if daily loss > $100
+  MAX_TOTAL_ACCOUNT_VALUE: 60000,        // $60,000 total across all 6 agents
+  HALT_ON_TOTAL_DAILY_LOSS: 3000,        // Stop ALL trading if daily loss > $3,000 (5% of total)
   HALT_ON_API_ERROR_COUNT: 5,            // Stop if 5+ consecutive API errors
 
   // Feature flags
@@ -31,6 +31,76 @@ interface ValidationResult {
   allowed: boolean;
   reason?: string;
   warningLevel?: 'info' | 'warning' | 'critical';
+}
+
+/**
+ * Validate exit prices and confidence scores (Alpha Arena Phase 6)
+ */
+export function validateExitParameters(
+  action: 'BUY' | 'SELL_SHORT',
+  currentPrice: number,
+  targetPrice?: number,
+  stopLoss?: number,
+  confidence?: number
+): ValidationResult {
+  // Validate confidence score
+  if (confidence !== undefined) {
+    if (confidence < 0 || confidence > 1) {
+      return {
+        allowed: false,
+        reason: `Confidence ${confidence} must be between 0 and 1`,
+        warningLevel: 'warning'
+      };
+    }
+    if (confidence < 0.7) {
+      return {
+        allowed: false,
+        reason: `Confidence ${(confidence * 100).toFixed(0)}% is below minimum threshold of 70%`,
+        warningLevel: 'info'
+      };
+    }
+  }
+
+  // Validate exit prices for LONG positions (BUY)
+  if (action === 'BUY') {
+    if (targetPrice && targetPrice <= currentPrice) {
+      return {
+        allowed: false,
+        reason: `Target price $${targetPrice.toFixed(2)} must be ABOVE current price $${currentPrice.toFixed(2)} for LONG positions`,
+        warningLevel: 'warning'
+      };
+    }
+    if (stopLoss && stopLoss >= currentPrice) {
+      return {
+        allowed: false,
+        reason: `Stop loss $${stopLoss.toFixed(2)} must be BELOW current price $${currentPrice.toFixed(2)} for LONG positions`,
+        warningLevel: 'warning'
+      };
+    }
+  }
+
+  // Validate exit prices for SHORT positions
+  if (action === 'SELL_SHORT') {
+    if (targetPrice && targetPrice >= currentPrice) {
+      return {
+        allowed: false,
+        reason: `Target price $${targetPrice.toFixed(2)} must be BELOW current price $${currentPrice.toFixed(2)} for SHORT positions`,
+        warningLevel: 'warning'
+      };
+    }
+    if (stopLoss && stopLoss <= currentPrice) {
+      return {
+        allowed: false,
+        reason: `Stop loss $${stopLoss.toFixed(2)} must be ABOVE current price $${currentPrice.toFixed(2)} for SHORT positions`,
+        warningLevel: 'warning'
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    warningLevel: 'info'
+  };
 }
 
 /**
@@ -86,11 +156,11 @@ export async function validateTrade(
     }
   }
 
-  // 5. Check agent's account value limit (for BUY orders)
+  // 5. Check agent's cash balance (for BUY orders)
   if (action === 'BUY') {
     const agent = await prisma.agent.findUnique({
       where: { id: agentId },
-      select: { accountValue: true }
+      select: { cashBalance: true, accountValue: true }
     });
 
     if (!agent) {
@@ -101,10 +171,20 @@ export async function validateTrade(
       };
     }
 
-    if (agent.accountValue + tradeValue > SAFETY_LIMITS.MAX_POSITION_PER_AGENT) {
+    // Check if trade exceeds available cash
+    if (tradeValue > agent.cashBalance) {
       return {
         allowed: false,
-        reason: `Trade would exceed agent max account value of $${SAFETY_LIMITS.MAX_POSITION_PER_AGENT}`,
+        reason: `Trade value $${tradeValue.toFixed(2)} exceeds cash balance $${agent.cashBalance.toFixed(2)}`,
+        warningLevel: 'warning'
+      };
+    }
+
+    // Check if account value would exceed maximum (allowing for growth)
+    if (agent.accountValue > SAFETY_LIMITS.MAX_POSITION_PER_AGENT * 1.5) {
+      return {
+        allowed: false,
+        reason: `Account value $${agent.accountValue.toFixed(2)} exceeds safe limit`,
         warningLevel: 'warning'
       };
     }
@@ -147,16 +227,16 @@ async function getAgentDailyPnL(agentId: string): Promise<number> {
   const trades = await prisma.trade.findMany({
     where: {
       agentId,
-      executedAt: {
+      timestamp: {
         gte: today
       }
     },
     select: {
-      pnl: true
+      realizedPnL: true
     }
   });
 
-  return trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+  return trades.reduce((sum, trade) => sum + (trade.realizedPnL || 0), 0);
 }
 
 /**
@@ -168,16 +248,16 @@ async function getTotalDailyPnL(): Promise<number> {
 
   const trades = await prisma.trade.findMany({
     where: {
-      executedAt: {
+      timestamp: {
         gte: today
       }
     },
     select: {
-      pnl: true
+      realizedPnL: true
     }
   });
 
-  return trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+  return trades.reduce((sum, trade) => sum + (trade.realizedPnL || 0), 0);
 }
 
 /**
@@ -192,17 +272,17 @@ async function countDayTradesLast5Days(agentId: string): Promise<number> {
   const trades = await prisma.trade.findMany({
     where: {
       agentId,
-      executedAt: {
+      timestamp: {
         gte: fiveDaysAgo
       }
     },
     select: {
       symbol: true,
-      type: true,
-      executedAt: true
+      action: true,
+      timestamp: true
     },
     orderBy: {
-      executedAt: 'asc'
+      timestamp: 'asc'
     }
   });
 
@@ -211,14 +291,14 @@ async function countDayTradesLast5Days(agentId: string): Promise<number> {
   const buysByDay = new Map<string, Set<string>>(); // date -> Set of symbols bought
 
   for (const trade of trades) {
-    const dateKey = trade.executedAt.toISOString().split('T')[0];
+    const dateKey = trade.timestamp.toISOString().split('T')[0];
 
-    if (trade.type === 'BUY') {
+    if (trade.action === 'BUY') {
       if (!buysByDay.has(dateKey)) {
         buysByDay.set(dateKey, new Set());
       }
       buysByDay.get(dateKey)!.add(trade.symbol);
-    } else if (trade.type === 'SELL') {
+    } else if (trade.action === 'SELL') {
       const buysToday = buysByDay.get(dateKey);
       if (buysToday && buysToday.has(trade.symbol)) {
         dayTrades++;
@@ -234,28 +314,10 @@ async function countDayTradesLast5Days(agentId: string): Promise<number> {
  * Get count of recent consecutive API errors
  */
 async function getRecentAPIErrors(): Promise<number> {
-  // Check last 10 trade attempts
-  const recentTrades = await prisma.trade.findMany({
-    take: 10,
-    orderBy: {
-      createdAt: 'desc'
-    },
-    select: {
-      success: true
-    }
-  });
-
-  // Count consecutive failures from most recent
-  let consecutiveErrors = 0;
-  for (const trade of recentTrades) {
-    if (!trade.success) {
-      consecutiveErrors++;
-    } else {
-      break;
-    }
-  }
-
-  return consecutiveErrors;
+  // Note: Trade model doesn't currently track failed attempts
+  // All records in the database are successful trades
+  // TODO: Add error tracking table for failed trade attempts
+  return 0;
 }
 
 /**

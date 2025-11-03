@@ -42,7 +42,8 @@ export async function GET(request: Request) {
 
       if (!groupedData.has(timeKey)) {
         groupedData.set(timeKey, {
-          timestamp: roundedTime.toLocaleTimeString('en-US', {
+          timestamp: roundedTime.toISOString(),
+          displayTime: roundedTime.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
           })

@@ -1,0 +1,555 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import PerformanceChartOption3 from '@/components/PerformanceChartOption3';
+import ModelIcon from '@/components/ModelIcon';
+import type { AIAgent } from '@/types';
+
+// Mock chart data for when there are no trades
+const generateMockChartData = (agents: AIAgent[]) => {
+  const now = Date.now();
+  const points = 20;
+  return agents.map(agent => ({
+    ...agent,
+    history: Array.from({ length: points }, (_, i) => ({
+      timestamp: new Date(now - (points - i) * 3600000),
+      value: 10000 + Math.random() * 1000 - 500
+    }))
+  }));
+};
+
+// Mock trades
+const MOCK_TRADES = [
+  { id: '1', symbol: 'AAPL', side: 'BUY', quantity: 50, price: 178.23, timestamp: '5m ago', agentName: 'DeepSeek' },
+  { id: '2', symbol: 'NVDA', side: 'BUY', quantity: 25, price: 495.67, timestamp: '12m ago', agentName: 'Claude Haiku' },
+  { id: '3', symbol: 'MSFT', side: 'SELL', quantity: 30, price: 378.45, timestamp: '18m ago', agentName: 'GPT-4o Mini' },
+];
+
+// Mock positions
+const MOCK_POSITIONS = [
+  { symbol: 'AAPL', quantity: 150, entryPrice: 175.20, currentPrice: 178.23, pnl: 454.50, pnlPercent: 1.73, agentName: 'DeepSeek' },
+  { symbol: 'NVDA', quantity: 200, entryPrice: 490.10, currentPrice: 495.67, pnl: 1114.00, pnlPercent: 1.14, agentName: 'Claude Haiku' },
+];
+
+// Mock stock ticker data
+const MOCK_STOCKS = [
+  { symbol: 'MSFT', price: 517.81, change: 2.34, changePercent: 0.45 },
+  { symbol: 'NVDA', price: 202.49, change: -3.21, changePercent: -1.56 },
+  { symbol: 'AMZN', price: 244.22, change: 1.15, changePercent: 0.47 },
+  { symbol: 'META', price: 648.35, change: -5.12, changePercent: -0.78 },
+  { symbol: 'GOOGL', price: 281.19, change: 3.87, changePercent: 1.39 },
+  { symbol: 'TSLA', price: 456.56, change: 8.23, changePercent: 1.83 },
+  { symbol: 'V', price: 312.45, change: -1.23, changePercent: -0.39 },
+  { symbol: 'JPM', price: 234.12, change: 2.11, changePercent: 0.91 },
+  { symbol: 'WMT', price: 189.34, change: -0.87, changePercent: -0.46 },
+  { symbol: 'DIS', price: 123.45, change: 1.76, changePercent: 1.45 },
+];
+
+export default function SplitViewPage() {
+  const [agents, setAgents] = useState<AIAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'rankings' | 'trades' | 'positions' | 'chat'>('rankings');
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch('/api/agents');
+        const data = await response.json();
+        setAgents(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+    const interval = setInterval(fetchAgents, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalValue = agents.reduce((sum, agent) => sum + agent.accountValue, 0);
+  const totalGain = totalValue - (agents.length * 10000);
+  const totalGainPercent = (totalGain / (agents.length * 10000)) * 100;
+  const sortedAgents = [...agents].sort((a, b) => b.roi - a.roi);
+
+  return (
+    <div className="h-screen flex flex-col overflow-hidden" style={{
+      backgroundColor: '#FFF1E0',
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      color: '#33302E'
+    }}>
+      {/* FT Header */}
+      <div style={{
+        backgroundColor: '#FFFCF5',
+        borderBottom: '1px solid #CEC6B9'
+      }}>
+        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
+          <div>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: '#990F3D',
+              letterSpacing: '0.02em',
+              marginBottom: '2px'
+            }}>
+              POLYSTOCKS
+            </h1>
+            <div style={{ fontSize: '11px', color: '#66605C' }}>
+              AI Trading Arena • {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '2px' }}>PORTFOLIO VALUE</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: '#990F3D' }}>
+                ${totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+            <Link href="/" style={{
+              fontSize: '13px',
+              color: '#990F3D',
+              textDecoration: 'underline'
+            }}>
+              ← Current View
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Stock Ticker Carousel */}
+      <div style={{
+        backgroundColor: '#FFF7ED',
+        borderBottom: '1px solid #CEC6B9',
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        <div style={{
+          display: 'flex',
+          animation: 'scroll 30s linear infinite',
+          whiteSpace: 'nowrap'
+        }}>
+          {/* Duplicate stocks array for seamless loop */}
+          {[...MOCK_STOCKS, ...MOCK_STOCKS, ...MOCK_STOCKS].map((stock, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '8px 24px',
+                gap: '12px',
+                borderRight: '1px solid #E8E3DB',
+                minWidth: 'fit-content'
+              }}
+            >
+              <span style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                color: '#33302E',
+                letterSpacing: '0.05em'
+              }}>
+                {stock.symbol}
+              </span>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#33302E'
+              }}>
+                ${stock.price.toFixed(2)}
+              </span>
+              <span style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                color: stock.changePercent >= 0 ? '#0D7680' : '#CC0000'
+              }}>
+                {stock.changePercent >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CSS Animation */}
+      <style jsx>{`
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-33.33%);
+          }
+        }
+      `}</style>
+
+      {/* Main Content */}
+      <div className="max-w-[1400px] mx-auto px-4 py-2 flex-1 overflow-hidden">
+        {/* Market Summary Bar */}
+        <div style={{
+          backgroundColor: '#FFFCF5',
+          color: '#33302E',
+          padding: '10px 16px',
+          marginBottom: '12px',
+          fontSize: '13px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #CEC6B9'
+        }}>
+          <div>
+            <span style={{ color: '#66605C' }}>TOTAL RETURN:</span>
+            <span style={{
+              fontWeight: '700',
+              marginLeft: '8px',
+              color: totalGainPercent >= 0 ? '#0D7680' : '#CC0000'
+            }}>
+              {totalGainPercent >= 0 ? '+' : ''}{totalGainPercent.toFixed(2)}%
+            </span>
+          </div>
+          <div style={{ color: '#66605C' }}>
+            ● MARKETS OPEN
+          </div>
+        </div>
+
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-12 gap-3">
+          {/* Left Sidebar - Agent List */}
+          <div className="col-span-3">
+            <div style={{
+              backgroundColor: '#FFFCF5',
+              border: '1px solid #CEC6B9',
+              padding: '16px'
+            }}>
+              <h2 style={{
+                fontSize: '14px',
+                fontWeight: '700',
+                marginBottom: '16px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #990F3D',
+                letterSpacing: '0.02em',
+                color: '#990F3D'
+              }}>
+                AI AGENTS
+              </h2>
+              <div>
+                {agents.map((agent, index) => (
+                  <button
+                    key={agent.id}
+                    onClick={() => setSelectedAgent(agent.id === selectedAgent ? '' : agent.id)}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '12px',
+                      marginBottom: '8px',
+                      border: selectedAgent === agent.id ? '2px solid #990F3D' : '1px solid #CEC6B9',
+                      backgroundColor: selectedAgent === agent.id ? '#FFF7ED' : '#FFFCF5',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <div
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <ModelIcon model={agent.model} size={14} />
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: '700' }}>
+                        {index + 1}. {agent.name}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>
+                      ${agent.accountValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: agent.roi >= 0 ? '#0D7680' : '#CC0000'
+                    }}>
+                      {agent.roi >= 0 ? '+' : ''}{agent.roi.toFixed(2)}%
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div style={{
+              backgroundColor: '#FFFCF5',
+              border: '1px solid #990F3D',
+              padding: '16px',
+              marginTop: '16px'
+            }}>
+              <h3 style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                marginBottom: '12px',
+                paddingBottom: '6px',
+                borderBottom: '1px solid #990F3D'
+              }}>
+                MARKET OVERVIEW
+              </h3>
+              <div style={{ fontSize: '11px', lineHeight: '1.8' }}>
+                <div>S&P 500: <span style={{ float: 'right', fontWeight: '700' }}>4,783.45</span></div>
+                <div>Nasdaq: <span style={{ float: 'right', fontWeight: '700' }}>15,011.35</span></div>
+                <div>Dow Jones: <span style={{ float: 'right', fontWeight: '700' }}>37,248.35</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Content */}
+          <div className="col-span-9">
+            {/* Performance Chart */}
+            <div style={{
+              backgroundColor: '#FFFCF5',
+              border: '1px solid #990F3D',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                marginBottom: '16px',
+                paddingBottom: '8px',
+                borderBottom: '2px solid #990F3D',
+                letterSpacing: '0.05em'
+              }}>
+                PORTFOLIO PERFORMANCE
+              </h2>
+              <div style={{ height: '300px', width: '100%' }}>
+                <PerformanceChartOption3 agents={agents} />
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div style={{
+              backgroundColor: '#FFFCF5',
+              border: '1px solid #990F3D',
+              borderBottom: 'none',
+              display: 'flex',
+              gap: '0px'
+            }}>
+              {[
+                { id: 'rankings' as const, label: 'RANKINGS' },
+                { id: 'trades' as const, label: 'TRADES' },
+                { id: 'positions' as const, label: 'POSITIONS' },
+                { id: 'chat' as const, label: 'CHAT' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.05em',
+                    backgroundColor: activeTab === tab.id ? '#FFF7ED' : '#FFFCF5',
+                    border: 'none',
+                    borderBottom: activeTab === tab.id ? '3px solid #990F3D' : '1px solid #CEC6B9',
+                    borderRight: '1px solid #CEC6B9',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Agent Comparison Table */}
+            {activeTab === 'rankings' && (
+              <div style={{
+                backgroundColor: '#FFFCF5',
+                border: '1px solid #990F3D',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h2 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid #990F3D',
+                  letterSpacing: '0.05em'
+                }}>
+                  AGENT RANKINGS
+                </h2>
+              <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #990F3D' }}>
+                    <th style={{ textAlign: 'left', padding: '8px', fontWeight: '700' }}>RANK</th>
+                    <th style={{ textAlign: 'left', padding: '8px', fontWeight: '700' }}>AGENT</th>
+                    <th style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>VALUE</th>
+                    <th style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>RETURN</th>
+                    <th style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>TRADES</th>
+                    <th style={{ textAlign: 'right', padding: '8px', fontWeight: '700' }}>WIN RATE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAgents.map((agent, index) => (
+                    <tr key={agent.id} style={{ borderBottom: '1px solid #CEC6B9' }}>
+                      <td style={{ padding: '10px', fontWeight: '700' }}>{index + 1}</td>
+                      <td style={{ padding: '10px' }}>{agent.name}</td>
+                      <td style={{ padding: '10px', textAlign: 'right', fontWeight: '700' }}>
+                        ${(agent.accountValue / 1000).toFixed(1)}K
+                      </td>
+                      <td style={{
+                        padding: '10px',
+                        textAlign: 'right',
+                        fontWeight: '700',
+                        color: agent.roi >= 0 ? '#0D7680' : '#CC0000'
+                      }}>
+                        {agent.roi >= 0 ? '+' : ''}{agent.roi.toFixed(1)}%
+                      </td>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>
+                        {agent.tradeCount || 0}
+                      </td>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>
+                        {(agent.winRate || 0).toFixed(0)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            )}
+
+            {/* Trades Tab */}
+            {activeTab === 'trades' && (
+              <div style={{
+                backgroundColor: '#FFFCF5',
+                border: '1px solid #990F3D',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h2 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid #990F3D',
+                  letterSpacing: '0.05em'
+                }}>
+                  RECENT TRADES
+                </h2>
+                <div>
+                  {MOCK_TRADES.map((trade) => (
+                    <div key={trade.id} style={{
+                      padding: '12px 0',
+                      borderBottom: '1px solid #CEC6B9',
+                      fontSize: '12px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: '700', fontSize: '14px' }}>{trade.symbol}</span>
+                        <span style={{
+                          fontWeight: '700',
+                          fontSize: '14px',
+                          color: trade.side === 'BUY' ? '#0D7680' : '#CC0000'
+                        }}>
+                          {trade.side}
+                        </span>
+                      </div>
+                      <div style={{ opacity: 0.7, marginBottom: '4px' }}>
+                        {trade.quantity} shares @ ${trade.price.toFixed(2)}
+                      </div>
+                      <div style={{ opacity: 0.5, fontSize: '11px' }}>
+                        {trade.agentName} • {trade.timestamp}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Positions Tab */}
+            {activeTab === 'positions' && (
+              <div style={{
+                backgroundColor: '#FFFCF5',
+                border: '1px solid #990F3D',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h2 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid #990F3D',
+                  letterSpacing: '0.05em'
+                }}>
+                  OPEN POSITIONS
+                </h2>
+                <div>
+                  {MOCK_POSITIONS.map((position, index) => (
+                    <div key={index} style={{
+                      padding: '12px 0',
+                      borderBottom: '1px solid #CEC6B9',
+                      fontSize: '12px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: '700', fontSize: '14px' }}>{position.symbol}</span>
+                        <span style={{
+                          fontWeight: '700',
+                          fontSize: '14px',
+                          color: position.pnl >= 0 ? '#0D7680' : '#CC0000'
+                        }}>
+                          {position.pnl >= 0 ? '+' : ''}${Math.abs(position.pnl).toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ opacity: 0.7, marginBottom: '4px' }}>
+                        {position.quantity} shares @ ${position.entryPrice.toFixed(2)}
+                      </div>
+                      <div style={{ opacity: 0.5, fontSize: '11px' }}>
+                        {position.agentName} • Current: ${position.currentPrice.toFixed(2)} ({position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%)
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Chat Tab */}
+            {activeTab === 'chat' && (
+              <div style={{
+                backgroundColor: '#FFFCF5',
+                border: '1px solid #990F3D',
+                padding: '20px',
+                marginBottom: '20px',
+                minHeight: '300px'
+              }}>
+                <h2 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  marginBottom: '16px',
+                  paddingBottom: '8px',
+                  borderBottom: '2px solid #990F3D',
+                  letterSpacing: '0.05em'
+                }}>
+                  MODEL CHAT
+                </h2>
+                <div style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  opacity: 0.5,
+                  fontSize: '14px'
+                }}>
+                  Chat interface coming soon...
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

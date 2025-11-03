@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import './header-styles.css';
 
 export default function Header() {
   const pathname = usePathname();
@@ -29,13 +31,29 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--background)] backdrop-blur-sm">
-      <nav className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+      <nav className="w-full px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 sm:space-x-8">
-            <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-              PolyStocks
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 hover:opacity-80 transition-opacity">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
+                <Image
+                  src="/sapyn-eye.png"
+                  alt="Sapyn Eye"
+                  fill
+                  className="sapyn-eye-spin object-contain"
+                  priority
+                />
+              </div>
+              <Image
+                src="/sapyn-text.png"
+                alt="SAPYN"
+                width={140}
+                height={36}
+                className="h-7 w-auto sm:h-8 mt-0.5"
+                priority
+              />
             </Link>
-            <div className="hidden md:flex space-x-6">
+            <div className="hidden md:flex items-center space-x-6">
               <Link
                 href="/"
                 className={`text-sm font-medium transition-colors hover:text-[var(--blue)] ${

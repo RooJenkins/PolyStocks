@@ -8,10 +8,9 @@ import type { AIAgent } from '@/types';
 interface PerformanceChartProps {
   agents: AIAgent[];
   timeframe?: '24h' | '7d' | 'all';
-  mockData?: any[]; // Optional mock data for visualization purposes
 }
 
-export default function PerformanceChartOption3({ agents, timeframe = 'all', mockData }: PerformanceChartProps) {
+export default function PerformanceChartOption3({ agents, timeframe = 'all' }: PerformanceChartProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lineEndpoints, setLineEndpoints] = useState<Record<string, { x: number; y: number }>>({});
@@ -33,13 +32,6 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
   }, []);
 
   useEffect(() => {
-    // If mockData is provided, use it instead of fetching
-    if (mockData) {
-      setData(mockData);
-      setLoading(false);
-      return;
-    }
-
     const fetchPerformanceData = async () => {
       try {
         const response = await fetch(`/api/performance?timeframe=${timeframe}`);
@@ -56,7 +48,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
     const interval = setInterval(fetchPerformanceData, 5000);
 
     return () => clearInterval(interval);
-  }, [timeframe, mockData]);
+  }, [timeframe]);
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current || data.length === 0) return;
@@ -76,20 +68,11 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
         left: isMobile ? 40 : 50
       };
 
-      // High-DPI canvas support for sharper rendering
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.scale(dpr, dpr);
-
-      // Enable anti-aliasing for smoother lines
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      canvas.width = width;
+      canvas.height = height;
 
       // Clear canvas
-      ctx.fillStyle = '#F5E6D3';
+      ctx.fillStyle = '#FFFCF5';
       ctx.fillRect(0, 0, width, height);
 
       // Calculate scales
@@ -159,7 +142,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
       // Draw crosshair if mouse is over chart
       if (mousePos && mousePos.x >= padding.left && mousePos.x <= width - padding.right) {
-        ctx.strokeStyle = '#2E5299';
+        ctx.strokeStyle = '#990F3D';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
@@ -299,7 +282,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#F5E6D3] rounded-lg">
+      <div className="w-full h-full flex items-center justify-center bg-[#FFFCF5] rounded-lg">
         <div className="text-[#66605C]">Loading chart data...</div>
       </div>
     );
@@ -307,7 +290,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
   if (data.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#F5E6D3] rounded-lg">
+      <div className="w-full h-full flex items-center justify-center bg-[#FFFCF5] rounded-lg">
         <div className="text-[#66605C]">No performance data available yet</div>
       </div>
     );
@@ -387,7 +370,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
   return (
     <div
-      className="w-full h-full bg-[#F5E6D3] rounded-lg relative"
+      className="w-full h-full bg-[#FFFCF5] rounded-lg relative"
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -465,8 +448,8 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
           style={{
             left: `${mousePos.x + 15}px`,
             top: `${mousePos.y - 10}px`,
-            backgroundColor: '#E9DECF',
-            border: `2px solid ${agents.find(a => a.id === (hoveredLine || hoveredBubble))?.color || '#2E5299'}`,
+            backgroundColor: '#FFFCF5',
+            border: `2px solid ${agents.find(a => a.id === (hoveredLine || hoveredBubble))?.color || '#990F3D'}`,
             borderRadius: '8px',
             padding: '6px 10px',
             fontSize: '13px',

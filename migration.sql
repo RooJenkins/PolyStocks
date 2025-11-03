@@ -27,6 +27,10 @@ CREATE TABLE "Position" (
     "unrealizedPnLPercent" DOUBLE PRECISION NOT NULL,
     "openedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "targetPrice" DOUBLE PRECISION,
+    "stopLoss" DOUBLE PRECISION,
+    "invalidationCondition" TEXT,
+    "entryDecisionId" TEXT,
 
     CONSTRAINT "Position_pkey" PRIMARY KEY ("id")
 );
@@ -45,6 +49,8 @@ CREATE TABLE "Trade" (
     "reasoning" TEXT NOT NULL,
     "confidence" DOUBLE PRECISION NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "exitReason" TEXT,
+    "decisionId" TEXT,
 
     CONSTRAINT "Trade_pkey" PRIMARY KEY ("id")
 );
@@ -64,6 +70,7 @@ CREATE TABLE "Decision" (
     "riskAssessment" TEXT NOT NULL,
     "targetPrice" DOUBLE PRECISION,
     "stopLoss" DOUBLE PRECISION,
+    "invalidationCondition" TEXT,
     "marketDataSnapshot" TEXT NOT NULL,
 
     CONSTRAINT "Decision_pkey" PRIMARY KEY ("id")
@@ -152,3 +159,4 @@ ALTER TABLE "Decision" ADD CONSTRAINT "Decision_agentId_fkey" FOREIGN KEY ("agen
 
 -- AddForeignKey
 ALTER TABLE "PerformancePoint" ADD CONSTRAINT "PerformancePoint_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

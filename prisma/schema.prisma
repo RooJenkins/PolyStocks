@@ -6,20 +6,24 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Agent {
-  id            String   @id @default(uuid())
-  name          String
-  model         String
-  color         String
-  accountValue  Float    @default(10000)
-  cashBalance   Float    @default(10000)
-  startingValue Float    @default(10000)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  model            String
+  color            String
+  accountValue     Float    @default(10000)
+  cashBalance      Float    @default(10000)
+  startingValue    Float    @default(10000)
+  broker           String   @default("simulation") // alpaca, tradier, webull, td-ameritrade, interactive-brokers, simulation
+  isLive           Boolean  @default(false)        // Deprecated: Use broker field instead
+  alpacaAccountId  String?                         // Deprecated: Broker-specific
+  lastSyncAt       DateTime?                       // Last sync with broker
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   positions         Position[]
   trades            Trade[]
@@ -84,6 +88,7 @@ model Decision {
   riskAssessment String
   targetPrice    Float?
   stopLoss       Float?
+  invalidationCondition String? // Exists in production DB
 
   // Market context
   marketDataSnapshot String // JSON string of market data
