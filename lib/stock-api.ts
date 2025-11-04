@@ -146,31 +146,48 @@ async function fetchPolygonQuote(
 
 // Yahoo Finance implementation (FREE, unlimited)
 async function fetchYahooFinancePrices(): Promise<Stock[]> {
-  console.log('  📊 Using Yahoo Finance (unlimited, free)');
-  const stocks: Stock[]  = [];
+  console.log('  📊 Using Yahoo Finance (batched requests to avoid rate limits)');
 
-  // Fetch all stocks in parallel
-  const promises = TOP_20_STOCKS.map(async (stock) => {
-    try {
-      const quote = await yahooGetQuote(stock.symbol, 'stock-api', 'StockAPI');
-      return {
-        symbol: stock.symbol,
-        name: stock.name,
-        price: quote.price,
-        change: quote.change,
-        changePercent: quote.changePercent,
-      };
-    } catch (error) {
-      console.error(`Error fetching ${stock.symbol} from Yahoo Finance:`, error);
-      return null;
+  try {
+    // Fetch all symbols in batches of 5 with 500ms delay between batches
+    // This prevents rate limiting while still being fast
+    const stocks: Stock[] = [];
+    const batchSize = 5;
+
+    for (let i = 0; i < TOP_20_STOCKS.length; i += batchSize) {
+      const batch = TOP_20_STOCKS.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (stock) => {
+        try {
+          const quote = await yahooGetQuote(stock.symbol, 'stock-api', 'StockAPI');
+          return {
+            symbol: stock.symbol,
+            name: stock.name,
+            price: quote.price,
+            change: quote.change,
+            changePercent: quote.changePercent,
+          };
+        } catch (error) {
+          console.error(`  ⚠️  Error fetching ${stock.symbol}:`, error);
+          return null;
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      stocks.push(...batchResults.filter((r): r is Stock => r !== null));
+
+      // Add delay between batches (except for last batch)
+      if (i + batchSize < TOP_20_STOCKS.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
-  });
 
-  const results = await Promise.all(promises);
-  const validResults = results.filter((r): r is Stock => r !== null);
-
-  console.log(`  ✓ Fetched ${validResults.length}/${TOP_20_STOCKS.length} stocks from Yahoo Finance`);
-  return validResults;
+    console.log(`  ✓ Fetched ${stocks.length}/${TOP_20_STOCKS.length} stocks from Yahoo Finance`);
+    return stocks;
+  } catch (error) {
+    console.error('  ❌ Error in fetchYahooFinancePrices:', error);
+    throw error;
+  }
 }
 
 // Alpha Vantage implementation

@@ -52,10 +52,10 @@ export function validateExitParameters(
         warningLevel: 'warning'
       };
     }
-    if (confidence < 0.7) {
+    if (confidence < 0.6) {
       return {
         allowed: false,
-        reason: `Confidence ${(confidence * 100).toFixed(0)}% is below minimum threshold of 70%`,
+        reason: `Confidence ${(confidence * 100).toFixed(0)}% is below minimum threshold of 60%`,
         warningLevel: 'info'
       };
     }

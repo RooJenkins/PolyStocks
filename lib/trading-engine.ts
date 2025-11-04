@@ -437,8 +437,10 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
     positionSizePercent = 0.20; // 20% for high confidence
   } else if (confidence >= 0.7) {
     positionSizePercent = 0.15; // 15% for medium confidence
+  } else if (confidence >= 0.6) {
+    positionSizePercent = 0.10; // 10% for lower confidence
   } else {
-    console.log(`  ⚠️  Confidence too low (${(confidence * 100).toFixed(0)}% < 70%) - rejecting trade`);
+    console.log(`  ⚠️  Confidence too low (${(confidence * 100).toFixed(0)}% < 60%) - rejecting trade`);
     return;
   }
 
