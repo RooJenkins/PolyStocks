@@ -61,395 +61,95 @@ const StockLogo = ({ symbol, size = 14 }: { symbol: string; size?: number }) => 
   );
 };
 
-// Generate mock performance data
-const generateMockPerformanceData = (agents: AIAgent[]) => {
-  const now = Date.now();
-  const points = 48;
-  const data: any[] = [];
-  const baseValues: Record<string, number> = {};
 
-  agents.forEach(agent => {
-    baseValues[agent.id] = 10000;
-  });
 
-  for (let i = 0; i < points; i++) {
-    const timestamp = new Date(now - (points - i) * 3600000);
-    const point: any = { timestamp: timestamp.toISOString() };
-    agents.forEach(agent => {
-      const volatility = 50 + Math.random() * 50;
-      const trend = agent.roi / 100;
-      const change = (Math.random() - 0.48) * volatility + (trend * 20);
-      baseValues[agent.id] = Math.max(8000, Math.min(12000, baseValues[agent.id] + change));
-      point[agent.id] = Math.round(baseValues[agent.id] * 100) / 100;
-    });
-    data.push(point);
-  }
-  return data;
-};
 
-// Stock market data (not crypto)
-const STOCK_TICKERS = [
-  { symbol: 'AAPL', name: 'Apple Inc', price: 178.23, change: 2.34, changePercent: 1.33 },
-  { symbol: 'MSFT', name: 'Microsoft Corp', price: 378.45, change: -3.21, changePercent: -0.84 },
-  { symbol: 'NVDA', name: 'NVIDIA Corp', price: 495.67, change: 8.92, changePercent: 1.83 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 141.80, change: 1.25, changePercent: 0.89 },
-  { symbol: 'AMZN', name: 'Amazon.com Inc', price: 178.35, change: -2.15, changePercent: -1.19 },
-  { symbol: 'TSLA', name: 'Tesla Inc', price: 242.84, change: 5.67, changePercent: 2.39 },
-  { symbol: 'META', name: 'Meta Platforms', price: 492.15, change: 3.45, changePercent: 0.71 },
-  { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.56, change: -1.23, changePercent: -0.62 },
-];
-
-// Market conditions and benchmark data
-const MARKET_CONDITIONS: {
-  sp500: { current: number; change: number; changePercent: number; startValue: number };
-  sentiment: 'Bullish' | 'Bearish' | 'Neutral';
-  volatility: 'Low' | 'Moderate' | 'High';
-  trend: 'Uptrend' | 'Downtrend' | 'Sideways';
-  vix: number;
-  description: string;
-} = {
-  sp500: {
-    current: 4783.45,
-    change: 32.18,
-    changePercent: 0.68,
-    startValue: 4750.00,
-  },
-  sentiment: 'Bullish',
-  volatility: 'Moderate',
-  trend: 'Uptrend',
-  vix: 14.2,
-  description: 'Market showing bullish momentum with tech sector leading gains. Volatility remains moderate as investors digest earnings reports.'
-};
-
-// Generate market vs AI performance comparison data
-const generateMarketComparisonData = () => {
-  const dataPoints = 20;
-  const data: any[] = [];
-  let sp500Value = MARKET_CONDITIONS.sp500.startValue;
-
-  for (let i = 0; i < dataPoints; i++) {
-    const progress = i / (dataPoints - 1);
-    // S&P 500 grows steadily
-    sp500Value = MARKET_CONDITIONS.sp500.startValue + (MARKET_CONDITIONS.sp500.change * progress);
-    const sp500Change = ((sp500Value - MARKET_CONDITIONS.sp500.startValue) / MARKET_CONDITIONS.sp500.startValue) * 100;
-
-    data.push({
-      day: i,
-      sp500: sp500Change,
-      market: sp500Value
-    });
-  }
-  return data;
-};
-
-// Performance by market condition
-const PERFORMANCE_BY_CONDITION = {
-  bullish: {
-    bestPerformer: 'Gemini Flash',
-    avgROI: 3.2,
-    topModels: ['Gemini Flash', 'GPT-4o Mini', 'DeepSeek'],
-  },
-  bearish: {
-    bestPerformer: 'GPT-4o Mini',
-    avgROI: -0.8,
-    topModels: ['GPT-4o Mini', 'Claude Haiku', 'DeepSeek'],
-  },
-  highVolatility: {
-    bestPerformer: 'Qwen',
-    avgROI: 2.1,
-    topModels: ['Qwen', 'Gemini Flash', 'GPT-4o Mini'],
-  },
-  sideways: {
-    bestPerformer: 'Claude Haiku',
-    avgROI: 1.2,
-    topModels: ['Claude Haiku', 'DeepSeek', 'Gemini Flash'],
-  }
-};
-
-// Mock chat/reasoning data
-const MOCK_CHAT_HISTORY: Record<string, Array<{timestamp: string, message: string, type: 'decision' | 'analysis' | 'trade'}>> = {
-  '1': [
-    { timestamp: '2m ago', message: 'Analyzing AAPL technicals: RSI at 68, approaching overbought. MACD showing bullish crossover. Will monitor for entry.', type: 'analysis' },
-    { timestamp: '5m ago', message: 'DECISION: Taking profit on MSFT position (+15.2%). Market showing signs of consolidation, reducing exposure.', type: 'decision' },
-    { timestamp: '12m ago', message: 'EXECUTED: SELL 30 shares MSFT @ $378.45. Profit target reached. Moving to cash position.', type: 'trade' },
-  ],
-  '2': [
-    { timestamp: '3m ago', message: 'Strong momentum in semiconductor sector. NVDA breaking resistance at $495. Initiating position.', type: 'analysis' },
-    { timestamp: '8m ago', message: 'DECISION: Buying NVDA based on AI chip demand surge and favorable technical setup.', type: 'decision' },
-    { timestamp: '12m ago', message: 'EXECUTED: BUY 25 shares NVDA @ $495.67. Target: $520, Stop: $485.', type: 'trade' },
-  ],
-  '3': [
-    { timestamp: '1m ago', message: 'High volatility detected. Drawing down positions. Current max drawdown at -4.8%, approaching risk limits.', type: 'analysis' },
-    { timestamp: '6m ago', message: 'DECISION: Risk-off mode activated. Win rate below target at 46.7%. Reassessing strategy.', type: 'decision' },
-  ],
-  '4': [
-    { timestamp: '4m ago', message: 'Excellent session: 70% win rate, Sharpe 1.89. Best performer today with +4.12% ROI.', type: 'analysis' },
-    { timestamp: '9m ago', message: 'DECISION: GOOGL showing oversold conditions on RSI. Strong value play here.', type: 'decision' },
-    { timestamp: '25m ago', message: 'EXECUTED: BUY 40 shares GOOGL @ $141.80. Entry confirmed at support level.', type: 'trade' },
-  ],
-  '5': [
-    { timestamp: '7m ago', message: 'Struggling session. ROI at -1.24%. Need to improve entry timing and risk management.', type: 'analysis' },
-    { timestamp: '15m ago', message: 'DECISION: Bearish pattern forming on TSLA. Selling position to limit further losses.', type: 'decision' },
-  ],
-  '6': [
-    { timestamp: '1m ago', message: 'Solid performance: 54.5% win rate, ROI +0.89%. Conservative approach paying off.', type: 'analysis' },
-    { timestamp: '5m ago', message: 'DECISION: AAPL earnings beat expectations. Fundamental strength confirmed. Entering position.', type: 'decision' },
-    { timestamp: '5m ago', message: 'EXECUTED: BUY 50 shares AAPL @ $178.23. Conviction: 87%. Target: $185.', type: 'trade' },
-  ],
-};
-
-// Mock trades
-const MOCK_TRADES = [
-  { id: '1', symbol: 'AAPL', side: 'BUY', quantity: 50, entryPrice: 175.20, exitPrice: 178.23, pnl: 151.50, pnlPercent: 1.73, timestamp: '5m ago', agentId: '6', agentName: 'DeepSeek', holdTime: '2h 15m', confidence: 87 },
-  { id: '2', symbol: 'NVDA', side: 'BUY', quantity: 25, entryPrice: 490.10, exitPrice: 495.67, pnl: 139.25, pnlPercent: 1.14, timestamp: '12m ago', agentId: '2', agentName: 'Claude Haiku', holdTime: '4h 22m', confidence: 92 },
-  { id: '3', symbol: 'MSFT', side: 'SELL', quantity: 30, entryPrice: 390.20, exitPrice: 378.45, pnl: 352.50, pnlPercent: 3.01, timestamp: '18m ago', agentId: '1', agentName: 'GPT-4o Mini', holdTime: '1h 45m', confidence: 78 },
-  { id: '4', symbol: 'GOOGL', side: 'BUY', quantity: 40, entryPrice: 139.50, exitPrice: 141.80, pnl: 92.00, pnlPercent: 1.65, timestamp: '25m ago', agentId: '4', agentName: 'Gemini Flash', holdTime: '3h 12m', confidence: 85 },
-  { id: '5', symbol: 'TSLA', side: 'SELL', quantity: 15, entryPrice: 256.40, exitPrice: 242.84, pnl: 203.40, pnlPercent: 5.29, timestamp: '32m ago', agentId: '5', agentName: 'Qwen', holdTime: '45m', confidence: 74 },
-  { id: '6', symbol: 'AMZN', side: 'BUY', quantity: 35, entryPrice: 176.20, exitPrice: 178.35, pnl: 75.25, pnlPercent: 1.22, timestamp: '41m ago', agentId: '1', agentName: 'GPT-4o Mini', holdTime: '5h 33m', confidence: 81 },
-  { id: '7', symbol: 'META', side: 'BUY', quantity: 20, entryPrice: 485.30, exitPrice: 492.15, pnl: 137.00, pnlPercent: 1.41, timestamp: '55m ago', agentId: '4', agentName: 'Gemini Flash', holdTime: '2h 18m', confidence: 89 },
-];
-
-// Mock open positions
-const MOCK_POSITIONS = [
-  {
-    symbol: 'AAPL',
-    quantity: 50,
-    entryPrice: 178.23,
-    currentPrice: 179.45,
-    pnl: 61.00,
-    pnlPercent: 0.68,
-    agentId: '6',
-    agentName: 'DeepSeek',
-    exitPlan: 'Target: $185 (+3.8%). Stop loss at $175 (-1.8%). Trailing stop active.',
-    reasoning: 'Entered on earnings beat. Strong technicals with RSI at 68. Holding for breakout above $180 resistance.'
-  },
-  {
-    symbol: 'NVDA',
-    quantity: 25,
-    entryPrice: 495.67,
-    currentPrice: 498.20,
-    pnl: 63.25,
-    pnlPercent: 0.51,
-    agentId: '2',
-    agentName: 'Claude Haiku',
-    exitPlan: 'Target: $520 (+4.4%). Stop loss at $485 (-2.2%). Exit if sector momentum weakens.',
-    reasoning: 'AI chip demand surge. MACD bullish crossover. Expecting continuation to $520 resistance level.'
-  },
-  {
-    symbol: 'GOOGL',
-    quantity: 40,
-    entryPrice: 141.80,
-    currentPrice: 142.45,
-    pnl: 26.00,
-    pnlPercent: 0.46,
-    agentId: '4',
-    agentName: 'Gemini Flash',
-    exitPlan: 'Target: $148 (+3.9%). Stop loss at $139 (-2.5%). Taking profits at key resistance.',
-    reasoning: 'Oversold bounce play. Strong support at $140. Cloud revenue growth driving upside momentum.'
-  },
-];
-
-// Mock agents with comprehensive metrics
-const MOCK_AGENTS = [
-  {
-    id: '1',
-    name: 'GPT-4o Mini',
-    model: 'gpt-4o-mini',
-    accountValue: 10234,
-    roi: 2.34,
-    color: '#3B9B9B',
-    tradeCount: 12,
-    winRate: 58.3,
-    sharpeRatio: 1.42,
-    maxDrawdown: -3.2,
-    biggestWin: 425.50,
-    biggestLoss: -187.30,
-    totalPnL: 234,
-    fees: 67.20,
-    avgTradeSize: 3250,
-    medianTradeSize: 2890,
-    avgHoldTime: '3h 25m',
-    medianHoldTime: '2h 45m',
-    percentLong: 75,
-    expectancy: 19.50,
-    medianLeverage: 1.0,
-    avgLeverage: 1.2,
-    avgConfidence: 82.5,
-    medianConfidence: 85.0,
-    startingValue: 10000
-  },
-  {
-    id: '2',
-    name: 'Claude Haiku',
-    model: 'claude-3-5-haiku-20241022',
-    accountValue: 10156,
-    roi: 1.56,
-    color: '#D97757',
-    tradeCount: 8,
-    winRate: 62.5,
-    sharpeRatio: 1.28,
-    maxDrawdown: -2.1,
-    biggestWin: 512.00,
-    biggestLoss: -156.20,
-    totalPnL: 156,
-    fees: 45.30,
-    avgTradeSize: 4120,
-    medianTradeSize: 3850,
-    avgHoldTime: '5h 12m',
-    medianHoldTime: '4h 30m',
-    percentLong: 88,
-    expectancy: 19.50,
-    medianLeverage: 1.0,
-    avgLeverage: 1.1,
-    avgConfidence: 87.3,
-    medianConfidence: 88.0,
-    startingValue: 10000
-  },
-  {
-    id: '3',
-    name: 'Grok',
-    model: 'grok-beta',
-    accountValue: 9987,
-    roi: -0.13,
-    color: '#C77B6A',
-    tradeCount: 15,
-    winRate: 46.7,
-    sharpeRatio: 0.87,
-    maxDrawdown: -4.8,
-    biggestWin: 298.40,
-    biggestLoss: -445.60,
-    totalPnL: -13,
-    fees: 89.50,
-    avgTradeSize: 2780,
-    medianTradeSize: 2450,
-    avgHoldTime: '2h 18m',
-    medianHoldTime: '1h 55m',
-    percentLong: 53,
-    expectancy: -0.87,
-    medianLeverage: 1.0,
-    avgLeverage: 1.3,
-    avgConfidence: 71.2,
-    medianConfidence: 72.0,
-    startingValue: 10000
-  },
-  {
-    id: '4',
-    name: 'Gemini Flash',
-    model: 'gemini-2.0-flash-exp',
-    accountValue: 10412,
-    roi: 4.12,
-    color: '#FFB224',
-    tradeCount: 10,
-    winRate: 70.0,
-    sharpeRatio: 1.89,
-    maxDrawdown: -1.8,
-    biggestWin: 678.90,
-    biggestLoss: -123.50,
-    totalPnL: 412,
-    fees: 58.40,
-    avgTradeSize: 3890,
-    medianTradeSize: 3650,
-    avgHoldTime: '4h 05m',
-    medianHoldTime: '3h 40m',
-    percentLong: 90,
-    expectancy: 41.20,
-    medianLeverage: 1.0,
-    avgLeverage: 1.0,
-    avgConfidence: 86.8,
-    medianConfidence: 87.0,
-    startingValue: 10000
-  },
-  {
-    id: '5',
-    name: 'Qwen',
-    model: 'qwen-2.5-72b',
-    accountValue: 9876,
-    roi: -1.24,
-    color: '#E93CAC',
-    tradeCount: 7,
-    winRate: 42.9,
-    sharpeRatio: 0.65,
-    maxDrawdown: -5.2,
-    biggestWin: 234.10,
-    biggestLoss: -389.20,
-    totalPnL: -124,
-    fees: 42.80,
-    avgTradeSize: 2950,
-    medianTradeSize: 2720,
-    avgHoldTime: '1h 45m',
-    medianHoldTime: '1h 30m',
-    percentLong: 57,
-    expectancy: -17.71,
-    medianLeverage: 1.0,
-    avgLeverage: 1.4,
-    avgConfidence: 68.9,
-    medianConfidence: 70.0,
-    startingValue: 10000
-  },
-  {
-    id: '6',
-    name: 'DeepSeek',
-    model: 'deepseek-chat',
-    accountValue: 10089,
-    roi: 0.89,
-    color: '#8B5CF6',
-    tradeCount: 11,
-    winRate: 54.5,
-    sharpeRatio: 1.12,
-    maxDrawdown: -2.9,
-    biggestWin: 356.70,
-    biggestLoss: -198.40,
-    totalPnL: 89,
-    fees: 52.30,
-    avgTradeSize: 3120,
-    medianTradeSize: 2980,
-    avgHoldTime: '2h 50m',
-    medianHoldTime: '2h 35m',
-    percentLong: 73,
-    expectancy: 8.09,
-    medianLeverage: 1.0,
-    avgLeverage: 1.2,
-    avgConfidence: 79.4,
-    medianConfidence: 80.0,
-    startingValue: 10000
-  },
-];
 
 export default function SplitViewPage() {
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<'trades' | 'chat' | 'positions' | 'analysis'>('trades');
-  const [mockPerformanceData, setMockPerformanceData] = useState<any[]>([]);
+  const [performanceData, setPerformanceData] = useState<any[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
+  const [decisions, setDecisions] = useState<Record<string, any[]>>({});
+  const [stocks, setStocks] = useState<any[]>([]);
   const [mainTab, setMainTab] = useState<'performance' | 'overall' | 'advanced'>('performance');
   const [timeFilter, setTimeFilter] = useState<'all' | '72h' | '24h'>('all');
   const [tradeFilter, setTradeFilter] = useState<string>('all');
 
   useEffect(() => {
-    const fetchAgents = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/agents');
-        if (!response.ok) throw new Error('Failed to fetch agents');
-        const data = await response.json();
+        // Fetch agents
+        const agentsRes = await fetch('/api/agents');
+        if (!agentsRes.ok) throw new Error('Failed to fetch agents');
+        const agentsData = await agentsRes.json();
+        setAgents(agentsData);
 
-        // Use mock data if API returns empty array
-        if (data.length === 0) {
-          setAgents(MOCK_AGENTS as any);
-          setMockPerformanceData(generateMockPerformanceData(MOCK_AGENTS as any));
-        } else {
-          setAgents(data);
-          setMockPerformanceData(generateMockPerformanceData(data));
+        // Fetch performance data
+        const performanceRes = await fetch('/api/performance');
+        if (performanceRes.ok) {
+          const performanceData = await performanceRes.json();
+          setPerformanceData(performanceData);
         }
+
+        // Fetch trades
+        const tradesRes = await fetch('/api/trades');
+        if (tradesRes.ok) {
+          const tradesData = await tradesRes.json();
+          setTrades(tradesData);
+        }
+
+        // Fetch positions
+        const positionsRes = await fetch('/api/positions');
+        if (positionsRes.ok) {
+          const positionsData = await positionsRes.json();
+          setPositions(positionsData);
+        }
+
+        // Fetch decisions
+        const decisionsRes = await fetch('/api/decisions');
+        if (decisionsRes.ok) {
+          const decisionsData = await decisionsRes.json();
+          // Group decisions by agentId
+          const groupedDecisions: Record<string, any[]> = {};
+          decisionsData.forEach((decision: any) => {
+            if (!groupedDecisions[decision.agentId]) {
+              groupedDecisions[decision.agentId] = [];
+            }
+            groupedDecisions[decision.agentId].push(decision);
+          });
+          setDecisions(groupedDecisions);
+        }
+
+        // Fetch stock tickers - we'll fetch a list of common stocks
+        const stockSymbols = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA', 'META', 'JPM'];
+        const stockPromises = stockSymbols.map(async (symbol) => {
+          try {
+            const res = await fetch(`/api/stocks/${symbol}`);
+            if (res.ok) {
+              const data = await res.json();
+              return { symbol, ...data };
+            }
+          } catch (e) {
+            console.error(`Failed to fetch ${symbol}:`, e);
+          }
+          return null;
+        });
+        const stocksData = (await Promise.all(stockPromises)).filter(Boolean);
+        setStocks(stocksData);
+
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching agents:', error);
-        setAgents(MOCK_AGENTS as any);
-        setMockPerformanceData(generateMockPerformanceData(MOCK_AGENTS as any));
+        console.error('Error fetching data:', error);
         setLoading(false);
       }
     };
-    fetchAgents();
-    const interval = setInterval(fetchAgents, 10000);
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -463,8 +163,8 @@ export default function SplitViewPage() {
   const lowestAgent = sortedAgents[sortedAgents.length - 1];
 
   const filteredTrades = tradeFilter === 'all'
-    ? MOCK_TRADES
-    : MOCK_TRADES.filter(t => t.agentId === tradeFilter);
+    ? trades
+    : trades.filter(t => t.agentId === tradeFilter);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{
@@ -625,7 +325,7 @@ export default function SplitViewPage() {
           gap: '12px',
           paddingLeft: '12px'
         }} className="ticker-scroll">
-          {[...STOCK_TICKERS, ...STOCK_TICKERS].map((stock, idx) => (
+          {[...stocks, ...stocks].map((stock, idx) => (
             <div key={idx} style={{
               display: 'flex',
               alignItems: 'center',
@@ -652,19 +352,19 @@ export default function SplitViewPage() {
                 fontFamily: 'system-ui, sans-serif',
                 color: '#33302E'
               }}>
-                ${stock.price.toFixed(2)}
+                ${stock.currentPrice?.toFixed(2) || stock.price?.toFixed(2) || 'N/A'}
               </div>
               <div style={{
                 fontSize: '9px',
                 fontWeight: '700',
                 fontFamily: 'system-ui, sans-serif',
-                color: stock.changePercent >= 0 ? '#0F7B3A' : '#CC0000',
+                color: (stock.changePercent || stock.change) >= 0 ? '#0F7B3A' : '#CC0000',
                 padding: '2px 6px',
-                backgroundColor: stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+                backgroundColor: (stock.changePercent || stock.change) >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
                 borderRadius: '10px',
-                border: `1px solid ${stock.changePercent >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
+                border: `1px solid ${(stock.changePercent || stock.change) >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
               }}>
-                {stock.changePercent >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
+                {(stock.changePercent || stock.change) >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent || stock.change || 0).toFixed(2)}%
               </div>
             </div>
           ))}
@@ -941,7 +641,7 @@ export default function SplitViewPage() {
               <div style={{ flex: 1, minHeight: 0 }}>
                 <PerformanceChartOption3
                   agents={selectedAgentId ? agents.filter(a => a.id === selectedAgentId) : agents}
-                  mockData={mockPerformanceData}
+                  mockData={performanceData}
                 />
               </div>
             </div>
@@ -1168,123 +868,6 @@ export default function SplitViewPage() {
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {/* Market Conditions Banner */}
-              <div style={{
-                padding: '16px 20px',
-                background: 'linear-gradient(to bottom, #E9DECF 0%, #E0D4C3 100%)',
-                color: '#262A33',
-                borderBottom: '2px solid #CCC1B7'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '32px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
-                      S&P 500
-                    </span>
-                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#262A33' }}>
-                      {MARKET_CONDITIONS.sp500.current.toLocaleString()}
-                    </span>
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: MARKET_CONDITIONS.sp500.changePercent >= 0 ? '#0F7B3A' : '#CC0000' }}>
-                      {MARKET_CONDITIONS.sp500.changePercent >= 0 ? '▲' : '▼'} {Math.abs(MARKET_CONDITIONS.sp500.changePercent).toFixed(2)}%
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
-                      Sentiment
-                    </span>
-                    <div style={{
-                      display: 'inline-block',
-                      padding: '6px 14px',
-                      backgroundColor: MARKET_CONDITIONS.sentiment === 'Bullish' ? 'rgba(15, 123, 58, 0.15)' : MARKET_CONDITIONS.sentiment === 'Bearish' ? 'rgba(204, 0, 0, 0.15)' : 'rgba(102, 96, 92, 0.15)',
-                      border: `1px solid ${MARKET_CONDITIONS.sentiment === 'Bullish' ? '#0F7B3A' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#CC0000' : '#66605C'}`,
-                      borderRadius: '16px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      color: MARKET_CONDITIONS.sentiment === 'Bullish' ? '#0F7B3A' : MARKET_CONDITIONS.sentiment === 'Bearish' ? '#CC0000' : '#66605C'
-                    }}>
-                      {MARKET_CONDITIONS.sentiment}
-                    </div>
-                    <span style={{ fontSize: '10px', color: '#66605C' }}>
-                      {MARKET_CONDITIONS.trend}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#990F3D' }}>
-                      Volatility (VIX)
-                    </span>
-                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#262A33' }}>
-                      {MARKET_CONDITIONS.vix}
-                    </span>
-                    <div style={{
-                      display: 'inline-block',
-                      padding: '4px 10px',
-                      backgroundColor: 'rgba(153, 15, 61, 0.1)',
-                      border: '1px solid #990F3D',
-                      borderRadius: '12px',
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      color: '#990F3D'
-                    }}>
-                      {MARKET_CONDITIONS.volatility}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Best Performers by Market Condition */}
-              <div style={{
-                padding: '12px 20px',
-                borderBottom: '2px solid #990F3D',
-                backgroundColor: '#EBE0D0'
-              }}>
-                <h3 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '10px', color: '#262A33' }}>
-                  🏆 Best Performers by Market Condition
-                </h3>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '10px'
-                }}>
-                  {[
-                    { label: 'Bullish Markets', condition: 'bullish', emoji: '📈', color: '#0F7B3A' },
-                    { label: 'Bearish Markets', condition: 'bearish', emoji: '📉', color: '#CC0000' },
-                    { label: 'High Volatility', condition: 'highVolatility', emoji: '⚡', color: '#FF6B35' },
-                    { label: 'Sideways Markets', condition: 'sideways', emoji: '↔️', color: '#4A90E2' }
-                  ].map((item) => {
-                    const data = PERFORMANCE_BY_CONDITION[item.condition as keyof typeof PERFORMANCE_BY_CONDITION];
-                    return (
-                      <div key={item.condition} style={{
-                        padding: '10px',
-                        backgroundColor: '#F5E6D3',
-                        border: '1px solid #CCC1B7',
-                        borderRadius: '14px',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.06)'
-                      }}>
-                        <div style={{ fontSize: '9px', fontWeight: '700', color: item.color, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {item.emoji} {item.label}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: '700', color: '#262A33', marginBottom: '3px' }}>
-                          {data.bestPerformer}
-                        </div>
-                        <div style={{ fontSize: '10px', color: '#66605C', marginBottom: '4px' }}>
-                          Avg ROI: <span style={{ fontWeight: '700', color: data.avgROI >= 0 ? '#0F7B3A' : '#CC0000' }}>
-                            {data.avgROI >= 0 ? '+' : ''}{data.avgROI.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '8px', color: '#66605C', lineHeight: '1.3' }}>
-                          Top 3: {data.topModels.slice(0, 3).join(', ')}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Charts Section */}
               <div style={{
@@ -1511,62 +1094,35 @@ export default function SplitViewPage() {
                   </h3>
                   <ResponsiveContainer width="100%" height={250}>
                     <LineChart
-                      data={(() => {
-                        const marketData = generateMarketComparisonData();
-                        return marketData.map((point, i) => {
-                          const result: any = { ...point };
-                          // Add each agent's performance
-                          sortedAgents.forEach(agent => {
-                            // Simulate performance trajectory
-                            const progress = i / (marketData.length - 1);
-                            const targetROI = agent.roi;
-                            const volatility = Math.abs(agent.maxDrawdown) * 0.3;
-                            const randomWalk = (Math.random() - 0.5) * volatility;
-                            result[agent.name] = (targetROI * progress) + randomWalk;
-                          });
-                          return result;
-                        });
-                      })()}
+                      data={performanceData.length > 0 ? performanceData : []}
                       margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
                       <XAxis
-                        dataKey="day"
+                        dataKey="timestamp"
                         tick={{ fontSize: 10, fill: '#66605C' }}
                         stroke="#66605C"
-                        label={{ value: 'Trading Days', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                        label={{ value: 'Time', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                        tickFormatter={(value) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       />
                       <YAxis
                         tick={{ fontSize: 10, fill: '#66605C' }}
                         stroke="#66605C"
-                        label={{ value: 'Return (%)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
+                        label={{ value: 'Account Value ($)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
-                        formatter={(value: any, name: string) => {
-                          if (name === 'sp500') return [`${Number(value).toFixed(2)}%`, 'S&P 500'];
-                          return [`${Number(value).toFixed(2)}%`, name];
-                        }}
+                        labelFormatter={(value) => new Date(value).toLocaleString()}
+                        formatter={(value: any) => [`$${Number(value).toFixed(2)}`, '']}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
 
-                      {/* S&P 500 Benchmark Line */}
-                      <Line
-                        type="monotone"
-                        dataKey="sp500"
-                        name="S&P 500"
-                        stroke="#262A33"
-                        strokeWidth={3}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-
                       {/* AI Agent Lines */}
-                      {sortedAgents.map((agent, index) => (
+                      {sortedAgents.map((agent) => (
                         <Line
                           key={agent.id}
                           type="monotone"
-                          dataKey={agent.name}
+                          dataKey={agent.id}
                           name={agent.name}
                           stroke={agent.color}
                           strokeWidth={selectedAgentId === agent.id ? 4 : 2}
@@ -1585,13 +1141,11 @@ export default function SplitViewPage() {
                     color: '#66605C'
                   }}>
                     <strong style={{ color: '#262A33' }}>Analysis:</strong> {
-                      sortedAgents[0].roi > MARKET_CONDITIONS.sp500.changePercent
-                        ? `Top performer ${sortedAgents[0].name} is outperforming the market by ${(sortedAgents[0].roi - MARKET_CONDITIONS.sp500.changePercent).toFixed(2)}%. `
-                        : `Market is outperforming AI models. `
+                      sortedAgents.length > 0 && sortedAgents[0].roi > 0
+                        ? `Top performer ${sortedAgents[0].name} is leading with ${sortedAgents[0].roi.toFixed(2)}% ROI. `
+                        : sortedAgents.length > 0 ? `All agents currently underperforming. ` : ``
                     }
-                    {MARKET_CONDITIONS.sentiment === 'Bullish' && 'Bullish conditions favor momentum strategies.'}
-                    {MARKET_CONDITIONS.sentiment === 'Bearish' && 'Bearish conditions favor defensive strategies.'}
-                    {MARKET_CONDITIONS.sentiment === 'Neutral' && 'Neutral conditions favor range-trading strategies.'}
+                    AI agents are actively trading stocks based on market conditions and technical analysis.
                   </div>
                 </div>
               </div>
@@ -2012,13 +1566,13 @@ export default function SplitViewPage() {
                     }}>
                       {selectedAgent.name} — AI Reasoning
                     </h4>
-                    {MOCK_CHAT_HISTORY[selectedAgent.id]?.map((entry, idx) => (
+                    {decisions[selectedAgent.id]?.map((entry, idx) => (
                       <div
                         key={idx}
                         style={{
                           marginBottom: '14px',
                           padding: '16px',
-                          backgroundColor: entry.type === 'trade' ? '#F0E4CE' : (entry.type === 'decision' ? '#E5DFD0' : '#EBE0D0'),
+                          backgroundColor: '#EBE0D0',
                           border: '1px solid #CCC1B7',
                           borderRadius: '20px',
                           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
@@ -2035,15 +1589,21 @@ export default function SplitViewPage() {
                             color: '#990F3D',
                             textTransform: 'uppercase'
                           }}>
-                            {entry.type}
+                            Decision
                           </span>
                           <span style={{ fontSize: '10px', color: '#66605C' }}>
-                            {entry.timestamp}
+                            {new Date(entry.createdAt || entry.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#33302E' }}>
-                          {entry.message}
+                        <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#33302E', marginBottom: '8px' }}>
+                          <strong>Action:</strong> {entry.action} {entry.symbol}
+                          {entry.quantity && ` (${entry.quantity} shares)`}
                         </div>
+                        {entry.reasoning && (
+                          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#66605C' }}>
+                            {entry.reasoning}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -2062,8 +1622,8 @@ export default function SplitViewPage() {
                   flexDirection: 'column',
                   gap: '10px'
                 }}>
-                {MOCK_POSITIONS.map((position, idx) => {
-                  const agent = MOCK_AGENTS.find(a => a.id === position.agentId);
+                {positions.map((position, idx) => {
+                  const agent = agents.find(a => a.id === position.agentId);
                   return (
                     <div
                       key={idx}
@@ -2302,33 +1862,21 @@ export default function SplitViewPage() {
                       <ResponsiveContainer width="100%" height={180}>
                         <AreaChart
                           data={(() => {
-                            // Generate mock cumulative P&L data
-                            const dataPoints = [];
-                            const startValue = selectedAgent.startingValue;
-                            const endValue = selectedAgent.accountValue;
-                            const steps = 20;
-                            const volatility = 0.02;
-
-                            let currentValue = startValue;
-                            const totalChange = endValue - startValue;
-                            const avgChange = totalChange / steps;
-
-                            for (let i = 0; i <= steps; i++) {
-                              const progress = i / steps;
-                              const expectedValue = startValue + (totalChange * progress);
-                              const randomWalk = (Math.random() - 0.5) * 2 * volatility * startValue;
-                              currentValue = expectedValue + randomWalk;
-
-                              // Ensure we end at the correct value
-                              if (i === steps) currentValue = endValue;
-
-                              dataPoints.push({
-                                day: i,
-                                value: currentValue,
-                                profit: currentValue - startValue
-                              });
+                            // Use real performance data if available, otherwise show current values
+                            if (performanceData.length > 0) {
+                              return performanceData.map(point => ({
+                                time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                value: point[selectedAgent.id] || selectedAgent.accountValue,
+                                pnl: (point[selectedAgent.id] || selectedAgent.accountValue) - 10000
+                              }));
                             }
-                            return dataPoints;
+
+                            // Fallback: show single point with current value
+                            return [{
+                              time: 'Now',
+                              value: selectedAgent.accountValue,
+                              pnl: selectedAgent.accountValue - 10000
+                            }];
                           })()}
                           margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
                         >
@@ -2340,10 +1888,10 @@ export default function SplitViewPage() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
                           <XAxis
-                            dataKey="day"
+                            dataKey="time"
                             tick={{ fontSize: 10, fill: '#66605C' }}
                             stroke="#66605C"
-                            label={{ value: 'Trading Days', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                            label={{ value: 'Time', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
                           />
                           <YAxis
                             tick={{ fontSize: 10, fill: '#66605C' }}
