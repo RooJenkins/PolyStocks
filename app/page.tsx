@@ -84,8 +84,17 @@ export default function SplitViewPage() {
       try {
         // Fetch agents
         const agentsRes = await fetch('/api/agents');
-        if (!agentsRes.ok) throw new Error('Failed to fetch agents');
+        if (!agentsRes.ok) {
+          console.error('Failed to fetch agents:', agentsRes.status);
+          setLoading(false);
+          return;
+        }
         const agentsData = await agentsRes.json();
+        if (!Array.isArray(agentsData)) {
+          console.error('Agents data is not an array:', agentsData);
+          setLoading(false);
+          return;
+        }
         setAgents(agentsData);
 
         // Fetch performance data
@@ -154,8 +163,9 @@ export default function SplitViewPage() {
   }, []);
 
   const totalValue = agents.reduce((sum, agent) => sum + agent.accountValue, 0);
-  const totalGain = totalValue - (agents.length * 10000);
-  const totalGainPercent = (totalGain / (agents.length * 10000)) * 100;
+  const startingValue = agents.length * 10000;
+  const totalGain = totalValue - startingValue;
+  const totalGainPercent = startingValue > 0 ? (totalGain / startingValue) * 100 : 0;
   const sortedAgents = [...agents].sort((a, b) => b.roi - a.roi);
   const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
 
