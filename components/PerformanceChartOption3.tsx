@@ -105,9 +105,15 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
         });
       });
 
+      // Prevent NaN errors when no data available
+      if (allValues.length === 0) {
+        console.warn('No chart data available yet');
+        return;
+      }
+
       const minValue = Math.min(...allValues);
       const maxValue = Math.max(...allValues);
-      const valueRange = maxValue - minValue;
+      const valueRange = maxValue - minValue || 1; // Prevent division by zero
 
       // Draw grid
       ctx.strokeStyle = '#CEC6B9';
