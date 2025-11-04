@@ -1,7 +1,6 @@
 import cron from 'node-cron';
 import { runTradingCycle } from '../lib/trading-engine';
 import { isMarketOpen, getMarketStatus, formatDuration } from '../lib/realistic-execution';
-import { seedAgents } from '../lib/seed';
 
 async function startBot() {
   console.log('🤖 Sapyn AI Trading Bot Started');
@@ -17,10 +16,6 @@ async function startBot() {
     console.log(`⏰ Next market open: ${marketStatus.nextOpen.toLocaleString()}`);
     console.log(`⏳ Time until open: ${formatDuration(marketStatus.timeUntilOpen)}\n`);
   }
-
-  // Seed AI agents on startup
-  console.log('🌱 Initializing AI agents...\n');
-  await seedAgents();
 
   // Run immediately if market is open
   if (marketStatus.isOpen) {
