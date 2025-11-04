@@ -115,6 +115,9 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
       const maxValue = Math.max(...allValues);
       const valueRange = maxValue - minValue || 1; // Prevent division by zero
 
+      // Prevent division by zero when only one data point
+      const xScale = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth / 2;
+
       // Draw grid
       ctx.strokeStyle = '#CEC6B9';
       ctx.lineWidth = 1;
@@ -146,7 +149,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
       data.forEach((point, idx) => {
         if (idx % labelInterval === 0 || idx === data.length - 1) {
-          const x = padding.left + (chartWidth / (data.length - 1)) * idx;
+          const x = padding.left + xScale * idx;
 
           // Parse the timestamp and format as day + hour
           const timestamp = new Date(point.timestamp);
@@ -200,7 +203,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
           const value = point[agent.id];
           if (typeof value !== 'number') return;
 
-          const x = padding.left + (chartWidth / (data.length - 1)) * idx;
+          const x = padding.left + xScale * idx;
           const y = padding.top + chartHeight - ((value - minValue) / valueRange) * chartHeight;
 
           points.push({ x, y, value });
@@ -239,7 +242,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
             const value = point[agent.id];
             if (typeof value !== 'number') return;
 
-            const x = padding.left + (chartWidth / (data.length - 1)) * idx;
+            const x = padding.left + xScale * idx;
             const y = padding.top + chartHeight - ((value - minValue) / valueRange) * chartHeight;
 
             points.push({ x, y, value });
@@ -264,11 +267,13 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
 
           // Draw dots at crosshair intersections (only for hovered line)
           if (mousePos && newCrosshairValues[agent.id]) {
-            const dataIndex = Math.round(((mousePos.x - padding.left) / chartWidth) * (data.length - 1));
+            const dataIndex = data.length > 1
+              ? Math.round(((mousePos.x - padding.left) / chartWidth) * (data.length - 1))
+              : 0;
             if (dataIndex >= 0 && dataIndex < data.length) {
               const value = data[dataIndex][agent.id];
               if (typeof value === 'number') {
-                const x = padding.left + (chartWidth / (data.length - 1)) * dataIndex;
+                const x = padding.left + xScale * dataIndex;
                 const y = padding.top + chartHeight - ((value - minValue) / valueRange) * chartHeight;
 
                 ctx.fillStyle = agent.color;
