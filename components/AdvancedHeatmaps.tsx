@@ -8,7 +8,14 @@ interface HeatmapData {
   name: string;
   model: string;
   color: string;
-  dailyPerformance: Record<string, { gains: number; losses: number; total: number }>;
+  dailyPerformance: Record<string, {
+    gains: number;
+    losses: number;
+    total: number;
+    percentChange: number;
+    startValue: number;
+    endValue: number;
+  }>;
   hourlyActivity: Record<number, number>;
   dayOfWeekActivity: Record<number, number>;
   tradesByHour: Record<number, { count: number; wins: number; losses: number }>;
@@ -91,7 +98,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
           <div style={{ overflowX: 'auto' }}>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: `120px repeat(${sortedDates.length}, 30px)`,
+              gridTemplateColumns: `120px repeat(${sortedDates.length}, 50px)`,
               gap: '2px',
               fontSize: '10px',
               minWidth: 'fit-content'
@@ -147,22 +154,25 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
                   </div>
                   {sortedDates.map(date => {
                     const dayData = agent.dailyPerformance[date];
-                    const change = dayData?.total || 0;
-                    const maxChange = 50;
-                    const intensity = Math.min(Math.abs(change) / maxChange, 1);
-                    const color = change > 0
+                    const percentChange = dayData?.percentChange || 0;
+                    const dollarChange = dayData?.total || 0;
+
+                    // Use percentage for color intensity (max at 5%)
+                    const maxPercent = 5;
+                    const intensity = Math.min(Math.abs(percentChange) / maxPercent, 1);
+                    const color = percentChange > 0
                       ? `rgba(15, 123, 58, ${0.2 + intensity * 0.8})`
-                      : change < 0
+                      : percentChange < 0
                       ? `rgba(204, 0, 0, ${0.2 + intensity * 0.8})`
                       : '#E9DECF';
 
                     return (
                       <div
                         key={`${agent.agentId}-${date}`}
-                        title={`${agent.name} on ${date}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`}
+                        title={`${agent.name} on ${date}: ${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}% (${dollarChange >= 0 ? '+' : ''}$${dollarChange.toFixed(2)})`}
                         style={{
-                          width: '30px',
-                          height: '30px',
+                          width: '50px',
+                          height: '40px',
                           backgroundColor: color,
                           borderRadius: '4px',
                           border: '1px solid #CCC1B7',
@@ -171,12 +181,12 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '8px',
+                          fontSize: '9px',
                           fontWeight: '700',
-                          color: intensity > 0.5 ? '#FFF' : 'transparent'
+                          color: Math.abs(percentChange) > 0.5 ? (intensity > 0.6 ? '#FFF' : '#262A33') : '#66605C'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.3)';
+                          e.currentTarget.style.transform = 'scale(1.15)';
                           e.currentTarget.style.zIndex = '10';
                         }}
                         onMouseLeave={(e) => {
@@ -184,7 +194,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
                           e.currentTarget.style.zIndex = '1';
                         }}
                       >
-                        {Math.abs(change) > 1 ? (change > 0 ? '▲' : '▼') : ''}
+                        {Math.abs(percentChange) > 0.01 ? `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%` : '-'}
                       </div>
                     );
                   })}

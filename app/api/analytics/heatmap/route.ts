@@ -18,7 +18,14 @@ export async function GET() {
 
     const heatmapData = agents.map(agent => {
       // Group performance by day and hour
-      const dailyPerformance: Record<string, { gains: number, losses: number, total: number }> = {};
+      const dailyPerformance: Record<string, {
+        gains: number,
+        losses: number,
+        total: number,
+        percentChange: number,
+        startValue: number,
+        endValue: number
+      }> = {};
       const hourlyActivity: Record<number, number> = {};
       const dayOfWeekActivity: Record<number, number> = {};
 
@@ -31,9 +38,17 @@ export async function GET() {
         const dayOfWeek = new Date(current.timestamp).getDay();
 
         const change = current.accountValue - previous.accountValue;
+        const percentChange = (change / previous.accountValue) * 100;
 
         if (!dailyPerformance[date]) {
-          dailyPerformance[date] = { gains: 0, losses: 0, total: 0 };
+          dailyPerformance[date] = {
+            gains: 0,
+            losses: 0,
+            total: 0,
+            percentChange: 0,
+            startValue: previous.accountValue,
+            endValue: current.accountValue
+          };
         }
 
         if (change > 0) {
@@ -42,11 +57,18 @@ export async function GET() {
           dailyPerformance[date].losses += Math.abs(change);
         }
         dailyPerformance[date].total += change;
+        dailyPerformance[date].endValue = current.accountValue;
 
         // Track hourly activity
         hourlyActivity[hour] = (hourlyActivity[hour] || 0) + 1;
         dayOfWeekActivity[dayOfWeek] = (dayOfWeekActivity[dayOfWeek] || 0) + 1;
       }
+
+      // Calculate percentage change for each day
+      Object.keys(dailyPerformance).forEach(date => {
+        const day = dailyPerformance[date];
+        day.percentChange = ((day.endValue - day.startValue) / day.startValue) * 100;
+      });
 
       // Calculate trade patterns
       const tradesByHour: Record<number, { count: number, wins: number, losses: number }> = {};
