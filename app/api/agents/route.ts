@@ -24,6 +24,26 @@ export async function GET() {
     // Calculate metrics for each agent
     const agentsWithMetrics = await Promise.all(
       agents.map(async (agent) => {
+        // Special handling for S&P 20 Benchmark - uses BenchmarkPosition table
+        if (agent.id === 'benchmark-sp20') {
+          return {
+            id: agent.id,
+            name: agent.name,
+            model: agent.model,
+            color: agent.color,
+            accountValue: agent.accountValue, // Use stored value from benchmark calculation
+            startingValue: agent.startingValue,
+            roi: ((agent.accountValue - agent.startingValue) / agent.startingValue) * 100,
+            totalPnL: agent.accountValue - agent.startingValue,
+            sharpeRatio: 0,
+            maxDrawdown: 0,
+            winRate: 0,
+            tradeCount: 0,
+            biggestWin: 0,
+            biggestLoss: 0,
+          };
+        }
+
         const trades = await prisma.trade.findMany({
           where: { agentId: agent.id },
         });
