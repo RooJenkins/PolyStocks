@@ -1025,7 +1025,12 @@ export default function SplitViewPage() {
                     ]}>
                       <PolarGrid stroke="#CCC1B7" />
                       <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#66605C' }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#66605C' }} />
+                      <PolarRadiusAxis
+                        angle={90}
+                        domain={[0, 100]}
+                        tick={{ fontSize: 9, fill: '#66605C' }}
+                        tickFormatter={(value) => Number(value || 0).toFixed(0)}
+                      />
                       {sortedAgents.map((agent, index) => (
                         <Radar
                           key={agent.id}
