@@ -796,7 +796,7 @@ export default function SplitViewPage() {
                           fontWeight: '600',
                           border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
                         }}>
-                          ${(agent as any).fees?.toFixed(2) || '0'}
+                          ${((agent as any).fees || 0).toFixed(2)}
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
@@ -808,7 +808,7 @@ export default function SplitViewPage() {
                           fontWeight: '600',
                           border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
                         }}>
-                          {agent.winRate?.toFixed(1)}%
+                          {(agent.winRate || 0).toFixed(1)}%
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
@@ -820,7 +820,7 @@ export default function SplitViewPage() {
                           borderRadius: '16px',
                           fontWeight: '700'
                         }}>
-                          ${agent.biggestWin?.toFixed(0)}
+                          ${(agent.biggestWin || 0).toFixed(0)}
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
@@ -844,7 +844,7 @@ export default function SplitViewPage() {
                           fontWeight: '600',
                           border: selectedAgentId === agent.id ? '1px solid #CCC1B7' : 'none'
                         }}>
-                          {agent.sharpeRatio?.toFixed(3)}
+                          {(agent.sharpeRatio || 0).toFixed(3)}
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
@@ -1534,7 +1534,7 @@ export default function SplitViewPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
-                      Entry: ${trade.entryPrice.toFixed(2)} → Exit: ${trade.exitPrice.toFixed(2)}
+                      Entry: ${(trade.entryPrice || 0).toFixed(2)} → Exit: ${(trade.exitPrice || 0).toFixed(2)}
                     </div>
                     <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
                       Quantity: {trade.quantity} shares
@@ -1545,9 +1545,9 @@ export default function SplitViewPage() {
                     <div style={{
                       fontSize: '14px',
                       fontWeight: '700',
-                      color: trade.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                      color: (trade.pnl || 0) >= 0 ? '#0F7B3A' : '#CC0000'
                     }}>
-                      P&L: {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)} ({trade.pnl >= 0 ? '+' : ''}{trade.pnlPercent.toFixed(2)}%)
+                      P&L: {(trade.pnl || 0) >= 0 ? '+' : ''}${(trade.pnl || 0).toFixed(2)} ({(trade.pnl || 0) >= 0 ? '+' : ''}{(trade.pnlPercent || 0).toFixed(2)}%)
                     </div>
                   </div>
                 ))}
@@ -1697,16 +1697,16 @@ export default function SplitViewPage() {
                           <div style={{
                             fontSize: '15px',
                             fontWeight: '700',
-                            color: position.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                            color: (position.pnl || 0) >= 0 ? '#0F7B3A' : '#CC0000'
                           }}>
-                            {position.pnl >= 0 ? '+' : ''}${position.pnl.toFixed(2)}
+                            {(position.pnl || 0) >= 0 ? '+' : ''}${(position.pnl || 0).toFixed(2)}
                           </div>
                           <div style={{
                             fontSize: '11px',
                             fontWeight: '600',
-                            color: position.pnl >= 0 ? '#0F7B3A' : '#CC0000'
+                            color: (position.pnl || 0) >= 0 ? '#0F7B3A' : '#CC0000'
                           }}>
-                            ({position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%)
+                            ({(position.pnlPercent || 0) >= 0 ? '+' : ''}{(position.pnlPercent || 0).toFixed(2)}%)
                           </div>
                         </div>
                       </div>
@@ -1725,11 +1725,11 @@ export default function SplitViewPage() {
                         </div>
                         <div>
                           <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Entry</div>
-                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${position.entryPrice.toFixed(2)}</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${(position.entryPrice || 0).toFixed(2)}</div>
                         </div>
                         <div>
                           <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Current</div>
-                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${position.currentPrice.toFixed(2)}</div>
+                          <div style={{ fontWeight: '700', fontSize: '12px' }}>${(position.currentPrice || 0).toFixed(2)}</div>
                         </div>
                         <div>
                           <div style={{ color: '#66605C', marginBottom: '4px', fontSize: '10px' }}>Value</div>
@@ -1844,15 +1844,15 @@ export default function SplitViewPage() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Win Rate:</span>
-                          <span style={{ fontWeight: '700' }}>{selectedAgent.winRate?.toFixed(1)}%</span>
+                          <span style={{ fontWeight: '700' }}>{(selectedAgent.winRate || 0).toFixed(1)}%</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Sharpe Ratio:</span>
-                          <span style={{ fontWeight: '700' }}>{selectedAgent.sharpeRatio?.toFixed(2)}</span>
+                          <span style={{ fontWeight: '700' }}>{(selectedAgent.sharpeRatio || 0).toFixed(2)}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Max Drawdown:</span>
-                          <span style={{ fontWeight: '700', color: '#CC0000' }}>{selectedAgent.maxDrawdown?.toFixed(2)}%</span>
+                          <span style={{ fontWeight: '700', color: '#CC0000' }}>{(selectedAgent.maxDrawdown || 0).toFixed(2)}%</span>
                         </div>
                       </div>
                     </div>
