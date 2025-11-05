@@ -1558,13 +1558,100 @@ export default function SplitViewPage() {
             {detailTab === 'chat' && (
               <div>
                 {!selectedAgent ? (
-                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#66605C' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px' }}>
-                      Select a model to view reasoning
-                    </div>
-                    <div style={{ fontSize: '12px' }}>
-                      Click on any model in the table or selector below
-                    </div>
+                  <div>
+                    <h4 style={{
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      marginBottom: '16px',
+                      color: '#262A33'
+                    }}>
+                      All Models — Latest Reasoning
+                    </h4>
+                    {agents.map(agent => {
+                      const agentDecisions = decisions[agent.id] || [];
+                      const latestDecision = agentDecisions[0];
+
+                      if (!latestDecision) return null;
+
+                      return (
+                        <div
+                          key={agent.id}
+                          style={{
+                            marginBottom: '16px',
+                            padding: '16px',
+                            backgroundColor: '#EBE0D0',
+                            border: `2px solid ${agent.color}`,
+                            borderRadius: '20px',
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                          }}
+                        >
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: '10px',
+                            alignItems: 'center'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <div style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                backgroundColor: agent.color
+                              }} />
+                              <span style={{
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                color: '#262A33'
+                              }}>
+                                {agent.name}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '10px', color: '#66605C' }}>
+                              {new Date(latestDecision.createdAt || latestDecision.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#33302E', marginBottom: '8px' }}>
+                            <strong>Action:</strong> {latestDecision.action} {latestDecision.symbol}
+                            {latestDecision.quantity && ` (${latestDecision.quantity} shares)`}
+                          </div>
+                          {latestDecision.reasoning && (
+                            <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#66605C' }}>
+                              {latestDecision.reasoning}
+                            </div>
+                          )}
+                          {(latestDecision.targetPrice || latestDecision.stopLoss || latestDecision.invalidationCondition) && (
+                            <div style={{
+                              marginTop: '10px',
+                              padding: '10px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px',
+                              fontSize: '10px'
+                            }}>
+                              <div style={{ fontWeight: '700', marginBottom: '6px', color: '#990F3D' }}>EXIT PLAN</div>
+                              {latestDecision.targetPrice && (
+                                <div style={{ marginBottom: '4px', color: '#33302E' }}>
+                                  <strong>Target:</strong> ${(latestDecision.targetPrice || 0).toFixed(2)}
+                                </div>
+                              )}
+                              {latestDecision.stopLoss && (
+                                <div style={{ marginBottom: '4px', color: '#33302E' }}>
+                                  <strong>Stop Loss:</strong> ${(latestDecision.stopLoss || 0).toFixed(2)}
+                                </div>
+                              )}
+                              {latestDecision.invalidationCondition && (
+                                <div style={{ color: '#66605C' }}>
+                                  <strong>Invalidation:</strong> {latestDecision.invalidationCondition}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div>
@@ -1610,8 +1697,34 @@ export default function SplitViewPage() {
                           {entry.quantity && ` (${entry.quantity} shares)`}
                         </div>
                         {entry.reasoning && (
-                          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#66605C' }}>
+                          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#66605C', marginBottom: '8px' }}>
                             {entry.reasoning}
+                          </div>
+                        )}
+                        {(entry.targetPrice || entry.stopLoss || entry.invalidationCondition) && (
+                          <div style={{
+                            marginTop: '10px',
+                            padding: '10px',
+                            backgroundColor: '#F5E6D3',
+                            borderRadius: '12px',
+                            fontSize: '10px'
+                          }}>
+                            <div style={{ fontWeight: '700', marginBottom: '6px', color: '#990F3D' }}>EXIT PLAN</div>
+                            {entry.targetPrice && (
+                              <div style={{ marginBottom: '4px', color: '#33302E' }}>
+                                <strong>Target:</strong> ${(entry.targetPrice || 0).toFixed(2)}
+                              </div>
+                            )}
+                            {entry.stopLoss && (
+                              <div style={{ marginBottom: '4px', color: '#33302E' }}>
+                                <strong>Stop Loss:</strong> ${(entry.stopLoss || 0).toFixed(2)}
+                              </div>
+                            )}
+                            {entry.invalidationCondition && (
+                              <div style={{ color: '#66605C' }}>
+                                <strong>Invalidation:</strong> {entry.invalidationCondition}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1800,13 +1913,198 @@ export default function SplitViewPage() {
             {detailTab === 'analysis' && (
               <div>
                 {!selectedAgent ? (
-                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#66605C' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px' }}>
-                      Select a model to view analysis
-                    </div>
-                    <div style={{ fontSize: '12px' }}>
-                      Click on any model in the table or selector below
-                    </div>
+                  <div>
+                    <h4 style={{
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      marginBottom: '16px',
+                      color: '#262A33'
+                    }}>
+                      All Models — Performance Analysis
+                    </h4>
+                    {agents.map(agent => {
+                      return (
+                        <div
+                          key={agent.id}
+                          style={{
+                            marginBottom: '16px',
+                            padding: '16px',
+                            backgroundColor: '#EBE0D0',
+                            border: `2px solid ${agent.color}`,
+                            borderRadius: '20px',
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                          }}
+                        >
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: '12px',
+                            alignItems: 'center'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <div style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                backgroundColor: agent.color
+                              }} />
+                              <span style={{
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                color: '#262A33'
+                              }}>
+                                {agent.name}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Performance Metrics */}
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: '8px',
+                            fontSize: '11px',
+                            marginBottom: '12px'
+                          }}>
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '4px' }}>Account Value</div>
+                              <div style={{ fontWeight: '700', color: '#262A33' }}>
+                                ${agent.accountValue.toLocaleString()}
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '4px' }}>Return</div>
+                              <div style={{
+                                fontWeight: '700',
+                                color: agent.roi >= 0 ? '#0F7B3A' : '#CC0000'
+                              }}>
+                                {agent.roi >= 0 ? '+' : ''}{(agent.roi || 0).toFixed(2)}%
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '4px' }}>Total P&L</div>
+                              <div style={{
+                                fontWeight: '700',
+                                color: (agent.totalPnL || 0) >= 0 ? '#0F7B3A' : '#CC0000'
+                              }}>
+                                ${agent.totalPnL?.toLocaleString()}
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '4px' }}>Win Rate</div>
+                              <div style={{ fontWeight: '700', color: '#262A33' }}>
+                                {(agent.winRate || 0).toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Mini Performance Chart */}
+                          <div style={{
+                            height: '100px',
+                            backgroundColor: '#F5E6D3',
+                            borderRadius: '12px',
+                            padding: '8px'
+                          }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart
+                                data={(() => {
+                                  // Use real performance data if available
+                                  if (performanceData.length > 0) {
+                                    return performanceData.map(point => ({
+                                      time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                      value: point[agent.id] || agent.accountValue
+                                    }));
+                                  }
+                                  // Fallback: show single point
+                                  return [{
+                                    time: 'Now',
+                                    value: agent.accountValue
+                                  }];
+                                })()}
+                                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                              >
+                                <defs>
+                                  <linearGradient id={`colorPnL-mini-${agent.id}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={agent.color} stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor={agent.color} stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <Area
+                                  type="monotone"
+                                  dataKey="value"
+                                  stroke={agent.color}
+                                  strokeWidth={1.5}
+                                  fill={`url(#colorPnL-mini-${agent.id})`}
+                                />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          </div>
+
+                          {/* Additional Stats Row */}
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: '8px',
+                            marginTop: '12px',
+                            fontSize: '10px'
+                          }}>
+                            <div style={{
+                              padding: '8px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '10px',
+                              textAlign: 'center'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '2px' }}>Trades</div>
+                              <div style={{ fontWeight: '700', color: '#262A33' }}>
+                                {agent.tradeCount}
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '8px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '10px',
+                              textAlign: 'center'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '2px' }}>Sharpe</div>
+                              <div style={{ fontWeight: '700', color: '#262A33' }}>
+                                {(agent.sharpeRatio || 0).toFixed(2)}
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '8px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '10px',
+                              textAlign: 'center'
+                            }}>
+                              <div style={{ color: '#66605C', marginBottom: '2px' }}>Drawdown</div>
+                              <div style={{ fontWeight: '700', color: '#CC0000' }}>
+                                {(agent.maxDrawdown || 0).toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div>

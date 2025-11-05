@@ -199,16 +199,24 @@ Respond with JSON only:
   "invalidationCondition":"Exit if 4H RSI breaks below 40, signaling momentum failure"
 }
 
-CRITICAL EXIT PLANNING:
-- targetPrice: Price at which to take profits (WILL AUTO-EXECUTE)
-- stopLoss: Price at which to cut losses (WILL AUTO-EXECUTE)
-- invalidationCondition: Market condition that voids your thesis (e.g., "Break below support at $180", "Volume drops below 1M shares", "RSI reversal")
+CRITICAL EXIT PLANNING (REQUIRED FOR ALL BUY/SELL_SHORT ACTIONS):
+⚠️ WARNING: If you submit BUY or SELL_SHORT without complete exit plan, trade will be REJECTED
+- targetPrice: REQUIRED - Price at which to take profits (WILL AUTO-EXECUTE)
+- stopLoss: REQUIRED - Price at which to cut losses (WILL AUTO-EXECUTE)
+- invalidationCondition: REQUIRED - Market condition that voids your thesis (e.g., "Break below support at $180", "Volume drops below 1M shares", "RSI reversal")
+- reasoning: REQUIRED - Detailed explanation of why this trade makes sense now
 
-For BUY trades:
-- targetPrice must be ABOVE currentPrice
-- stopLoss must be BELOW currentPrice
-- Both are required and will execute automatically
+For BUY/LONG trades:
+- targetPrice must be ABOVE currentPrice (REQUIRED)
+- stopLoss must be BELOW currentPrice (REQUIRED)
+- invalidationCondition must describe specific exit condition (REQUIRED)
 
+For SELL_SHORT trades:
+- targetPrice must be BELOW currentPrice (REQUIRED)
+- stopLoss must be ABOVE currentPrice (REQUIRED)
+- invalidationCondition must describe specific exit condition (REQUIRED)
+
+For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"Why closing this position now","confidence":0.8}
 For HOLD: {"action":"HOLD","reasoning":"Why waiting is best","confidence":0.7}`;
 }
 
