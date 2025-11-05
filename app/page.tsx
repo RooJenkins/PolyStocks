@@ -918,12 +918,12 @@ export default function SplitViewPage() {
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
-                        formatter={(value: any) => [`${Number(value).toFixed(2)}%`]}
+                        formatter={(value: any) => [`${Number(value || 0).toFixed(2)}%`]}
                       />
                       <Scatter
                         data={sortedAgents.map(agent => ({
-                          risk: Math.abs(agent.maxDrawdown),
-                          roi: agent.roi,
+                          risk: Math.abs(agent.maxDrawdown || 0),
+                          roi: agent.roi || 0,
                           name: agent.name,
                           fill: agent.color,
                           trades: agent.tradeCount,
@@ -975,7 +975,7 @@ export default function SplitViewPage() {
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
-                        formatter={(value: any) => [`${Number(value).toFixed(1)}%`]}
+                        formatter={(value: any) => [`${Number(value || 0).toFixed(1)}%`]}
                       />
                       <Bar dataKey="winRate" radius={[8, 8, 0, 0]}>
                         {sortedAgents.map((agent, index) => (
@@ -1072,7 +1072,7 @@ export default function SplitViewPage() {
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
-                        formatter={(value: any) => [`${Number(value).toFixed(3)}`]}
+                        formatter={(value: any) => [`${Number(value || 0).toFixed(3)}`]}
                       />
                       <Bar dataKey="sharpeRatio" radius={[0, 8, 8, 0]}>
                         {sortedAgents.map((agent, index) => (
@@ -1123,7 +1123,7 @@ export default function SplitViewPage() {
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
                         labelFormatter={(value) => new Date(value).toLocaleString()}
-                        formatter={(value: any) => [`$${Number(value).toFixed(2)}`, '']}
+                        formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}`, ""]}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
 
