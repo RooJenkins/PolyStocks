@@ -518,58 +518,99 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
           ))}
 
           {/* Correlation cells */}
-          {agents.map((rowAgent, rowIdx) => (
-            <>
-              <div
-                key={`label-${rowAgent.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  fontWeight: '600',
-                  color: '#262A33',
-                  fontSize: '9px',
-                  padding: '4px'
-                }}
-              >
-                {rowAgent.name.split(' ')[0]}
-              </div>
-              {agents.map((colAgent, colIdx) => {
-                // Calculate simple correlation based on ROI similarity
-                const correlation = rowIdx === colIdx
-                  ? 1
-                  : 1 - Math.min(Math.abs((rowAgent.roi || 0) - (colAgent.roi || 0)) / 10, 1);
+          {agents.map((rowAgent, rowIdx) => {
+            // Get row agent data
+            const rowAgentData = heatmapData.find(d => d.agentId === rowAgent.id);
 
-                const intensity = Math.abs(correlation);
-                const color = correlation > 0.7
-                  ? `rgba(15, 123, 58, ${intensity})`
-                  : correlation < 0.3
-                  ? `rgba(204, 0, 0, ${intensity})`
-                  : `rgba(153, 15, 61, ${intensity * 0.6})`;
+            return (
+              <>
+                <div
+                  key={`label-${rowAgent.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    fontWeight: '600',
+                    color: '#262A33',
+                    fontSize: '9px',
+                    padding: '4px'
+                  }}
+                >
+                  {rowAgent.name.split(' ')[0]}
+                </div>
+                {agents.map((colAgent, colIdx) => {
+                  // Get column agent data
+                  const colAgentData = heatmapData.find(d => d.agentId === colAgent.id);
 
-                return (
-                  <div
-                    key={`${rowAgent.id}-${colAgent.id}`}
-                    title={`${rowAgent.name} vs ${colAgent.name}: ${(correlation * 100).toFixed(0)}%`}
-                    style={{
-                      aspectRatio: '1',
-                      backgroundColor: color,
-                      borderRadius: '4px',
-                      border: '1px solid #CCC1B7',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '8px',
-                      fontWeight: '700',
-                      color: intensity > 0.5 ? '#FFF' : '#262A33'
-                    }}
-                  >
-                    {(correlation * 100).toFixed(0)}
-                  </div>
-                );
-              })}
-            </>
-          ))}
+                  // Calculate Pearson correlation based on daily returns
+                  let correlation = 0;
+                  if (rowIdx === colIdx) {
+                    correlation = 1; // Perfect correlation with self
+                  } else if (rowAgentData && colAgentData) {
+                    // Get common dates
+                    const rowDates = Object.keys(rowAgentData.dailyPerformance);
+                    const colDates = Object.keys(colAgentData.dailyPerformance);
+                    const commonDates = rowDates.filter(date => colDates.includes(date));
+
+                    if (commonDates.length >= 2) {
+                      // Extract daily returns
+                      const rowReturns = commonDates.map(date => rowAgentData.dailyPerformance[date].percentChange);
+                      const colReturns = commonDates.map(date => colAgentData.dailyPerformance[date].percentChange);
+
+                      // Calculate Pearson correlation
+                      const n = rowReturns.length;
+                      const sumRow = rowReturns.reduce((a, b) => a + b, 0);
+                      const sumCol = colReturns.reduce((a, b) => a + b, 0);
+                      const sumRowSq = rowReturns.reduce((a, b) => a + b * b, 0);
+                      const sumColSq = colReturns.reduce((a, b) => a + b * b, 0);
+                      const sumRowCol = rowReturns.reduce((acc, val, i) => acc + val * colReturns[i], 0);
+
+                      const numerator = n * sumRowCol - sumRow * sumCol;
+                      const denominator = Math.sqrt((n * sumRowSq - sumRow * sumRow) * (n * sumColSq - sumCol * sumCol));
+
+                      if (denominator > 0) {
+                        correlation = numerator / denominator;
+                      } else {
+                        // No variance - agents have identical returns
+                        correlation = 1;
+                      }
+                    } else {
+                      // Not enough data - show as neutral
+                      correlation = 0;
+                    }
+                  }
+
+                  const intensity = Math.abs(correlation);
+                  const color = correlation > 0.3
+                    ? `rgba(15, 123, 58, ${0.3 + intensity * 0.7})`
+                    : correlation < -0.3
+                    ? `rgba(204, 0, 0, ${0.3 + intensity * 0.7})`
+                    : `rgba(153, 153, 153, 0.4)`;
+
+                  return (
+                    <div
+                      key={`${rowAgent.id}-${colAgent.id}`}
+                      title={`${rowAgent.name} vs ${colAgent.name}: ${(correlation * 100).toFixed(0)}% correlation`}
+                      style={{
+                        aspectRatio: '1',
+                        backgroundColor: color,
+                        borderRadius: '4px',
+                        border: '1px solid #CCC1B7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '8px',
+                        fontWeight: '700',
+                        color: intensity > 0.5 || correlation > 0.3 ? '#FFF' : '#262A33'
+                      }}
+                    >
+                      {(correlation * 100).toFixed(0)}
+                    </div>
+                  );
+                })}
+              </>
+            );
+          })}
         </div>
         <div style={{
           marginTop: '12px',
@@ -579,8 +620,8 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
           fontSize: '10px',
           color: '#66605C'
         }}>
-          <strong style={{ color: '#262A33' }}>Note:</strong> Higher correlation (green) indicates models are performing similarly,
-          while lower correlation (red) shows divergent strategies.
+          <strong style={{ color: '#262A33' }}>Note:</strong> Pearson correlation of daily returns. Positive (green) means models perform similarly,
+          negative (red) means opposite strategies, gray means no clear relationship. Requires multiple trading days for accuracy.
         </div>
       </div>
     </div>
