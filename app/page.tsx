@@ -120,8 +120,8 @@ export default function SplitViewPage() {
           setPositions(positionsData);
         }
 
-        // Fetch decisions
-        const decisionsRes = await fetch('/api/decisions');
+        // Fetch decisions (increase limit to get more historical data)
+        const decisionsRes = await fetch('/api/decisions?limit=200');
         if (decisionsRes.ok) {
           const decisionsData = await decisionsRes.json();
           // Group decisions by agentId
@@ -1511,22 +1511,35 @@ export default function SplitViewPage() {
                       marginBottom: '16px',
                       color: '#262A33'
                     }}>
-                      All Models — Latest Reasoning
+                      All Models — Full Reasoning History
                     </h4>
-                    {agents.map(agent => {
-                      const agentDecisions = decisions[agent.id] || [];
-                      const latestDecision = agentDecisions[0];
+                    {(() => {
+                      // Flatten all decisions from all agents and sort by timestamp
+                      const allDecisions: any[] = [];
+                      agents.forEach(agent => {
+                        const agentDecisions = decisions[agent.id] || [];
+                        agentDecisions.forEach(decision => {
+                          allDecisions.push({
+                            ...decision,
+                            agent,
+                          });
+                        });
+                      });
+                      // Sort by timestamp, newest first
+                      allDecisions.sort((a, b) => {
+                        const timeA = new Date(a.createdAt || a.timestamp).getTime();
+                        const timeB = new Date(b.createdAt || b.timestamp).getTime();
+                        return timeB - timeA;
+                      });
 
-                      if (!latestDecision) return null;
-
-                      return (
+                      return allDecisions.map((decision, idx) => (
                         <div
-                          key={agent.id}
+                          key={`${decision.agent.id}-${idx}`}
                           style={{
                             marginBottom: '16px',
                             padding: '16px',
                             backgroundColor: '#EBE0D0',
-                            border: `2px solid ${agent.color}`,
+                            border: `2px solid ${decision.agent.color}`,
                             borderRadius: '20px',
                             boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
                           }}
@@ -1546,30 +1559,30 @@ export default function SplitViewPage() {
                                 width: '12px',
                                 height: '12px',
                                 borderRadius: '50%',
-                                backgroundColor: agent.color
+                                backgroundColor: decision.agent.color
                               }} />
                               <span style={{
                                 fontSize: '12px',
                                 fontWeight: '700',
                                 color: '#262A33'
                               }}>
-                                {agent.name}
+                                {decision.agent.name}
                               </span>
                             </div>
                             <span style={{ fontSize: '10px', color: '#66605C' }}>
-                              {new Date(latestDecision.createdAt || latestDecision.timestamp).toLocaleString()}
+                              {new Date(decision.createdAt || decision.timestamp).toLocaleString()}
                             </span>
                           </div>
                           <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#33302E', marginBottom: '8px' }}>
-                            <strong>Action:</strong> {latestDecision.action} {latestDecision.symbol}
-                            {latestDecision.quantity && ` (${latestDecision.quantity} shares)`}
+                            <strong>Action:</strong> {decision.action} {decision.symbol}
+                            {decision.quantity && ` (${decision.quantity} shares)`}
                           </div>
-                          {latestDecision.reasoning && (
+                          {decision.reasoning && (
                             <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#66605C' }}>
-                              {latestDecision.reasoning}
+                              {decision.reasoning}
                             </div>
                           )}
-                          {(latestDecision.targetPrice || latestDecision.stopLoss || latestDecision.invalidationCondition) && (
+                          {(decision.targetPrice || decision.stopLoss || decision.invalidationCondition) && (
                             <div style={{
                               marginTop: '10px',
                               padding: '10px',
@@ -1578,26 +1591,26 @@ export default function SplitViewPage() {
                               fontSize: '10px'
                             }}>
                               <div style={{ fontWeight: '700', marginBottom: '6px', color: '#990F3D' }}>EXIT PLAN</div>
-                              {latestDecision.targetPrice && (
+                              {decision.targetPrice && (
                                 <div style={{ marginBottom: '4px', color: '#33302E' }}>
-                                  <strong>Target:</strong> ${(latestDecision.targetPrice || 0).toFixed(2)}
+                                  <strong>Target:</strong> ${(decision.targetPrice || 0).toFixed(2)}
                                 </div>
                               )}
-                              {latestDecision.stopLoss && (
+                              {decision.stopLoss && (
                                 <div style={{ marginBottom: '4px', color: '#33302E' }}>
-                                  <strong>Stop Loss:</strong> ${(latestDecision.stopLoss || 0).toFixed(2)}
+                                  <strong>Stop Loss:</strong> ${(decision.stopLoss || 0).toFixed(2)}
                                 </div>
                               )}
-                              {latestDecision.invalidationCondition && (
+                              {decision.invalidationCondition && (
                                 <div style={{ color: '#66605C' }}>
-                                  <strong>Invalidation:</strong> {latestDecision.invalidationCondition}
+                                  <strong>Invalidation:</strong> {decision.invalidationCondition}
                                 </div>
                               )}
                             </div>
                           )}
                         </div>
-                      );
-                    })}
+                      ));
+                    })()}
                   </div>
                 ) : (
                   <div>
@@ -1684,14 +1697,16 @@ export default function SplitViewPage() {
             {detailTab === 'positions' && (
               <div>
                 <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
-                  Active Positions
+                  Active Positions {selectedAgentId && selectedAgent ? `— ${selectedAgent.name}` : '— All Models'}
                 </h4>
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px'
                 }}>
-                {positions.map((position, idx) => {
+                {positions
+                  .filter(position => !selectedAgentId || position.agentId === selectedAgentId)
+                  .map((position, idx) => {
                   const agent = agents.find(a => a.id === position.agentId);
                   return (
                     <div
@@ -1800,9 +1815,20 @@ export default function SplitViewPage() {
 
                       {/* Find the decision that opened this position */}
                       {(() => {
-                        const positionDecision = decisions[position.agentId]?.find(
+                        // Find the BUY decision with the closest timestamp to position.openedAt
+                        const buyDecisions = decisions[position.agentId]?.filter(
                           (d: any) => d.symbol === position.symbol && d.action === 'BUY'
-                        );
+                        ) || [];
+
+                        const positionDecision = buyDecisions.length > 0
+                          ? buyDecisions.reduce((closest: any, current: any) => {
+                              const positionTime = new Date(position.openedAt).getTime();
+                              const currentDiff = Math.abs(new Date(current.timestamp).getTime() - positionTime);
+                              const closestDiff = Math.abs(new Date(closest.timestamp).getTime() - positionTime);
+                              return currentDiff < closestDiff ? current : closest;
+                            })
+                          : null;
+
                         const hasExitPlan = positionDecision && (positionDecision.targetPrice || positionDecision.stopLoss || positionDecision.invalidationCondition);
                         const hasReasoning = positionDecision && positionDecision.reasoning;
 

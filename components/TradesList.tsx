@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import ModelIcon from './ModelIcon';
-import StockLogo from './StockLogo';
 
 interface Trade {
   id: string;
@@ -76,7 +75,6 @@ export default function TradesList({ agentId }: { agentId: string }) {
               >
                 {trade.action === 'BUY' || trade.action === 'BUY_TO_COVER' ? '↗' : '↘'} {trade.action}
               </div>
-              <StockLogo symbol={trade.symbol} size={16} />
               <span className="text-sm font-bold text-white">{trade.symbol}</span>
             </div>
             <div className="text-xs text-gray-500">

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import AnimatedNumber from './AnimatedNumber';
 import ModelIcon from './ModelIcon';
-import StockLogo from './StockLogo';
 
 interface Position {
   id: string;
@@ -121,7 +120,6 @@ export default function PositionsList({ agentId }: { agentId: string }) {
                       {position.side || 'LONG'}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <StockLogo symbol={position.symbol} size={16} />
                       <span className="font-bold text-white text-[11px]">{position.symbol}</span>
                     </div>
                     <div className="text-right font-mono text-white text-[11px]">{position.quantity}</div>

@@ -37,9 +37,14 @@ export async function GET(request: Request) {
 
       return {
         ...position,
+        agentName: position.agent.name, // Flatten agent name
+        agentColor: position.agent.color, // Flatten agent color
+        agentModel: position.agent.model, // Flatten agent model
         currentPrice,
         unrealizedPnL,
         unrealizedPnLPercent,
+        pnl: unrealizedPnL, // Add pnl alias for UI compatibility
+        pnlPercent: unrealizedPnLPercent, // Add pnlPercent alias for UI compatibility
       };
     });
 
