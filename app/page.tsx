@@ -552,7 +552,7 @@ export default function SplitViewPage() {
                     alignItems: 'center',
                     height: '24px'
                   }}>
-                    {agent.roi >= 0 ? '▲' : '▼'} {Math.abs(agent.roi).toFixed(1)}%
+                    {agent.roi >= 0 ? '▲' : '▼'} {Math.abs(agent.roi || 0).toFixed(1)}%
                   </div>
                 </div>
               </button>
@@ -772,7 +772,7 @@ export default function SplitViewPage() {
                           borderRadius: '16px',
                           fontWeight: '700'
                         }}>
-                          {agent.roi >= 0 ? '+' : ''}{agent.roi.toFixed(2)}%
+                          {agent.roi >= 0 ? '+' : ''}{(agent.roi || 0).toFixed(2)}%
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
@@ -1151,8 +1151,8 @@ export default function SplitViewPage() {
                     color: '#66605C'
                   }}>
                     <strong style={{ color: '#262A33' }}>Analysis:</strong> {
-                      sortedAgents.length > 0 && sortedAgents[0].roi > 0
-                        ? `Top performer ${sortedAgents[0].name} is leading with ${sortedAgents[0].roi.toFixed(2)}% ROI. `
+                      sortedAgents.length > 0 && sortedAgents[0] && sortedAgents[0].roi > 0
+                        ? `Top performer ${sortedAgents[0].name} is leading with ${(sortedAgents[0].roi || 0).toFixed(2)}% ROI. `
                         : sortedAgents.length > 0 ? `All agents currently underperforming. ` : ``
                     }
                     AI agents are actively trading stocks based on market conditions and technical analysis.
@@ -1835,7 +1835,7 @@ export default function SplitViewPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Return:</span>
                           <span style={{ fontWeight: '700', color: selectedAgent.roi >= 0 ? '#0F7B3A' : '#CC0000' }}>
-                            {selectedAgent.roi >= 0 ? '+' : ''}{selectedAgent.roi.toFixed(2)}%
+                            {selectedAgent.roi >= 0 ? '+' : ''}{(selectedAgent.roi || 0).toFixed(2)}%
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
