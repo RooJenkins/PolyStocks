@@ -204,7 +204,7 @@ Respond with JSON only:
   "action":"BUY|SELL|SELL_SHORT|BUY_TO_COVER|HOLD",
   "symbol":"AAPL",
   "quantity":5,
-  "reasoning":"Why this trade fits market context and strategy",
+  "reasoning":"Detailed 1-2 paragraph analysis explaining: (1) Why this specific stock/action now? What technical signals, price action, or market context support this decision? (2) How does this fit your overall strategy and risk profile? What makes you confident in this trade?",
   "confidence":0.85,
   "riskAssessment":"Low|Med|High",
   "targetPrice":200,
@@ -217,7 +217,7 @@ CRITICAL EXIT PLANNING (REQUIRED FOR ALL BUY/SELL_SHORT ACTIONS):
 - targetPrice: REQUIRED - Price at which to take profits (WILL AUTO-EXECUTE)
 - stopLoss: REQUIRED - Price at which to cut losses (WILL AUTO-EXECUTE)
 - invalidationCondition: REQUIRED - Market condition that voids your thesis (e.g., "Break below support at $180", "Volume drops below 1M shares", "RSI reversal")
-- reasoning: REQUIRED - Detailed explanation of why this trade makes sense now
+- reasoning: REQUIRED - Write 1-2 detailed paragraphs explaining your complete analysis and rationale
 
 For BUY/LONG trades:
 - targetPrice must be ABOVE currentPrice (REQUIRED)
@@ -229,8 +229,8 @@ For SELL_SHORT trades:
 - stopLoss must be ABOVE currentPrice (REQUIRED)
 - invalidationCondition must describe specific exit condition (REQUIRED)
 
-For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"Why closing this position now","confidence":0.8}
-For HOLD: {"action":"HOLD","reasoning":"Why waiting is best","confidence":0.7}`;
+For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"1-2 paragraph explanation of why you're closing this position now, including P&L analysis and market context","confidence":0.8}
+For HOLD: {"action":"HOLD","reasoning":"1-2 paragraph explanation of why waiting is the best strategy right now, including what you're watching for","confidence":0.7}`;
 }
 
 export async function getAIDecision(
