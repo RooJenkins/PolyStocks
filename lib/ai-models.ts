@@ -204,7 +204,7 @@ Respond with JSON only:
   "action":"BUY|SELL|SELL_SHORT|BUY_TO_COVER|HOLD",
   "symbol":"AAPL",
   "quantity":5,
-  "reasoning":"Detailed 1-2 paragraph analysis explaining: (1) Why this specific stock/action now? What technical signals, price action, or market context support this decision? (2) How does this fit your overall strategy and risk profile? What makes you confident in this trade?",
+  "reasoning":"IMPORTANT: Write a detailed analysis of at least 200 characters (2-3 sentences minimum). Explain: (1) What specific technical signals, price patterns, or market conditions make this the right move now? (2) How does this trade fit your strategy and risk management approach? (3) What key factors are you monitoring? Example: 'XOM is showing strong momentum with price breaking above 7-day MA (+2.3%) on elevated volume. The energy sector is benefiting from crude oil strength, and XOM's technical setup suggests continuation to $126 resistance. This trade aligns with my momentum strategy and offers 3:1 reward-risk. Will monitor crude prices and sector rotation as key factors.'",
   "confidence":0.85,
   "riskAssessment":"Low|Med|High",
   "targetPrice":200,
@@ -217,7 +217,7 @@ CRITICAL EXIT PLANNING (REQUIRED FOR ALL BUY/SELL_SHORT ACTIONS):
 - targetPrice: REQUIRED - Price at which to take profits (WILL AUTO-EXECUTE)
 - stopLoss: REQUIRED - Price at which to cut losses (WILL AUTO-EXECUTE)
 - invalidationCondition: REQUIRED - Market condition that voids your thesis (e.g., "Break below support at $180", "Volume drops below 1M shares", "RSI reversal")
-- reasoning: REQUIRED - Write 1-2 detailed paragraphs explaining your complete analysis and rationale
+- reasoning: REQUIRED - Minimum 200 characters. Write detailed analysis explaining your complete rationale and what you're monitoring.
 
 For BUY/LONG trades:
 - targetPrice must be ABOVE currentPrice (REQUIRED)
@@ -229,8 +229,8 @@ For SELL_SHORT trades:
 - stopLoss must be ABOVE currentPrice (REQUIRED)
 - invalidationCondition must describe specific exit condition (REQUIRED)
 
-For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"1-2 paragraph explanation of why you're closing this position now, including P&L analysis and market context","confidence":0.8}
-For HOLD: {"action":"HOLD","reasoning":"1-2 paragraph explanation of why waiting is the best strategy right now, including what you're watching for","confidence":0.7}`;
+For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"Detailed explanation (200+ chars): Why closing now? What's the P&L? What market conditions triggered this exit? Example: 'Closing UNH position with +$3.67 profit (1.1% gain). Healthcare sector showing weakness today with UNH down 0.8%. Taking profits as the stock approaches resistance at $328 and RSI indicates overbought conditions. Market rotation into tech reducing healthcare allocations.'","confidence":0.8}
+For HOLD: {"action":"HOLD","reasoning":"Detailed explanation (200+ chars): Why is waiting best? What signals are you monitoring? What would trigger action? Example: 'Holding cash as market shows mixed signals. S&P up 0.19% but sector rotation unclear. Monitoring energy sector momentum and crude oil prices for potential XOM entry. Also watching tech sector for pullback opportunities in NVDA/MSFT. Will act when conviction reaches 70%+ with clear technical setup.'","confidence":0.7}`;
 }
 
 export async function getAIDecision(
