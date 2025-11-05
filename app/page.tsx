@@ -1708,20 +1708,20 @@ export default function SplitViewPage() {
                           gap: '8px',
                           alignItems: 'center'
                         }}>
-                          {/* Stock symbol in pill with icon */}
+                          {/* Stock symbol in pill */}
                           <div style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            padding: '6px 12px',
+                            padding: '6px 14px',
                             backgroundColor: '#990F3D',
                             color: '#FFF1E5',
                             borderRadius: '16px',
-                            fontSize: '12px',
+                            fontSize: '13px',
                             fontWeight: '700',
-                            height: '28px'
+                            height: '28px',
+                            letterSpacing: '0.5px'
                           }}>
-                            <StockLogo symbol={position.symbol} size={13} />
                             {position.symbol}
                           </div>
                           {/* Model icon and name in same pill */}
@@ -1791,56 +1791,102 @@ export default function SplitViewPage() {
                         </div>
                       </div>
 
-                      {/* Exit Plan */}
-                      <div style={{
-                        backgroundColor: '#E0D4C3',
-                        padding: '10px 12px',
-                        borderRadius: '16px',
-                        marginBottom: '8px'
-                      }}>
-                        <div style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          color: '#990F3D',
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          Exit Plan
-                        </div>
-                        <div style={{
-                          fontSize: '11px',
-                          color: '#262A33',
-                          lineHeight: '1.5'
-                        }}>
-                          {(position as any).exitPlan}
-                        </div>
-                      </div>
+                      {/* Find the decision that opened this position */}
+                      {(() => {
+                        const positionDecision = decisions[position.agentId]?.find(
+                          (d: any) => d.symbol === position.symbol && d.action === 'BUY'
+                        );
+                        const hasExitPlan = positionDecision && (positionDecision.targetPrice || positionDecision.stopLoss || positionDecision.invalidationCondition);
+                        const hasReasoning = positionDecision && positionDecision.reasoning;
 
-                      {/* Reasoning */}
-                      <div style={{
-                        backgroundColor: '#E0D4C3',
-                        padding: '10px 12px',
-                        borderRadius: '16px'
-                      }}>
-                        <div style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          color: '#990F3D',
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          Trade Reasoning
-                        </div>
-                        <div style={{
-                          fontSize: '11px',
-                          color: '#262A33',
-                          lineHeight: '1.5'
-                        }}>
-                          {(position as any).reasoning}
-                        </div>
-                      </div>
+                        return (
+                          <>
+                            {/* Exit Plan */}
+                            {hasExitPlan && (
+                              <div style={{
+                                backgroundColor: '#E0D4C3',
+                                padding: '10px 12px',
+                                borderRadius: '16px',
+                                marginBottom: '8px'
+                              }}>
+                                <div style={{
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#990F3D',
+                                  marginBottom: '6px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}>
+                                  Exit Plan
+                                </div>
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: '#262A33',
+                                  lineHeight: '1.5'
+                                }}>
+                                  {positionDecision.targetPrice && (
+                                    <div style={{ marginBottom: '4px' }}>
+                                      <strong>Target:</strong> ${positionDecision.targetPrice.toFixed(2)}
+                                    </div>
+                                  )}
+                                  {positionDecision.stopLoss && (
+                                    <div style={{ marginBottom: '4px' }}>
+                                      <strong>Stop Loss:</strong> ${positionDecision.stopLoss.toFixed(2)}
+                                    </div>
+                                  )}
+                                  {positionDecision.invalidationCondition && (
+                                    <div style={{ color: '#66605C', fontSize: '10px', marginTop: '4px' }}>
+                                      <strong>Invalidation:</strong> {positionDecision.invalidationCondition}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Reasoning */}
+                            {hasReasoning && (
+                              <div style={{
+                                backgroundColor: '#E0D4C3',
+                                padding: '10px 12px',
+                                borderRadius: '16px'
+                              }}>
+                                <div style={{
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#990F3D',
+                                  marginBottom: '6px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}>
+                                  Trade Reasoning
+                                </div>
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: '#262A33',
+                                  lineHeight: '1.5'
+                                }}>
+                                  {positionDecision.reasoning}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Show message if no data available */}
+                            {!hasExitPlan && !hasReasoning && (
+                              <div style={{
+                                backgroundColor: '#E0D4C3',
+                                padding: '10px 12px',
+                                borderRadius: '16px',
+                                fontSize: '10px',
+                                color: '#66605C',
+                                fontStyle: 'italic',
+                                textAlign: 'center'
+                              }}>
+                                Position opened before decision tracking was implemented
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   );
                 })}
