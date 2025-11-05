@@ -58,8 +58,12 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
     ? heatmapData.filter(d => d.agentId === selectedAgentId)
     : heatmapData;
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  // Get all unique dates across all agents
+  const allDates = new Set<string>();
+  filteredData.forEach(agent => {
+    Object.keys(agent.dailyPerformance).forEach(date => allDates.add(date));
+  });
+  const sortedDates = Array.from(allDates).sort();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
@@ -71,84 +75,125 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         border: '1px solid #CCC1B7'
       }}>
         <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
-          📅 Daily Performance Heatmap
+          Daily Performance Heatmap
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filteredData.map(agent => {
-            const dates = Object.keys(agent.dailyPerformance).sort();
-            const last30Days = dates.slice(-30);
 
-            return (
-              <div key={agent.agentId} style={{ marginBottom: '12px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '8px'
-                }}>
-                  <div style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: agent.color
-                  }} />
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#262A33' }}>
-                    {agent.name}
-                  </span>
+        {sortedDates.length === 0 ? (
+          <div style={{
+            padding: '40px',
+            textAlign: 'center',
+            color: '#66605C',
+            fontSize: '12px'
+          }}>
+            No performance data available yet. Data will appear once agents start trading.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: `120px repeat(${sortedDates.length}, 30px)`,
+              gap: '2px',
+              fontSize: '10px',
+              minWidth: 'fit-content'
+            }}>
+              {/* Header row with dates */}
+              <div style={{ position: 'sticky', left: 0, backgroundColor: '#F8EBD8', zIndex: 2 }} />
+              {sortedDates.map(date => (
+                <div
+                  key={date}
+                  style={{
+                    fontSize: '9px',
+                    color: '#66605C',
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    textAlign: 'left',
+                    height: '80px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'center',
+                    padding: '4px 0'
+                  }}
+                >
+                  {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${Math.min(last30Days.length, 30)}, 1fr)`,
-                  gap: '4px',
-                  maxWidth: '100%'
-                }}>
-                  {last30Days.map(date => {
+              ))}
+
+              {/* Rows for each agent */}
+              {filteredData.map(agent => (
+                <>
+                  <div
+                    key={`label-${agent.agentId}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      position: 'sticky',
+                      left: 0,
+                      backgroundColor: '#F8EBD8',
+                      paddingRight: '8px',
+                      zIndex: 1,
+                      fontWeight: '600',
+                      fontSize: '11px',
+                      color: '#262A33'
+                    }}
+                  >
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: agent.color
+                    }} />
+                    {agent.name}
+                  </div>
+                  {sortedDates.map(date => {
                     const dayData = agent.dailyPerformance[date];
-                    const change = dayData.total;
-                    const maxChange = 50; // Normalize to $50 max change for color intensity
+                    const change = dayData?.total || 0;
+                    const maxChange = 50;
                     const intensity = Math.min(Math.abs(change) / maxChange, 1);
                     const color = change > 0
-                      ? `rgba(15, 123, 58, ${0.3 + intensity * 0.7})`
+                      ? `rgba(15, 123, 58, ${0.2 + intensity * 0.8})`
                       : change < 0
-                      ? `rgba(204, 0, 0, ${0.3 + intensity * 0.7})`
+                      ? `rgba(204, 0, 0, ${0.2 + intensity * 0.8})`
                       : '#E9DECF';
 
                     return (
                       <div
-                        key={date}
-                        title={`${date}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`}
+                        key={`${agent.agentId}-${date}`}
+                        title={`${agent.name} on ${date}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`}
                         style={{
-                          aspectRatio: '1',
+                          width: '30px',
+                          height: '30px',
                           backgroundColor: color,
                           borderRadius: '4px',
                           border: '1px solid #CCC1B7',
                           cursor: 'pointer',
-                          transition: 'transform 0.2s'
+                          transition: 'transform 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          fontWeight: '700',
+                          color: intensity > 0.5 ? '#FFF' : 'transparent'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.2)';
+                          e.currentTarget.style.transform = 'scale(1.3)';
+                          e.currentTarget.style.zIndex = '10';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.zIndex = '1';
                         }}
-                      />
+                      >
+                        {Math.abs(change) > 1 ? (change > 0 ? '▲' : '▼') : ''}
+                      </div>
                     );
                   })}
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: '4px',
-                  fontSize: '9px',
-                  color: '#66605C'
-                }}>
-                  <span>{last30Days[0]}</span>
-                  <span>{last30Days[last30Days.length - 1]}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -173,7 +218,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         </div>
       </div>
 
-      {/* Hourly Trading Activity Heatmap */}
+      {/* Trading Volume Heatmap - Day of Week */}
       <div style={{
         backgroundColor: '#F8EBD8',
         padding: '20px',
@@ -181,121 +226,146 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         border: '1px solid #CCC1B7'
       }}>
         <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
-          ⏰ Trading Activity by Hour & Day
+          Trading Activity by Day of Week
         </h3>
-        {filteredData.map(agent => {
-          const maxTrades = Math.max(...Object.values(agent.tradesByHour).map(h => h.count), 1);
 
-          return (
-            <div key={agent.agentId} style={{ marginBottom: '24px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '12px'
-              }}>
-                <div style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  backgroundColor: agent.color
-                }} />
-                <span style={{ fontSize: '12px', fontWeight: '600', color: '#262A33' }}>
-                  {agent.name}
-                </span>
+        {filteredData.some(agent => Object.keys(agent.tradesByDayOfWeek).length > 0) ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '120px repeat(7, 1fr)',
+            gap: '4px',
+            fontSize: '10px'
+          }}>
+            {/* Header row */}
+            <div style={{ position: 'sticky', left: 0, backgroundColor: '#F8EBD8', zIndex: 2 }} />
+            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, idx) => (
+              <div
+                key={day}
+                style={{
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  color: '#262A33',
+                  fontSize: '11px',
+                  padding: '8px 4px'
+                }}
+              >
+                {day}
               </div>
+            ))}
 
-              {/* Day of Week x Hour Heatmap */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                {/* Hour labels */}
-                <div style={{ display: 'flex', gap: '2px', marginLeft: '40px' }}>
-                  {[0, 4, 8, 12, 16, 20].map(hour => (
-                    <div
-                      key={hour}
-                      style={{
-                        width: '40px',
-                        fontSize: '9px',
-                        color: '#66605C',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {hour}h
-                    </div>
-                  ))}
-                </div>
+            {/* Rows for each agent */}
+            {filteredData.map(agent => {
+              const maxTrades = Math.max(...Object.values(agent.tradesByDayOfWeek).map(d => d.count), 1);
 
-                {/* Rows for each day */}
-                {dayNames.map((day, dayIndex) => (
-                  <div key={day} style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                    <div style={{
-                      width: '35px',
-                      fontSize: '10px',
+              return (
+                <>
+                  <div
+                    key={`label-${agent.agentId}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      position: 'sticky',
+                      left: 0,
+                      backgroundColor: '#F8EBD8',
+                      paddingRight: '8px',
+                      zIndex: 1,
                       fontWeight: '600',
-                      color: '#66605C',
-                      textAlign: 'right',
-                      paddingRight: '5px'
-                    }}>
-                      {day}
-                    </div>
-                    {hours.map(hour => {
-                      const trades = agent.tradesByHour[hour];
-                      const count = trades?.count || 0;
-                      const winRate = count > 0 ? (trades.wins / count) : 0.5;
-                      const intensity = count / maxTrades;
-
-                      // Color based on win rate: green for high, red for low, gray for no trades
-                      let bgColor = '#E9DECF';
-                      if (count > 0) {
-                        if (winRate > 0.6) {
-                          bgColor = `rgba(15, 123, 58, ${0.2 + intensity * 0.8})`;
-                        } else if (winRate < 0.4) {
-                          bgColor = `rgba(204, 0, 0, ${0.2 + intensity * 0.8})`;
-                        } else {
-                          bgColor = `rgba(153, 15, 61, ${0.2 + intensity * 0.6})`;
-                        }
-                      }
-
-                      return (
-                        <div
-                          key={hour}
-                          title={`${day} ${hour}:00 - ${count} trades (${(winRate * 100).toFixed(0)}% wins)`}
-                          style={{
-                            width: '10px',
-                            height: '20px',
-                            backgroundColor: bgColor,
-                            borderRadius: '2px',
-                            border: '1px solid #CCC1B7',
-                            cursor: 'pointer'
-                          }}
-                        />
-                      );
-                    })}
+                      fontSize: '11px',
+                      color: '#262A33'
+                    }}
+                  >
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: agent.color
+                    }} />
+                    {agent.name}
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                  {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
+                    const dayData = agent.tradesByDayOfWeek[dayIdx];
+                    const count = dayData?.count || 0;
+                    const winRate = count > 0 ? (dayData.wins / count) : 0;
+                    const intensity = count / maxTrades;
+
+                    let bgColor = '#E9DECF';
+                    if (count > 0) {
+                      if (winRate >= 0.5) {
+                        bgColor = `rgba(15, 123, 58, ${0.2 + intensity * 0.8})`;
+                      } else {
+                        bgColor = `rgba(204, 0, 0, ${0.2 + intensity * 0.8})`;
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={`${agent.agentId}-${dayIdx}`}
+                        title={`${agent.name}: ${count} trades, ${(winRate * 100).toFixed(0)}% win rate`}
+                        style={{
+                          height: '50px',
+                          backgroundColor: bgColor,
+                          borderRadius: '8px',
+                          border: '1px solid #CCC1B7',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          color: intensity > 0.5 ? '#FFF' : '#262A33',
+                          transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        {count > 0 && (
+                          <>
+                            <div>{count}</div>
+                            <div style={{ fontSize: '8px', opacity: 0.8 }}>
+                              {(winRate * 100).toFixed(0)}%
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{
+            padding: '40px',
+            textAlign: 'center',
+            color: '#66605C',
+            fontSize: '12px'
+          }}>
+            No trading data available yet. Data will appear once agents execute trades.
+          </div>
+        )}
+
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           gap: '16px',
-          marginTop: '12px',
+          marginTop: '16px',
           fontSize: '10px',
           color: '#66605C'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: 'rgba(15, 123, 58, 0.8)', borderRadius: '3px' }} />
-            <span>High Win Rate</span>
+            <span>Wins &gt;50%</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: 'rgba(204, 0, 0, 0.8)', borderRadius: '3px' }} />
-            <span>Low Win Rate</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#E9DECF', borderRadius: '3px', border: '1px solid #CCC1B7' }} />
-            <span>No Activity</span>
+            <span>Wins &lt;50%</span>
           </div>
         </div>
       </div>
@@ -308,7 +378,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         border: '1px solid #CCC1B7'
       }}>
         <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
-          🔥 Win/Loss Streaks
+          Win/Loss Streaks
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           {filteredData.map(agent => (
@@ -354,7 +424,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
                     fontWeight: '700',
                     color: '#0F7B3A'
                   }}>
-                    🔥 {agent.maxWinStreak}
+                    {agent.maxWinStreak}
                   </div>
                 </div>
 
@@ -373,7 +443,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
                     fontWeight: '700',
                     color: '#CC0000'
                   }}>
-                    ❄️ {agent.maxLossStreak}
+                    {agent.maxLossStreak}
                   </div>
                 </div>
 
@@ -412,7 +482,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         border: '1px solid #CCC1B7'
       }}>
         <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
-          🔗 Model Performance Correlation
+          Model Performance Correlation
         </h3>
         <div style={{
           display: 'grid',
