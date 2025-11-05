@@ -126,6 +126,20 @@ model StockPrice {
   @@index([timestamp])
 }
 
+model BenchmarkPosition {
+  id           String   @id @default(uuid())
+  agentId      String
+  symbol       String
+  shares       Float
+  initialPrice Float
+  initialValue Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([agentId, symbol])
+  @@index([agentId])
+}
+
 model NewsItem {
   id          String   @id @default(uuid())
   title       String

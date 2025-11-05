@@ -2243,6 +2243,125 @@ export default function SplitViewPage() {
                       </ResponsiveContainer>
                     </div>
 
+                    {/* Portfolio Holdings Chart */}
+                    <div style={{
+                      padding: '18px',
+                      backgroundColor: '#E9DECF',
+                      border: '1px solid #CCC1B7',
+                      borderRadius: '20px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}>
+                      <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                        Portfolio Holdings
+                      </h4>
+                      {(() => {
+                        const agentPositions = positions.filter(p => p.agentId === selectedAgent.id);
+
+                        if (agentPositions.length === 0) {
+                          return (
+                            <div style={{
+                              padding: '40px',
+                              textAlign: 'center',
+                              color: '#66605C',
+                              fontSize: '12px'
+                            }}>
+                              No active positions. All cash currently.
+                            </div>
+                          );
+                        }
+
+                        const holdingsData = agentPositions.map(position => ({
+                          ticker: position.symbol,
+                          shares: position.quantity,
+                          amount: position.quantity * position.currentPrice,
+                          currentPrice: position.currentPrice
+                        }));
+
+                        return (
+                          <>
+                            {/* Bar Chart */}
+                            <ResponsiveContainer width="100%" height={200}>
+                              <BarChart data={holdingsData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
+                                <XAxis
+                                  dataKey="ticker"
+                                  tick={{ fontSize: 10, fill: '#66605C' }}
+                                  stroke="#66605C"
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={60}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 10, fill: '#66605C' }}
+                                  stroke="#66605C"
+                                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                                />
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                                  formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Value']}
+                                />
+                                <Bar dataKey="amount" fill={selectedAgent.color} radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+
+                            {/* Detailed Holdings Table */}
+                            <div style={{
+                              marginTop: '16px',
+                              backgroundColor: '#F5E6D3',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              maxHeight: '300px',
+                              overflowY: 'auto'
+                            }}>
+                              <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '10px', color: '#262A33' }}>
+                                Detailed Holdings
+                              </h5>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 2fr 2fr',
+                                gap: '8px',
+                                fontSize: '10px'
+                              }}>
+                                {/* Header */}
+                                <div style={{ fontWeight: '700', color: '#66605C', paddingBottom: '6px', borderBottom: '1px solid #CCC1B7' }}>Ticker</div>
+                                <div style={{ fontWeight: '700', color: '#66605C', textAlign: 'right', paddingBottom: '6px', borderBottom: '1px solid #CCC1B7' }}>Shares</div>
+                                <div style={{ fontWeight: '700', color: '#66605C', textAlign: 'right', paddingBottom: '6px', borderBottom: '1px solid #CCC1B7' }}>Amount (USD)</div>
+
+                                {/* Data Rows */}
+                                {holdingsData
+                                  .sort((a, b) => b.amount - a.amount)
+                                  .map((holding, idx) => (
+                                  <>
+                                    <div key={`ticker-${idx}`} style={{ padding: '6px 0', fontWeight: '600', color: '#262A33' }}>
+                                      {holding.ticker}
+                                    </div>
+                                    <div key={`shares-${idx}`} style={{ padding: '6px 0', textAlign: 'right', color: '#262A33' }}>
+                                      {holding.shares.toFixed(4)}
+                                    </div>
+                                    <div key={`amount-${idx}`} style={{ padding: '6px 0', textAlign: 'right', fontWeight: '600', color: '#262A33' }}>
+                                      ${holding.amount.toLocaleString()}
+                                    </div>
+                                  </>
+                                ))}
+
+                                {/* Total Row */}
+                                <div style={{ paddingTop: '8px', borderTop: '2px solid #990F3D', fontWeight: '700', color: '#262A33' }}>
+                                  TOTAL
+                                </div>
+                                <div style={{ paddingTop: '8px', borderTop: '2px solid #990F3D', textAlign: 'right', fontWeight: '700', color: '#262A33' }}>
+                                  {holdingsData.reduce((sum, h) => sum + h.shares, 0).toFixed(2)} shares
+                                </div>
+                                <div style={{ paddingTop: '8px', borderTop: '2px solid #990F3D', textAlign: 'right', fontWeight: '700', color: '#990F3D' }}>
+                                  ${holdingsData.reduce((sum, h) => sum + h.amount, 0).toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
                     {/* Trade Outcome Donut Chart */}
                     <div style={{
                       padding: '18px',

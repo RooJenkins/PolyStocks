@@ -9,6 +9,7 @@ import {
 import { getBroker, getBrokerDisplayName, type BrokerType } from './brokers';
 import { validateTrade, validateExitParameters, logSafetyViolation } from './safety-limits';
 import { checkAndExecuteExits } from './exit-manager';
+import { updateBenchmarkPerformance } from './benchmark';
 
 // Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
@@ -298,31 +299,39 @@ export async function runTradingCycle() {
     stocks = await enrichStocksWithTrends(stocks);
     console.log(`✓ Added 7-day trends and moving averages\n`);
 
-    // 3. Check positions for automatic exits (Alpha Arena Phase 1)
+    // 3. Update S&P 20 benchmark performance
+    await updateBenchmarkPerformance(stocks);
+
+    // 4. Check positions for automatic exits (Alpha Arena Phase 1)
     await checkAndExecuteExits(stocks);
 
-    // 4. Calculate market trend
+    // 5. Calculate market trend
     const marketTrend = calculateMarketTrend(stocks);
     console.log(`📊 Market trend: ${marketTrend.daily >= 0 ? '+' : ''}${marketTrend.daily.toFixed(2)}% today\n`);
 
-    // 5. Fetch news for big movers (>3% change)
+    // 6. Fetch news for big movers (>3% change)
     const news = await fetchNewsForBigMovers(stocks);
 
-    // 6. Get all agents
+    // 7. Get all agents (excluding benchmark)
     const agents = await prisma.agent.findMany({
       include: {
         positions: true,
       },
+      where: {
+        NOT: {
+          id: 'benchmark-sp20'
+        }
+      }
     });
 
     console.log(`🤖 Processing ${agents.length} AI agents\n`);
 
-    // 7. Process each agent
+    // 8. Process each agent
     for (const agent of agents) {
       await processAgentTrading(agent, stocks, marketTrend, news);
     }
 
-    // 8. Update all performance metrics
+    // 9. Update all performance metrics
     await updatePerformanceMetrics();
 
     console.log('\n✅ ===== TRADING CYCLE COMPLETE =====\n');
