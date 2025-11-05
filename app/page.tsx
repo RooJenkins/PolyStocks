@@ -168,7 +168,8 @@ export default function SplitViewPage() {
   const startingValue = agents.length * 10000;
   const totalGain = totalValue - startingValue;
   const totalGainPercent = startingValue > 0 ? (totalGain / startingValue) * 100 : 0;
-  const sortedAgents = [...agents].sort((a, b) => b.roi - a.roi);
+  // Filter out S&P 20 benchmark from UI display (keep in chart data)
+  const sortedAgents = [...agents].filter(a => a.id !== 'benchmark-sp20').sort((a, b) => b.roi - a.roi);
   const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
 
   const highestAgent = sortedAgents.length > 0 ? sortedAgents[0] : null;
