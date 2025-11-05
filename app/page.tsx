@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PerformanceChartOption3 from '@/components/PerformanceChartOption3';
 import ModelIcon from '@/components/ModelIcon';
 import StockTicker from '@/components/StockTicker';
+import AdvancedHeatmaps from '@/components/AdvancedHeatmaps';
 import type { AIAgent } from '@/types';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 
@@ -808,6 +809,9 @@ export default function SplitViewPage() {
               display: 'flex',
               flexDirection: 'column'
             }}>
+
+              {/* Advanced Heatmaps Section */}
+              <AdvancedHeatmaps agents={sortedAgents} selectedAgentId={selectedAgentId} />
 
               {/* Charts Section */}
               <div style={{
