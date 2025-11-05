@@ -1469,7 +1469,14 @@ export default function SplitViewPage() {
                         </span>
                       </div>
                       <div style={{ fontSize: '10px', color: '#66605C' }}>
-                        {trade.timestamp}
+                        {new Date(trade.timestamp).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     </div>
                     <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
