@@ -109,6 +109,18 @@ export function getMultiSourceToolsForClaude(): any[] {
 }
 
 /**
+ * Get all available tools formatted for Google Gemini
+ */
+export function getMultiSourceToolsForGemini(): any[] {
+  // Convert OpenAI format to Gemini function declaration format
+  return getMultiSourceToolsForOpenAI().map((tool) => ({
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters,
+  }));
+}
+
+/**
  * Get tool usage summary across all sources
  */
 export function getMultiSourceUsageSummary(): {

@@ -1,7 +1,7 @@
 import { TOP_20_STOCKS } from './constants';
 import type { Stock } from '@/types';
 import { generateMockStockPrices } from './mock-stock-data';
-import { get_quote as yahooGetQuote } from './yahoo-finance-tools';
+import { get_quote as yahooGetQuote, get_news as yahooGetNews } from './yahoo-finance-tools';
 
 // Stock API provider types
 type StockProvider = 'yahoo_finance' | 'alpha_vantage' | 'polygon' | 'finnhub';
@@ -306,17 +306,31 @@ async function fetchFinnhubQuote(
 export async function fetchStockNews(symbols: string[] = []): Promise<any[]> {
   const config = getAPIConfig();
 
-  if (!config) {
-    return []; // No news without API
-  }
-
   switch (config.provider) {
+    case 'yahoo_finance':
+      return fetchYahooFinanceNews(symbols);
     case 'polygon':
       return fetchPolygonNews(symbols, config.apiKey!);
     case 'finnhub':
       return fetchFinnhubNews(symbols, config.apiKey!);
     default:
-      return [];
+      return fetchYahooFinanceNews(symbols);
+  }
+}
+
+async function fetchYahooFinanceNews(symbols: string[]): Promise<any[]> {
+  try {
+    const news = await yahooGetNews(symbols, 'stock-api', 'StockAPI');
+    return news.map((item: any) => ({
+      headline: item.title,
+      title: item.title,
+      publisher: item.publisher,
+      tickers: [item.symbol],
+      providerPublishTime: item.providerPublishTime,
+    }));
+  } catch (error) {
+    console.error('Error fetching Yahoo Finance news:', error);
+    return [];
   }
 }
 

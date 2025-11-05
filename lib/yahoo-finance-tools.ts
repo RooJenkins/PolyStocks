@@ -6,6 +6,7 @@
 import YahooFinance from 'yahoo-finance2';
 import { mcpCache } from './mcp-cache';
 import { mcpLogger } from './mcp-logger';
+import axios from 'axios';
 
 // Create instance of Yahoo Finance client with validation suppressed
 const yahooFinance = new YahooFinance({
@@ -232,6 +233,62 @@ export async function get_trending(
 }
 
 /**
+ * Get stock news from Yahoo Finance
+ * Uses Yahoo Finance search API to get recent news articles
+ */
+export async function get_news(
+  symbols: string[],
+  agentId: string = 'unknown',
+  agentName: string = 'Unknown'
+): Promise<any[]> {
+  const cacheKey = symbols.join(',');
+  const cached = mcpCache.get('yf_get_news', { symbols: cacheKey });
+  if (cached !== null) {
+    mcpLogger.logToolCall(agentId, agentName, 'yf_get_news', { symbols: cacheKey }, true);
+    return cached;
+  }
+
+  try {
+    const allNews: any[] = [];
+
+    // Fetch news for each symbol
+    for (const symbol of symbols) {
+      try {
+        // Use yahoo-finance2 search API to get news
+        const searchResult = await yahooFinance.search(symbol, {
+          newsCount: 5
+        });
+
+        if (searchResult.news && searchResult.news.length > 0) {
+          const newsItems = searchResult.news.map((item: any) => ({
+            symbol,
+            title: item.title || 'No title',
+            publisher: item.publisher || 'Unknown',
+            link: item.link || '',
+            providerPublishTime: item.providerPublishTime,
+          }));
+          allNews.push(...newsItems);
+        }
+      } catch (symbolError: any) {
+        console.log(`  ⚠️  No news found for ${symbol}`);
+      }
+    }
+
+    // Sort by publish time (most recent first) and take top 10
+    allNews.sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0));
+    const result = allNews.slice(0, 10);
+
+    mcpCache.set('yf_get_news', { symbols: cacheKey }, result);
+    mcpLogger.logToolCall(agentId, agentName, 'yf_get_news', { symbols: cacheKey }, false);
+
+    return result;
+  } catch (error: any) {
+    console.log(`  ⚠️  Yahoo Finance news error: ${error.message}`);
+    return [];
+  }
+}
+
+/**
  * Get available tools for OpenAI format
  */
 export function getYahooFinanceToolsForOpenAI(): any[] {
@@ -307,6 +364,27 @@ export function getYahooFinanceToolsForOpenAI(): any[] {
         },
       },
     },
+    {
+      type: 'function',
+      function: {
+        name: 'yf_get_news',
+        description:
+          'Get recent news articles for one or more stock symbols from Yahoo Finance (FREE)',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbols: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'Array of stock symbols to get news for (e.g. ["AAPL", "TSLA", "NVDA"])',
+            },
+          },
+          required: ['symbols'],
+        },
+      },
+    },
   ];
 }
 
@@ -333,6 +411,8 @@ export async function callYahooFinanceTool(
       return await get_company_info(args.symbol, agentId, agentName);
     case 'yf_get_trending':
       return await get_trending(agentId, agentName);
+    case 'yf_get_news':
+      return await get_news(args.symbols || [], agentId, agentName);
     default:
       throw new Error(`Unknown Yahoo Finance tool: ${toolName}`);
   }

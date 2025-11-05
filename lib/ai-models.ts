@@ -2,25 +2,17 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
+import type { Stock } from '@/types';
 import {
   getMultiSourceToolsForOpenAI,
+  getMultiSourceToolsForClaude,
+  getMultiSourceToolsForGemini,
   callMultiSourceTool,
   getMultiSourceUsageSummary,
 } from './multi-source-tools';
 
 interface MarketContext {
-  stocks: Array<{
-    symbol: string;
-    name: string;
-    price: number;
-    change: number;
-    changePercent: number;
-    weekTrend?: number; // 7-day trend
-    ma7?: number; // 7-day moving average
-    ma30?: number; // 30-day moving average
-    volume?: number;
-    volumeStatus?: 'high' | 'low' | 'normal';
-  }>;
+  stocks: Stock[];
   cashBalance: number;
   accountValue: number;
   positions: Array<{
@@ -94,21 +86,40 @@ function createPrompt(context: MarketContext, maxToolCalls: number = 15, useMCPT
     // Today's change
     parts.push(`(${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(1)}%)`);
 
-    // 7-day trend if available
+    // 7-day and 30-day trends if available
     if (s.weekTrend !== undefined) {
       parts.push(`7d:${s.weekTrend >= 0 ? '+' : ''}${s.weekTrend.toFixed(1)}%`);
     }
-
-    // Moving averages if available
-    if (s.ma7 !== undefined && s.ma30 !== undefined) {
-      const vsMA7 = ((s.price - s.ma7) / s.ma7 * 100).toFixed(1);
-      const vsMA30 = ((s.price - s.ma30) / s.ma30 * 100).toFixed(1);
-      parts.push(`MA7:${Number(vsMA7) >= 0 ? '+' : ''}${vsMA7}%`);
-      parts.push(`MA30:${Number(vsMA30) >= 0 ? '+' : ''}${vsMA30}%`);
+    if (s.monthTrend !== undefined) {
+      parts.push(`30d:${s.monthTrend >= 0 ? '+' : ''}${s.monthTrend.toFixed(1)}%`);
     }
 
-    // Volume status if available
-    if (s.volumeStatus) {
+    // Moving averages if available
+    if (s.ma7 !== undefined) {
+      const vsMA7 = ((s.price - s.ma7) / s.ma7 * 100).toFixed(1);
+      parts.push(`MA7:${Number(vsMA7) >= 0 ? '+' : ''}${vsMA7}%`);
+    }
+    if (s.ma30 !== undefined) {
+      const vsMA30 = ((s.price - s.ma30) / s.ma30 * 100).toFixed(1);
+      parts.push(`MA30:${Number(vsMA30) >= 0 ? '+' : ''}${vsMA30}%`);
+    }
+    if (s.ma90 !== undefined) {
+      const vsMA90 = ((s.price - s.ma90) / s.ma90 * 100).toFixed(1);
+      parts.push(`MA90:${Number(vsMA90) >= 0 ? '+' : ''}${vsMA90}%`);
+    }
+
+    // 52-week high/low if available
+    if (s.high52w !== undefined && s.low52w !== undefined) {
+      const vsHigh = ((s.price - s.high52w) / s.high52w * 100).toFixed(1);
+      const vsLow = ((s.price - s.low52w) / s.low52w * 100).toFixed(1);
+      parts.push(`52wH:${Number(vsHigh) >= 0 ? '+' : ''}${vsHigh}%`);
+      parts.push(`52wL:${Number(vsLow) >= 0 ? '+' : ''}${vsLow}%`);
+    }
+
+    // Volume trend if available
+    if (s.volumeTrend !== undefined) {
+      parts.push(`VolTrend:${s.volumeTrend >= 0 ? '+' : ''}${s.volumeTrend.toFixed(0)}%`);
+    } else if (s.volumeStatus) {
       parts.push(`Vol:${s.volumeStatus}`);
     }
 
@@ -129,9 +140,11 @@ Positions: ${positionsStr}
 ${marketTrendStr}
 ${stocksStr}${newsStr}
 
-Format: Symbol:Price (Today%) 7d:Week% MA7:vsMA7% MA30:vsMA30% Vol:status
-- MA7/MA30: % above/below moving average (positive = bullish momentum)
-- Vol: high/normal/low trading volume
+Format: Symbol:Price (Today%) 7d:Week% 30d:Month% MA7:vsMA7% MA30:vsMA30% MA90:vsMA90% 52wH:vsHigh% 52wL:vsLow% VolTrend:trend%
+- 7d/30d: Price trend over 7/30 days
+- MA7/MA30/MA90: % above/below moving average (positive = bullish momentum)
+- 52wH/52wL: % from 52-week high/low (near high = potential resistance, near low = potential support)
+- VolTrend: Volume vs 7-day average (high volume = strong conviction)
 
 ==== YOUR PERFORMANCE ====
 ${agentStatsStr || 'No trade history yet'}
@@ -373,29 +386,225 @@ async function callClaude(context: MarketContext, agentId: string = 'claude', ag
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
 
-  // Using Claude Haiku instead of Sonnet (95% cost reduction)
-  const message = await anthropic.messages.create({
+  // Use tool calling for Claude with same budget as GPT-4o Mini
+  return await callClaudeWithTools(anthropic, context, agentId, agentName);
+}
+
+async function callClaudeWithTools(
+  anthropic: Anthropic,
+  context: MarketContext,
+  agentId: string,
+  agentName: string
+): Promise<TradingDecision> {
+  const MAX_TOOL_CALLS = 15;
+  let toolCallsUsed = 0;
+
+  const tools = getMultiSourceToolsForClaude();
+  const messages: Anthropic.MessageParam[] = [
+    {
+      role: 'user',
+      content: createPrompt(context, MAX_TOOL_CALLS, true),
+    },
+  ];
+
+  console.log(`  🔧 Multi-source function calling enabled (${MAX_TOOL_CALLS} tool budget)`);
+
+  while (toolCallsUsed < MAX_TOOL_CALLS) {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 800, // Increased from 200 for better reasoning
+      messages,
+      tools,
+      temperature: 0.7,
+    });
+
+    // Check if Claude wants to use tools
+    const hasToolUse = response.content.some((block) => block.type === 'tool_use');
+
+    if (!hasToolUse) {
+      // Claude is done and returned final answer
+      const textBlock = response.content.find((block) => block.type === 'text');
+      if (textBlock && textBlock.type === 'text') {
+        console.log(`  ✅ Decision made after ${toolCallsUsed} tool calls`);
+        return parseAIResponse(textBlock.text);
+      }
+      throw new Error('Claude returned no decision or tool calls');
+    }
+
+    // Add Claude's response to conversation
+    messages.push({
+      role: 'assistant',
+      content: response.content,
+    });
+
+    // Execute tool calls
+    const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+    for (const block of response.content) {
+      if (block.type === 'tool_use') {
+        toolCallsUsed++;
+        console.log(`  🔧 Tool call ${toolCallsUsed}/${MAX_TOOL_CALLS}: ${block.name}`);
+
+        try {
+          const result = await callMultiSourceTool(block.name, block.input, agentId, agentName);
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: JSON.stringify(result),
+          });
+        } catch (error: any) {
+          console.log(`  ⚠️  Tool error: ${error.message}`);
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: JSON.stringify({ error: error.message }),
+            is_error: true,
+          });
+        }
+      }
+    }
+
+    // Add tool results to conversation
+    messages.push({
+      role: 'user',
+      content: toolResults,
+    });
+
+    // Add budget reminder if not exhausted
+    if (toolCallsUsed < MAX_TOOL_CALLS) {
+      messages.push({
+        role: 'user',
+        content: `Tool calls used: ${toolCallsUsed}/${MAX_TOOL_CALLS}. ${MAX_TOOL_CALLS - toolCallsUsed} remaining. Make your decision or continue investigating.`,
+      });
+    }
+  }
+
+  // Budget exhausted, force decision
+  console.log(`  ⚠️  Tool budget exhausted (${MAX_TOOL_CALLS} calls), forcing decision`);
+  const finalResponse = await anthropic.messages.create({
     model: 'claude-3-5-haiku-20241022',
-    max_tokens: 200, // Reduced from 1024
+    max_tokens: 500,
     messages: [
+      ...messages,
       {
         role: 'user',
-        content: createPrompt(context),
+        content: 'Budget exhausted. Make your final trading decision NOW based on the data you gathered. Respond with JSON only.',
       },
     ],
+    temperature: 0.7,
   });
 
-  const response = message.content[0].type === 'text' ? message.content[0].text : '{}';
-  return parseAIResponse(response);
+  const textBlock = finalResponse.content.find((block) => block.type === 'text');
+  const content = textBlock && textBlock.type === 'text' ? textBlock.text : '{"action":"HOLD","reasoning":"Budget exhausted","confidence":0.5}';
+  return parseAIResponse(content);
 }
 
 async function callGemini(context: MarketContext): Promise<TradingDecision> {
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
-  const result = await model.generateContent(createPrompt(context));
-  const response = result.response.text();
-  return parseAIResponse(response);
+  // Use function calling for Gemini
+  return await callGeminiWithTools(genAI, context, 'gemini', 'Gemini Flash');
+}
+
+async function callGeminiWithTools(
+  genAI: GoogleGenerativeAI,
+  context: MarketContext,
+  agentId: string,
+  agentName: string
+): Promise<TradingDecision> {
+  const MAX_TOOL_CALLS = 15;
+  let toolCallsUsed = 0;
+
+  const tools = getMultiSourceToolsForGemini();
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash-exp',
+    tools: [{ functionDeclarations: tools }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 800,
+    },
+  });
+
+  console.log(`  🔧 Multi-source function calling enabled (${MAX_TOOL_CALLS} tool budget)`);
+
+  const chat = model.startChat({
+    history: [
+      {
+        role: 'user',
+        parts: [{
+          text: `You are an expert stock trader. You have access to multi-source financial data tools:
+- Yahoo Finance (yf_*): Unlimited free quotes, historical data, company info, trending stocks
+- Alpha Vantage (get_*): Technical indicators (RSI, MACD), news sentiment (LIMITED: 25 calls/day, use sparingly!)
+
+Use them wisely to make informed trading decisions. Budget: ${MAX_TOOL_CALLS} tool calls maximum.
+
+Strategy: Prefer Yahoo Finance tools (unlimited), use Alpha Vantage only for technical indicators you really need.`
+        }],
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood. I will use the tools efficiently within the budget to make informed trading decisions.' }],
+      },
+    ],
+  });
+
+  while (toolCallsUsed < MAX_TOOL_CALLS) {
+    const result = await chat.sendMessage(
+      toolCallsUsed === 0
+        ? createPrompt(context, MAX_TOOL_CALLS, true)
+        : `Tool calls used: ${toolCallsUsed}/${MAX_TOOL_CALLS}. ${MAX_TOOL_CALLS - toolCallsUsed} remaining. Make your decision or continue investigating.`
+    );
+
+    const response = result.response;
+    const functionCalls = response.functionCalls();
+
+    // If no function calls, Gemini is done
+    if (!functionCalls || functionCalls.length === 0) {
+      const text = response.text();
+      console.log(`  ✅ Decision made after ${toolCallsUsed} tool calls`);
+      return parseAIResponse(text);
+    }
+
+    // Execute function calls
+    const functionResponses: any[] = [];
+
+    for (const call of functionCalls) {
+      toolCallsUsed++;
+      console.log(`  🔧 Tool call ${toolCallsUsed}/${MAX_TOOL_CALLS}: ${call.name}`);
+
+      try {
+        const result = await callMultiSourceTool(call.name, call.args, agentId, agentName);
+        functionResponses.push({
+          functionResponse: {
+            name: call.name,
+            response: result,
+          },
+        });
+      } catch (error: any) {
+        console.log(`  ⚠️  Tool error: ${error.message}`);
+        functionResponses.push({
+          functionResponse: {
+            name: call.name,
+            response: { error: error.message },
+          },
+        });
+      }
+
+      if (toolCallsUsed >= MAX_TOOL_CALLS) break;
+    }
+
+    // Send function responses back to Gemini
+    await chat.sendMessage(functionResponses);
+  }
+
+  // Budget exhausted, force decision
+  console.log(`  ⚠️  Tool budget exhausted (${MAX_TOOL_CALLS} calls), forcing decision`);
+  const finalResult = await chat.sendMessage(
+    'Budget exhausted. Make your final trading decision NOW based on the data you gathered. Respond with JSON only.'
+  );
+
+  const content = finalResult.response.text() || '{"action":"HOLD","reasoning":"Budget exhausted","confidence":0.5}';
+  return parseAIResponse(content);
 }
 
 async function callDeepSeek(context: MarketContext): Promise<TradingDecision> {
@@ -414,7 +623,7 @@ async function callDeepSeek(context: MarketContext): Promise<TradingDecision> {
         },
       ],
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 1000, // Increased from 500
     },
     {
       headers: {
@@ -447,7 +656,7 @@ async function callQwen(context: MarketContext): Promise<TradingDecision> {
       },
       parameters: {
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 1000, // Increased from 500
       },
     },
     {

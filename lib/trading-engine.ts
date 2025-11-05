@@ -91,14 +91,15 @@ function calculateMarketTrend(stocks: Stock[]): { daily: number; weekly: number 
 
 // Helper: Enrich stocks with historical data
 async function enrichStocksWithTrends(stocks: Stock[]): Promise<Stock[]> {
-  // Get stock price history from the last 30 days
+  // Get stock price history from the last 90 days (increased from 30)
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const stockPrices = await prisma.stockPrice.findMany({
     where: {
       timestamp: {
-        gte: thirtyDaysAgo,
+        gte: ninetyDaysAgo,
       },
     },
     orderBy: { timestamp: 'asc' },
@@ -122,60 +123,119 @@ async function enrichStocksWithTrends(stocks: Stock[]): Promise<Stock[]> {
       ? ((stock.price - sevenDayPrices[0]) / sevenDayPrices[0]) * 100
       : undefined;
 
+    // Calculate 30-day trend
+    const thirtyDayPrices = stockPrices
+      .filter(sp => sp.symbol === stock.symbol && sp.timestamp >= thirtyDaysAgo)
+      .map(sp => sp.price);
+
+    const monthTrend = thirtyDayPrices.length >= 2
+      ? ((stock.price - thirtyDayPrices[0]) / thirtyDayPrices[0]) * 100
+      : undefined;
+
     // Calculate moving averages
     const ma7 = sevenDayPrices.length > 0
       ? sevenDayPrices.reduce((a, b) => a + b, 0) / sevenDayPrices.length
       : undefined;
 
-    const ma30 = historicalPrices.length > 0
+    const ma30 = thirtyDayPrices.length > 0
+      ? thirtyDayPrices.reduce((a, b) => a + b, 0) / thirtyDayPrices.length
+      : undefined;
+
+    const ma90 = historicalPrices.length > 0
       ? historicalPrices.reduce((a, b) => a + b, 0) / historicalPrices.length
+      : undefined;
+
+    // Calculate 52-week high/low (using 90 days as proxy since we have 90 days of data)
+    const high52w = historicalPrices.length > 0
+      ? Math.max(...historicalPrices)
+      : undefined;
+
+    const low52w = historicalPrices.length > 0
+      ? Math.min(...historicalPrices)
+      : undefined;
+
+    // Calculate volume trend (if volume data available)
+    const recentVolumes = stockPrices
+      .filter(sp => sp.symbol === stock.symbol && sp.timestamp >= sevenDaysAgo)
+      .map(sp => sp.volume)
+      .filter(v => v !== undefined && v !== null);
+
+    const avgVolume = recentVolumes.length > 0
+      ? recentVolumes.reduce((a, b) => (a || 0) + (b || 0), 0)! / recentVolumes.length
+      : undefined;
+
+    const volumeTrend = avgVolume && stock.volume
+      ? ((stock.volume - avgVolume) / avgVolume) * 100
       : undefined;
 
     return {
       ...stock,
       weekTrend,
+      monthTrend,
       ma7,
       ma30,
+      ma90,
+      high52w,
+      low52w,
+      avgVolume,
+      volumeTrend,
     };
   });
 }
 
 // Helper: Fetch news for stocks with significant moves
 async function fetchNewsForBigMovers(stocks: Stock[]): Promise<Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>> {
-  // Filter stocks with >3% absolute change
-  const bigMovers = stocks.filter(s => Math.abs(s.changePercent) > 3);
+  // Filter stocks with >2% absolute change (lowered from 3%)
+  const bigMovers = stocks.filter(s => Math.abs(s.changePercent) > 2);
 
   if (bigMovers.length === 0) {
     return [];
   }
 
-  console.log(`📰 Fetching news for ${bigMovers.length} stocks with >3% moves...`);
+  console.log(`📰 Fetching news for ${bigMovers.length} stocks with >2% moves...`);
 
   const news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }> = [];
 
   try {
+    // Fetch news for ALL big movers, not just first symbol
     const newsData = await fetchStockNews(bigMovers.map(s => s.symbol));
 
-    // Take top 3 most recent news items
-    const topNews = newsData.slice(0, 3);
+    // Take top 10 most recent news items (increased from 3)
+    const topNews = newsData.slice(0, 10);
 
     for (const item of topNews) {
-      // Simple sentiment analysis based on keywords
+      // Improved sentiment analysis with context awareness
       const headline = (item.headline || item.title || '').toLowerCase();
       let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
 
-      const positiveWords = ['up', 'surge', 'gain', 'beat', 'record', 'high', 'profit', 'growth', 'success'];
-      const negativeWords = ['down', 'fall', 'drop', 'miss', 'loss', 'low', 'decline', 'concern', 'warning'];
+      // Enhanced keyword lists with weights
+      const strongPositiveWords = ['surge', 'soar', 'beat', 'record high', 'breakthrough', 'skyrocket'];
+      const positiveWords = ['up', 'gain', 'high', 'profit', 'growth', 'success', 'jump', 'rally', 'advance', 'boost'];
+      const strongNegativeWords = ['plunge', 'crash', 'collapse', 'disaster', 'plummet'];
+      const negativeWords = ['down', 'fall', 'drop', 'miss', 'loss', 'low', 'decline', 'concern', 'warning', 'slump', 'tumble'];
 
-      if (positiveWords.some(word => headline.includes(word))) {
+      // Context-aware negation detection
+      const hasNegation = /\b(not|n't|no|never|despite|but|however)\b/i.test(headline);
+
+      // Calculate sentiment score
+      let score = 0;
+      if (strongPositiveWords.some(word => headline.includes(word))) score += 2;
+      if (positiveWords.some(word => headline.includes(word))) score += 1;
+      if (strongNegativeWords.some(word => headline.includes(word))) score -= 2;
+      if (negativeWords.some(word => headline.includes(word))) score -= 1;
+
+      // Reverse sentiment if negation detected
+      if (hasNegation) score *= -1;
+
+      if (score > 0) {
         sentiment = 'positive';
-      } else if (negativeWords.some(word => headline.includes(word))) {
+      } else if (score < 0) {
         sentiment = 'negative';
       }
 
       news.push({
         symbol: (item.tickers && item.tickers[0]) || bigMovers[0].symbol,
-        headline: (item.headline || item.title || 'No headline').slice(0, 100), // Truncate to 100 chars
+        headline: (item.headline || item.title || 'No headline').slice(0, 200), // Increased to 200 chars
         sentiment,
       });
     }

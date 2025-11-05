@@ -4,6 +4,17 @@ export interface Stock {
   price: number;
   change: number;
   changePercent: number;
+  volume?: number;
+  weekTrend?: number;
+  monthTrend?: number;
+  ma7?: number;
+  ma30?: number;
+  ma90?: number;
+  high52w?: number;
+  low52w?: number;
+  avgVolume?: number;
+  volumeTrend?: number;
+  volumeStatus?: 'high' | 'low' | 'normal';
 }
 
 export interface AIAgent {
