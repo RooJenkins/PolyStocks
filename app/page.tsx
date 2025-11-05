@@ -169,8 +169,8 @@ export default function SplitViewPage() {
   const sortedAgents = [...agents].sort((a, b) => b.roi - a.roi);
   const selectedAgent = selectedAgentId ? agents.find(a => a.id === selectedAgentId) : null;
 
-  const highestAgent = sortedAgents[0];
-  const lowestAgent = sortedAgents[sortedAgents.length - 1];
+  const highestAgent = sortedAgents.length > 0 ? sortedAgents[0] : null;
+  const lowestAgent = sortedAgents.length > 0 ? sortedAgents[sortedAgents.length - 1] : null;
 
   const filteredTrades = tradeFilter === 'all'
     ? trades
