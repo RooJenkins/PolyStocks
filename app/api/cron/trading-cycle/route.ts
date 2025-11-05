@@ -4,7 +4,7 @@ import { runTradingCycle } from '@/lib/trading-engine';
 /**
  * POST /api/cron/trading-cycle
  * Vercel Cron Job endpoint to run the AI trading cycle
- * Runs every 5 minutes during market hours
+ * Runs every 1 hour during market hours (9:30 AM - 4:30 PM ET)
  */
 export async function POST(request: NextRequest) {
   // Verify the request is from Vercel Cron
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     message: 'Trading cycle cron endpoint is active',
-    schedule: 'Every 5 minutes during market hours (9:30 AM - 4:00 PM ET)',
+    schedule: 'Every 1 hour during market hours (9:30 AM - 4:30 PM ET, Mon-Fri)',
     nextRun: 'Managed by Vercel Cron'
   });
 }

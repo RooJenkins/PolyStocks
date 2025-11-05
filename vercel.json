@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/cron/trading-cycle",
-      "schedule": "30 9 * * 1-5"
+      "schedule": "30 14-20 * * 1-5"
     }
   ]
 }
