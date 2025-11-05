@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import PerformanceChartOption3 from '@/components/PerformanceChartOption3';
 import ModelIcon from '@/components/ModelIcon';
+import StockTicker from '@/components/StockTicker';
 import type { AIAgent } from '@/types';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 
@@ -307,79 +308,8 @@ export default function SplitViewPage() {
         </div>
       </div>
 
-      {/* Pill-Shaped Carousel Ticker */}
-      <div style={{
-        backgroundColor: '#FFF1E5',
-        borderBottom: '1px solid #CCC1B7',
-        overflow: 'hidden',
-        flexShrink: 0,
-        position: 'relative',
-        padding: '8px 0'
-      }}>
-        <style>
-          {`
-            @keyframes scroll {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
-            }
-            .ticker-scroll {
-              animation: scroll 30s linear infinite;
-            }
-            .ticker-scroll:hover {
-              animation-play-state: paused;
-            }
-          `}
-        </style>
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          paddingLeft: '12px'
-        }} className="ticker-scroll">
-          {[...stocks, ...stocks].map((stock, idx) => (
-            <div key={idx} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
-              backgroundColor: '#F5E6D3',
-              borderRadius: '24px',
-              border: '1px solid #CCC1B7',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06)'
-            }}>
-              <div style={{
-                fontSize: '10px',
-                fontWeight: '700',
-                fontFamily: 'system-ui, sans-serif',
-                color: '#262A33',
-                letterSpacing: '0.3px'
-              }}>
-                {stock.symbol}
-              </div>
-              <div style={{
-                fontSize: '10px',
-                fontWeight: '600',
-                fontFamily: 'system-ui, sans-serif',
-                color: '#33302E'
-              }}>
-                ${stock.currentPrice?.toFixed(2) || stock.price?.toFixed(2) || 'N/A'}
-              </div>
-              <div style={{
-                fontSize: '9px',
-                fontWeight: '700',
-                fontFamily: 'system-ui, sans-serif',
-                color: (stock.changePercent || stock.change) >= 0 ? '#0F7B3A' : '#CC0000',
-                padding: '2px 6px',
-                backgroundColor: (stock.changePercent || stock.change) >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
-                borderRadius: '10px',
-                border: `1px solid ${(stock.changePercent || stock.change) >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
-              }}>
-                {(stock.changePercent || stock.change) >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent || stock.change || 0).toFixed(2)}%
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Stock Ticker Carousel */}
+      <StockTicker />
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">

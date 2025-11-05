@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AnimatedNumber from './AnimatedNumber';
-import StockLogo from './StockLogo';
 import type { Stock } from '@/types';
 
 export default function StockTicker() {
@@ -30,55 +28,99 @@ export default function StockTicker() {
 
   if (loading) {
     return (
-      <div className="w-full border-b border-[var(--border)] bg-[var(--card-bg)]">
-        <div className="container mx-auto px-4 py-3">
-          <div className="text-sm text-gray-500">Loading market data...</div>
+      <div style={{
+        backgroundColor: '#FFF1E5',
+        borderBottom: '1px solid #CCC1B7',
+        overflow: 'hidden',
+        flexShrink: 0,
+        position: 'relative',
+        padding: '8px 0'
+      }}>
+        <div style={{
+          fontSize: '10px',
+          color: '#66605C',
+          textAlign: 'center',
+          fontFamily: 'system-ui, sans-serif'
+        }}>
+          Loading market data...
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="w-full border-b border-[var(--border)] bg-[var(--card-bg)] overflow-hidden">
-      <div className="relative">
-        <style jsx>{`
-          @keyframes scroll {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(-50%);
-            }
-          }
-          .scroll-container {
-            animation: scroll 60s linear infinite;
-          }
-          .scroll-container:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
+  if (stocks.length === 0) {
+    return null;
+  }
 
-        <div className="scroll-container flex py-3">
-          {/* Duplicate the stocks array for seamless looping */}
-          {[...stocks, ...stocks].map((stock, index) => (
-            <div
-              key={`${stock.symbol}-${index}`}
-              className="flex items-center gap-6 px-10 border-r border-[var(--border)] whitespace-nowrap min-w-[220px]"
-            >
-              <div className="flex items-center gap-2">
-                <StockLogo symbol={stock.symbol} size={16} />
-                <div className="text-sm font-bold text-white">{stock.symbol}</div>
-              </div>
-              <div
-                className={`text-sm font-mono font-semibold ${
-                  stock.change >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'
-                }`}
-              >
-                <AnimatedNumber value={stock.price} decimals={2} prefix="$" className="font-mono" />
-              </div>
+  return (
+    <div style={{
+      backgroundColor: '#FFF1E5',
+      borderBottom: '1px solid #CCC1B7',
+      overflow: 'hidden',
+      flexShrink: 0,
+      position: 'relative',
+      padding: '8px 0'
+    }}>
+      <style jsx>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .ticker-scroll {
+          animation: scroll 30s linear infinite;
+        }
+        .ticker-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        paddingLeft: '12px'
+      }} className="ticker-scroll">
+        {[...stocks, ...stocks].map((stock, idx) => (
+          <div key={idx} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 14px',
+            backgroundColor: '#F5E6D3',
+            borderRadius: '24px',
+            border: '1px solid #CCC1B7',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06)'
+          }}>
+            <div style={{
+              fontSize: '10px',
+              fontWeight: '700',
+              fontFamily: 'system-ui, sans-serif',
+              color: '#262A33',
+              letterSpacing: '0.3px'
+            }}>
+              {stock.symbol}
             </div>
-          ))}
-        </div>
+            <div style={{
+              fontSize: '10px',
+              fontWeight: '600',
+              fontFamily: 'system-ui, sans-serif',
+              color: '#33302E'
+            }}>
+              ${stock.price?.toFixed(2) || 'N/A'}
+            </div>
+            <div style={{
+              fontSize: '9px',
+              fontWeight: '700',
+              fontFamily: 'system-ui, sans-serif',
+              color: (stock.changePercent || 0) >= 0 ? '#0F7B3A' : '#CC0000',
+              padding: '2px 6px',
+              backgroundColor: (stock.changePercent || 0) >= 0 ? 'rgba(15, 123, 58, 0.1)' : 'rgba(204, 0, 0, 0.1)',
+              borderRadius: '10px',
+              border: `1px solid ${(stock.changePercent || 0) >= 0 ? 'rgba(15, 123, 58, 0.2)' : 'rgba(204, 0, 0, 0.2)'}`
+            }}>
+              {(stock.changePercent || 0) >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent || 0).toFixed(2)}%
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
