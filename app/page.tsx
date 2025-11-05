@@ -784,7 +784,7 @@ export default function SplitViewPage() {
                           borderRadius: '16px',
                           fontWeight: '700'
                         }}>
-                          ${agent.totalPnL?.toLocaleString()}
+                          {(agent.totalPnL || 0) >= 0 ? '+' : ''}${agent.totalPnL?.toLocaleString()}
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right' }}>
