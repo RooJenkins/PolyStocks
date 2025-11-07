@@ -1,55 +1,59 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function HowItWorksPage() {
+  const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
   return (
     <div style={{
-      height: '100vh',
+      minHeight: '100vh',
       backgroundColor: '#E9DECF',
-      padding: '4px',
+      padding: '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
-      overflow: 'hidden'
+      overflow: 'auto'
     }}>
-      <div style={{ maxWidth: '1900px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
-          padding: '4px 12px',
-          borderRadius: '16px',
+          padding: '16px 24px',
+          borderRadius: '20px',
           border: '2px solid #990F3D',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              fontSize: '7px',
+              fontSize: '11px',
               fontWeight: '700',
               color: '#990F3D',
               textTransform: 'uppercase',
-              letterSpacing: '0.8px',
-              padding: '3px 8px',
+              letterSpacing: '1px',
+              padding: '6px 12px',
               backgroundColor: 'rgba(153, 15, 61, 0.15)',
-              borderRadius: '10px',
+              borderRadius: '12px',
               border: '1px solid rgba(153, 15, 61, 0.3)'
             }}>
               System Architecture
             </div>
             <h1 style={{
-              fontSize: '15px',
+              fontSize: '28px',
               fontWeight: '600',
               margin: 0,
-              letterSpacing: '-0.3px',
+              letterSpacing: '-0.5px',
               color: '#262A33'
             }}>
               How PolyStocks Works
             </h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              fontSize: '9px',
+              fontSize: '14px',
               color: '#66605C',
               fontFamily: 'Georgia, serif'
             }}>
@@ -58,16 +62,16 @@ export default function HowItWorksPage() {
             <Link
               href="/"
               style={{
-                padding: '5px 12px',
+                padding: '10px 20px',
                 background: 'linear-gradient(135deg, #990F3D 0%, #b8123f 100%)',
                 color: '#FFF',
                 textDecoration: 'none',
-                borderRadius: '14px',
-                fontSize: '10px',
+                borderRadius: '16px',
+                fontSize: '14px',
                 fontWeight: '600',
                 whiteSpace: 'nowrap',
                 border: '1px solid rgba(255,255,255,0.2)',
-                boxShadow: '0 2px 4px rgba(153, 15, 61, 0.3)'
+                boxShadow: '0 2px 6px rgba(153, 15, 61, 0.3)'
               }}
             >
               ← Dashboard
@@ -75,533 +79,804 @@ export default function HowItWorksPage() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Hero Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, #990F3D 0%, #b8123f 100%)',
+          padding: '40px',
+          borderRadius: '20px',
+          color: '#FFF',
+          textAlign: 'center',
+          boxShadow: '0 6px 20px rgba(153, 15, 61, 0.3)'
+        }}>
+          <h2 style={{
+            fontSize: '36px',
+            fontWeight: '700',
+            margin: '0 0 16px 0',
+            letterSpacing: '-0.5px'
+          }}>
+            Watch AI Models Battle in Real-Time Stock Trading
+          </h2>
+          <p style={{
+            fontSize: '18px',
+            lineHeight: '1.6',
+            margin: '0 auto',
+            maxWidth: '800px',
+            opacity: 0.95
+          }}>
+            Six leading AI models from OpenAI, Anthropic, Google, and more compete 24/7 in a simulated stock market.
+            Each AI makes autonomous trading decisions every 30 minutes, using real market data and technical indicators.
+          </p>
+          <div style={{
+            display: 'flex',
+            gap: '32px',
+            justifyContent: 'center',
+            marginTop: '32px',
+            flexWrap: 'wrap'
+          }}>
+            <div>
+              <div style={{ fontSize: '32px', fontWeight: '700' }}>$10,000</div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>Starting Capital</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '32px', fontWeight: '700' }}>30min</div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>Trading Cycles</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '32px', fontWeight: '700' }}>16/day</div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>Decisions Daily</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '32px', fontWeight: '700' }}>100%</div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>Transparent</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trading Cycle Section */}
         <div style={{
           background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
-          borderRadius: '16px',
-          padding: '6px',
-          flex: 1,
-          display: 'grid',
-          gridTemplateRows: 'auto 1fr auto',
-          gap: '5px',
-          overflow: 'hidden',
+          borderRadius: '20px',
+          padding: '32px',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
           border: '1px solid #CCC1B7'
         }}>
-          {/* Top Section */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: 0
+            }}>
+              30-Minute Trading Cycle
+            </h2>
+            <div style={{
+              background: 'linear-gradient(135deg, #990F3D 0%, #b8123f 100%)',
+              color: '#FFF',
+              padding: '8px 16px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 2px 8px rgba(153, 15, 61, 0.3)'
+            }}>
+              Every 30 Minutes
+            </div>
+          </div>
+
+          {/* Trading Cycle Steps */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1.4fr 240px 240px',
-            gap: '5px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px'
           }}>
-            {/* Trading Cycle */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-            }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #990F3D 0%, #b8123f 100%)',
-                color: '#FFF',
-                padding: '3px 8px',
-                borderRadius: '8px',
-                textAlign: 'center',
-                fontWeight: '700',
-                fontSize: '7px',
-                letterSpacing: '0.6px',
-                marginBottom: '5px',
-                boxShadow: '0 2px 4px rgba(153, 15, 61, 0.3)'
+            {[
+              {
+                num: '1',
+                title: 'FETCH DATA',
+                icon: '📊',
+                desc: 'Collect real-time stock prices, technical indicators (RSI, MACD, SMA, EMA), and latest market news',
+                details: 'Yahoo Finance + Alpha Vantage APIs'
+              },
+              {
+                num: '2',
+                title: 'ANALYZE',
+                icon: '🤖',
+                desc: 'Each AI model analyzes market data using up to 15 function calls to access different data points',
+                details: '6 models × 15 function budget = 90 total calls'
+              },
+              {
+                num: '3',
+                title: 'DECIDE',
+                icon: '💭',
+                desc: 'AI generates trading decision: BUY/SELL/HOLD with detailed reasoning, confidence score, and risk assessment',
+                details: 'Logged to Decisions table'
+              },
+              {
+                num: '4',
+                title: 'EXECUTE',
+                icon: '⚡',
+                desc: 'Simulate realistic market execution with slippage (0-0.2%), delays (1-3s), and partial fills (90-100%)',
+                details: 'Recorded in Trades table'
+              },
+              {
+                num: '5',
+                title: 'RECORD',
+                icon: '📈',
+                desc: 'Update all positions, calculate P&L, recompute portfolio metrics, and save performance snapshot',
+                details: 'Updates 4 database tables'
+              }
+            ].map((step, idx) => (
+              <div key={idx} style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: `3px solid ${idx % 2 === 0 ? '#990F3D' : '#CC785C'}`,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(153, 15, 61, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.06)';
               }}>
-                30-MINUTE TRADING CYCLE
-              </div>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                {[
-                  { num: '1', title: 'FETCH', desc: 'Real-time prices, RSI, MACD, SMA, EMA, news' },
-                  { num: '2', title: 'ANALYZE', desc: '6 AI models × 15 function calls each' },
-                  { num: '3', title: 'DECIDE', desc: 'BUY/SELL/HOLD + reasoning + risk' },
-                  { num: '4', title: 'EXECUTE', desc: 'Slippage, delays, partial fills' },
-                  { num: '5', title: 'RECORD', desc: 'Update P&L, positions, metrics' }
-                ].map((step, idx) => (
-                  <>
-                    <div key={idx} style={{ flex: 1 }}>
-                      <div style={{
-                        backgroundColor: '#F8EBD8',
-                        padding: '4px 3px',
-                        borderRadius: '8px',
-                        border: '2px solid #990F3D',
-                        boxShadow: '0 2px 4px rgba(153, 15, 61, 0.1)'
-                      }}>
-                        <div style={{
-                          fontWeight: '700',
-                          fontSize: '6px',
-                          color: '#990F3D',
-                          marginBottom: '2px',
-                          textAlign: 'center'
-                        }}>
-                          {step.num}. {step.title}
-                        </div>
-                        <div style={{
-                          fontSize: '5px',
-                          color: '#5a5a5a',
-                          lineHeight: '1.2',
-                          textAlign: 'center'
-                        }}>
-                          {step.desc}
-                        </div>
-                      </div>
-                    </div>
-                    {idx < 4 && (
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#990F3D',
-                        fontWeight: '700'
-                      }}>→</div>
-                    )}
-                  </>
-                ))}
-              </div>
-            </div>
-
-            {/* Data Sources */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-            }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#990F3D',
-                marginBottom: '5px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-                textAlign: 'center'
-              }}>
-                Market Data APIs
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{
-                  backgroundColor: '#F8EBD8',
-                  padding: '5px',
-                  borderRadius: '8px',
-                  border: '1px solid #CCC1B7'
+                  fontSize: '32px',
+                  marginBottom: '12px',
+                  textAlign: 'center'
                 }}>
-                  <div style={{ fontWeight: '700', fontSize: '7px', color: '#262A33', marginBottom: '2px' }}>
+                  {step.icon}
+                </div>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#990F3D',
+                  marginBottom: '8px',
+                  textAlign: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {step.num}. {step.title}
+                </div>
+                <div style={{
+                  fontSize: '13px',
+                  color: '#5a5a5a',
+                  lineHeight: '1.5',
+                  marginBottom: '12px',
+                  textAlign: 'center'
+                }}>
+                  {step.desc}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: '#990F3D',
+                  fontWeight: '600',
+                  textAlign: 'center',
+                  padding: '6px 12px',
+                  backgroundColor: 'rgba(153, 15, 61, 0.1)',
+                  borderRadius: '8px'
+                }}>
+                  {step.details}
+                </div>
+                {idx < 4 && (
+                  <div style={{
+                    fontSize: '24px',
+                    color: '#990F3D',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    marginTop: '12px'
+                  }}>↓</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Market Data & Risk Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '24px'
+        }}>
+          {/* Market Data APIs */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              📡 Market Data Sources
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #10b981',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '16px', color: '#262A33' }}>
                     Yahoo Finance
                   </div>
-                  <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3', marginBottom: '3px' }}>
-                    • Real-time quotes<br/>
-                    • Historical OHLCV<br/>
-                    • Company info<br/>
-                    • Trending stocks<br/>
-                    • News feed
-                  </div>
                   <div style={{
-                    fontSize: '5px',
+                    fontSize: '11px',
                     color: '#10b981',
                     fontWeight: '700',
                     textTransform: 'uppercase',
                     backgroundColor: '#ecfdf5',
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                    textAlign: 'center'
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid #10b981'
                   }}>
                     ∞ Unlimited
                   </div>
                 </div>
-                <div style={{
-                  backgroundColor: '#F8EBD8',
-                  padding: '5px',
-                  borderRadius: '8px',
-                  border: '1px solid #CCC1B7'
-                }}>
-                  <div style={{ fontWeight: '700', fontSize: '7px', color: '#262A33', marginBottom: '2px' }}>
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
+                  • Real-time stock quotes<br/>
+                  • Historical OHLCV data<br/>
+                  • Company information<br/>
+                  • Trending stocks<br/>
+                  • Market news feed
+                </div>
+              </div>
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #ea580c',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '16px', color: '#262A33' }}>
                     Alpha Vantage
                   </div>
-                  <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3', marginBottom: '3px' }}>
-                    • RSI, MACD indicators<br/>
-                    • SMA/EMA averages<br/>
-                    • Bollinger Bands<br/>
-                    • News sentiment
-                  </div>
                   <div style={{
-                    fontSize: '5px',
+                    fontSize: '11px',
                     color: '#ea580c',
                     fontWeight: '700',
                     textTransform: 'uppercase',
                     backgroundColor: '#ffedd5',
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                    textAlign: 'center'
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid #ea580c'
                   }}>
-                    ⚠ 25/Day Limit
+                    ⚠ 25/Day
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Risk Management */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-            }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#990F3D',
-                marginBottom: '5px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-                textAlign: 'center'
-              }}>
-                Risk Rules & Limits
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {[
-                  { title: 'Capital', items: ['Start: $10,000/agent', 'Max trade: $500', 'Max positions: 20'] },
-                  { title: 'Rules', items: ['Long only (no shorts)', 'No leverage/margin', 'Cash required first'] },
-                  { title: 'Execution', items: ['Slippage: 0-0.2%', 'Delay: 1-3 seconds', 'Fills: 90-100%'] }
-                ].map((section, idx) => (
-                  <div key={idx} style={{
-                    backgroundColor: '#F8EBD8',
-                    padding: '4px 6px',
-                    borderRadius: '8px',
-                    border: '1px solid #CCC1B7'
-                  }}>
-                    <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>
-                      {section.title}
-                    </div>
-                    <div style={{ fontSize: '5px', color: '#66605C', lineHeight: '1.2' }}>
-                      {section.items.map((item, i) => (
-                        <div key={i}>• {item}</div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
+                  • RSI & MACD indicators<br/>
+                  • SMA/EMA averages<br/>
+                  • Bollinger Bands<br/>
+                  • News sentiment analysis
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Middle Section */}
+          {/* Risk Management */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              🛡️ Risk Management
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                {
+                  title: '💰 Capital Limits',
+                  items: [
+                    'Starting capital: $10,000 per agent',
+                    'Maximum trade size: $500',
+                    'Maximum positions: 20 concurrent'
+                  ],
+                  color: '#10b981'
+                },
+                {
+                  title: '📋 Trading Rules',
+                  items: [
+                    'Long positions only (no short selling)',
+                    'No leverage or margin trading',
+                    'Cash must be available before trade'
+                  ],
+                  color: '#3b82f6'
+                },
+                {
+                  title: '⚙️ Execution Simulation',
+                  items: [
+                    'Slippage: 0-0.2% (realistic market impact)',
+                    'Delay: 1-3 seconds (network latency)',
+                    'Fill rate: 90-100% (partial fills possible)'
+                  ],
+                  color: '#8b5cf6'
+                }
+              ].map((section, idx) => (
+                <div key={idx} style={{
+                  backgroundColor: '#FFF',
+                  padding: '20px',
+                  borderRadius: '16px',
+                  border: `2px solid ${section.color}`,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}>
+                  <div style={{
+                    fontWeight: '700',
+                    marginBottom: '12px',
+                    color: '#262A33',
+                    fontSize: '16px'
+                  }}>
+                    {section.title}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
+                    {section.items.map((item, i) => (
+                      <div key={i} style={{ marginBottom: '8px' }}>• {item}</div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* AI Models Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+          borderRadius: '20px',
+          padding: '32px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+          border: '1px solid #CCC1B7'
+        }}>
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#262A33',
+            margin: '0 0 24px 0',
+            textAlign: 'center'
+          }}>
+            🤖 Six Competing AI Models
+          </h2>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1.5fr 1fr',
-            gap: '5px',
-            overflow: 'hidden'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+            gap: '20px'
           }}>
-            {/* AI Models */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <h2 style={{
-                fontSize: '8px',
-                fontWeight: '700',
-                color: '#262A33',
-                marginBottom: '5px',
-                textAlign: 'center',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px'
-              }}>
-                Competing AI Models
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '4px',
-                flex: 1
-              }}>
-                {[
-                  { name: 'GPT-5', provider: 'OpenAI', desc: 'Advanced reasoning, technical analysis, conservative risk', color: '#10A37F' },
-                  { name: 'Claude Sonnet 4.5', provider: 'Anthropic', desc: 'Balanced approach, detailed reasoning, portfolio optimization', color: '#CC785C' },
-                  { name: 'Gemini Flash', provider: 'Google', desc: 'Fast decisions, trend following, high-frequency mindset', color: '#4285F4' },
-                  { name: 'DeepSeek', provider: 'DeepSeek', desc: 'Value investing, fundamentals-focused, long-term holds', color: '#5B4DFF' },
-                  { name: 'Qwen', provider: 'Alibaba', desc: 'Momentum trading, pattern recognition, technical signals', color: '#FF6A00' },
-                  { name: 'Grok', provider: 'xAI', desc: 'Contrarian plays, market sentiment, bold moves', color: '#000000' }
-                ].map((model, idx) => (
-                  <div key={idx} style={{
-                    backgroundColor: '#F8EBD8',
-                    padding: '4px',
-                    borderRadius: '8px',
-                    border: `2px solid ${model.color}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.06)'
-                  }}>
+            {[
+              {
+                name: 'GPT-5',
+                provider: 'OpenAI',
+                icon: '🧠',
+                strategy: 'Conservative Technical Analysis',
+                desc: 'Focuses on advanced reasoning and risk-adjusted returns. Uses comprehensive technical indicators with conservative position sizing. Prioritizes capital preservation over aggressive gains.',
+                color: '#10A37F'
+              },
+              {
+                name: 'Claude Sonnet 4.5',
+                provider: 'Anthropic',
+                icon: '🎯',
+                strategy: 'Balanced Portfolio Optimization',
+                desc: 'Takes a balanced approach with detailed reasoning for every trade. Optimizes portfolio composition and employs careful risk management across positions.',
+                color: '#CC785C'
+              },
+              {
+                name: 'Gemini Flash',
+                provider: 'Google',
+                icon: '⚡',
+                strategy: 'High-Frequency Trend Following',
+                desc: 'Makes fast decisions based on short-term trends. Follows momentum signals and acts quickly on market movements with a high-frequency mindset.',
+                color: '#4285F4'
+              },
+              {
+                name: 'DeepSeek',
+                provider: 'DeepSeek',
+                icon: '🔍',
+                strategy: 'Value Investing & Fundamentals',
+                desc: 'Focuses on fundamental value and long-term holds. Analyzes company metrics and seeks undervalued opportunities for patient, fundamental-driven investing.',
+                color: '#5B4DFF'
+              },
+              {
+                name: 'Qwen',
+                provider: 'Alibaba',
+                icon: '📈',
+                strategy: 'Momentum & Pattern Recognition',
+                desc: 'Specializes in recognizing chart patterns and riding momentum. Uses technical signals to identify and capitalize on price trends and market movements.',
+                color: '#FF6A00'
+              },
+              {
+                name: 'Grok',
+                provider: 'xAI',
+                icon: '🎲',
+                strategy: 'Contrarian & Sentiment-Driven',
+                desc: 'Takes bold contrarian positions based on market sentiment analysis. Bets against the crowd when sentiment extremes suggest reversals.',
+                color: '#000000'
+              }
+            ].map((model, idx) => {
+              const isExpanded = expandedModel === model.name;
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: '#FFF',
+                    padding: '24px',
+                    borderRadius: '16px',
+                    border: `3px solid ${model.color}`,
+                    boxShadow: isExpanded ? `0 8px 24px ${model.color}40` : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    transform: isExpanded ? 'scale(1.02)' : 'scale(1)'
+                  }}
+                  onClick={() => setExpandedModel(isExpanded ? null : model.name)}
+                  onMouseEnter={(e) => {
+                    if (!isExpanded) {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = `0 6px 20px ${model.color}30`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isExpanded) {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.06)';
+                    }
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '32px' }}>{model.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontWeight: '700',
+                        fontSize: '18px',
+                        color: model.color,
+                        marginBottom: '4px'
+                      }}>
+                        {model.name}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#66605C',
+                        fontWeight: '600'
+                      }}>
+                        {model.provider}
+                      </div>
+                    </div>
                     <div style={{
-                      fontWeight: '700',
-                      fontSize: '7px',
+                      padding: '6px 12px',
+                      backgroundColor: `${model.color}15`,
+                      border: `2px solid ${model.color}`,
+                      borderRadius: '10px',
+                      fontSize: '11px',
                       color: model.color,
-                      marginBottom: '1px',
-                      textAlign: 'center',
-                      minHeight: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {model.name}
-                    </div>
-                    <div style={{
-                      fontSize: '5px',
-                      color: '#66605C',
-                      fontWeight: '600',
-                      textAlign: 'center',
-                      marginBottom: '2px'
-                    }}>
-                      {model.provider}
-                    </div>
-                    <div style={{
-                      fontSize: '5px',
-                      color: '#5a5a5a',
-                      lineHeight: '1.2',
-                      flex: 1,
-                      marginBottom: '3px'
-                    }}>
-                      {model.desc}
-                    </div>
-                    <div style={{
-                      padding: '2px 4px',
-                      backgroundColor: '#FFF',
-                      border: `1px solid ${model.color}`,
-                      borderRadius: '5px',
-                      fontSize: '5px',
-                      color: model.color,
                       fontWeight: '700',
-                      textAlign: 'center',
-                      textTransform: 'uppercase'
+                      textAlign: 'center'
                     }}>
                       15 Tool Budget
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Database Schema */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#262A33',
-                marginBottom: '5px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-                textAlign: 'center'
-              }}>
-                PostgreSQL Database
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1 }}>
-                {[
-                  { table: 'Agents', fields: 'id, name, model, accountValue, cashBalance', records: '6 models', color: '#10b981' },
-                  { table: 'Positions', fields: 'symbol, quantity, entryPrice, unrealizedPnL', records: '~50 active', color: '#3b82f6' },
-                  { table: 'Trades', fields: 'action, price, total, realizedPnL, reasoning', records: '~500 history', color: '#8b5cf6' },
-                  { table: 'Decisions', fields: 'action, symbol, confidence, riskAssessment', records: '~2k logged', color: '#f59e0b' },
-                  { table: 'Performance', fields: 'timestamp, accountValue, metrics', records: '~10k points', color: '#ef4444' },
-                  { table: 'StockPrices', fields: 'symbol, price, change, volume', records: '~5k snapshots', color: '#06b6d4' },
-                  { table: 'NewsItems', fields: 'title, sentiment, symbols', records: '~1k articles', color: '#84cc16' }
-                ].map((db, idx) => (
-                  <div key={idx} style={{
-                    backgroundColor: '#F8EBD8',
-                    padding: '3px 5px',
-                    borderRadius: '6px',
-                    border: `1px solid ${db.color}`,
-                    borderLeft: `3px solid ${db.color}`
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: '#990F3D',
+                    marginBottom: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
                   }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '1px'
-                    }}>
+                    {model.strategy}
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#5a5a5a',
+                    lineHeight: '1.6'
+                  }}>
+                    {model.desc}
+                  </div>
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '8px',
+                    backgroundColor: '#F8EBD8',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    color: '#66605C',
+                    textAlign: 'center',
+                    fontWeight: '600'
+                  }}>
+                    Click to {isExpanded ? 'collapse' : 'see live performance →'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Database & Tech Stack Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '24px'
+        }}>
+          {/* Database Schema */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              🗄️ PostgreSQL Database
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[
+                { table: 'Agents', icon: '🤖', fields: 'id, name, model, accountValue, cashBalance, broker', records: '6 AI models', color: '#10b981' },
+                { table: 'Positions', icon: '📊', fields: 'symbol, quantity, entryPrice, currentPrice, unrealizedPnL', records: '~50 active', color: '#3b82f6' },
+                { table: 'Trades', icon: '💰', fields: 'action, symbol, price, total, realizedPnL, reasoning', records: '~500 history', color: '#8b5cf6' },
+                { table: 'Decisions', icon: '🧠', fields: 'action, symbol, confidence, riskAssessment, reasoning', records: '~2k logged', color: '#f59e0b' },
+                { table: 'Performance', icon: '📈', fields: 'timestamp, agentId, accountValue, metrics', records: '~10k points', color: '#ef4444' },
+                { table: 'StockPrices', icon: '💹', fields: 'symbol, price, change, changePercent, volume', records: '~5k snapshots', color: '#06b6d4' },
+                { table: 'NewsItems', icon: '📰', fields: 'title, description, sentiment, symbols, source', records: '~1k articles', color: '#84cc16' }
+              ].map((db, idx) => (
+                <div key={idx} style={{
+                  backgroundColor: '#FFF',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: `2px solid ${db.color}`,
+                  borderLeft: `6px solid ${db.color}`,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '18px' }}>{db.icon}</span>
                       <div style={{
-                        fontSize: '6px',
+                        fontSize: '15px',
                         fontWeight: '700',
                         color: '#262A33'
                       }}>
                         {db.table}
                       </div>
-                      <div style={{
-                        fontSize: '5px',
-                        color: db.color,
-                        fontWeight: '700',
-                        backgroundColor: '#FFF',
-                        padding: '1px 3px',
-                        borderRadius: '3px',
-                        border: `1px solid ${db.color}`
-                      }}>
-                        {db.records}
-                      </div>
                     </div>
                     <div style={{
-                      fontSize: '5px',
-                      color: '#66605C',
-                      lineHeight: '1.2'
+                      fontSize: '11px',
+                      color: db.color,
+                      fontWeight: '700',
+                      backgroundColor: `${db.color}15`,
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${db.color}`
                     }}>
-                      {db.fields}
+                      {db.records}
                     </div>
                   </div>
-                ))}
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#66605C',
+                    lineHeight: '1.5',
+                    fontFamily: 'monospace'
+                  }}>
+                    {db.fields}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tech Stack */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              ⚙️ Technology Stack
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                { layer: 'Frontend', icon: '🎨', tech: 'Next.js 15 • React 19 • TypeScript • Tailwind CSS', color: '#3b82f6' },
+                { layer: 'Backend', icon: '🔧', tech: 'API Routes • Prisma ORM • Trading Engine', color: '#8b5cf6' },
+                { layer: 'Database', icon: '🗄️', tech: 'PostgreSQL • 7 Tables • Real-time Updates', color: '#10b981' },
+                { layer: 'Market Data', icon: '📡', tech: 'Yahoo Finance • Alpha Vantage • News APIs', color: '#06b6d4' },
+                { layer: 'AI Models', icon: '🤖', tech: 'OpenAI • Anthropic • Google • xAI • DeepSeek • Alibaba', color: '#f59e0b' },
+                { layer: 'Hosting', icon: '☁️', tech: 'Vercel Edge Functions • GitHub Actions • CRON Jobs', color: '#ef4444' }
+              ].map((stack, idx) => (
+                <div key={idx} style={{
+                  backgroundColor: '#FFF',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: `2px solid ${stack.color}`,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '24px' }}>{stack.icon}</span>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      color: stack.color,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {stack.layer}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
+                    {stack.tech}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Performance & Automation Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+          gap: '24px'
+        }}>
+          {/* Performance Metrics */}
+          <div style={{
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              📊 Performance Metrics
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #10b981',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+              }}>
+                <div style={{ fontWeight: '700', marginBottom: '12px', color: '#262A33', fontSize: '16px' }}>
+                  💵 Core Metrics
+                </div>
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.8' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Account Value:</strong> Cash balance + position values
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>ROI:</strong> (current - start) / start × 100%
+                  </div>
+                  <div>
+                    <strong>P&L:</strong> Realized gains/losses + unrealized
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #ef4444',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+              }}>
+                <div style={{ fontWeight: '700', marginBottom: '12px', color: '#262A33', fontSize: '16px' }}>
+                  📉 Risk Metrics
+                </div>
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.8' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Sharpe Ratio:</strong> Risk-adjusted return measure
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Max Drawdown:</strong> Largest peak-to-trough decline
+                  </div>
+                  <div>
+                    <strong>Win Rate:</strong> Profitable trades / total trades
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Section */}
+          {/* Automated Trading */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '5px'
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
           }}>
-            {/* Performance Metrics */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '5px',
-              borderRadius: '10px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
             }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#990F3D',
-                marginBottom: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px'
+              ⏰ Automated Trading Schedule
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #3b82f6',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
               }}>
-                Performance Analytics
-              </h3>
-              <div style={{ fontSize: '5px', color: '#5a5a5a', lineHeight: '1.3' }}>
-                <div style={{ marginBottom: '3px' }}>
-                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Core Metrics</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px', marginBottom: '2px' }}>
-                    <strong>Account Value:</strong> Cash + positions<br/>
-                    <strong>ROI:</strong> (current - start) / start × 100%<br/>
-                    <strong>P&L:</strong> Realized + unrealized
-                  </div>
+                <div style={{ fontWeight: '700', marginBottom: '12px', color: '#262A33', fontSize: '16px' }}>
+                  🤖 Automation
                 </div>
-                <div>
-                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Risk Metrics</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px' }}>
-                    <strong>Sharpe:</strong> Risk-adjusted returns<br/>
-                    <strong>Drawdown:</strong> Peak-to-trough<br/>
-                    <strong>Win Rate:</strong> Profitable / total
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.8', marginBottom: '12px' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Platform:</strong> GitHub Actions + Vercel API
+                  </div>
+                  <div>
+                    <strong>CRON:</strong> <code style={{ fontSize: '12px', fontFamily: 'monospace', backgroundColor: '#F8EBD8', padding: '4px 8px', borderRadius: '4px' }}>0,30 14-21 * * 1-5</code>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Automation */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '5px',
-              borderRadius: '10px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-            }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#990F3D',
-                marginBottom: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px'
+              <div style={{
+                backgroundColor: '#FFF',
+                padding: '20px',
+                borderRadius: '16px',
+                border: '2px solid #8b5cf6',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
               }}>
-                Automated Trading
-              </h3>
-              <div style={{ fontSize: '5px', color: '#5a5a5a', lineHeight: '1.3' }}>
-                <div style={{ marginBottom: '3px' }}>
-                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Scheduler</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px', marginBottom: '2px' }}>
-                    GitHub Actions → Vercel API<br/>
-                    <code style={{ fontSize: '5px', fontFamily: 'monospace' }}>0,30 14-21 * * 1-5</code>
-                  </div>
+                <div style={{ fontWeight: '700', marginBottom: '12px', color: '#262A33', fontSize: '16px' }}>
+                  📅 16 Cycles Per Day
                 </div>
-                <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>16 Cycles/Day</div>
-                <div style={{ fontSize: '5px', lineHeight: '1.2', marginBottom: '3px' }}>
-                  9:00•9:30•10:00•10:30•11:00•11:30<br/>
-                  12:00•12:30•1:00•1:30•2:00•2:30<br/>
-                  3:00•3:30•4:00•4:30 PM EST
+                <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6', marginBottom: '12px' }}>
+                  9:00 AM • 9:30 • 10:00 • 10:30 • 11:00 • 11:30<br/>
+                  12:00 PM • 12:30 • 1:00 • 1:30 • 2:00 • 2:30<br/>
+                  3:00 • 3:30 • 4:00 • 4:30 PM EST
                 </div>
                 <div style={{
-                  padding: '3px',
+                  padding: '12px',
                   backgroundColor: '#F8EBD8',
-                  borderRadius: '5px',
+                  borderRadius: '12px',
                   fontWeight: '700',
                   color: '#262A33',
-                  fontSize: '5px',
-                  textAlign: 'center'
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
                 }}>
-                  MON-FRI • MARKET HOURS
+                  Monday - Friday • Market Hours Only
                 </div>
-              </div>
-            </div>
-
-            {/* Tech Stack */}
-            <div style={{
-              backgroundColor: '#FFF',
-              padding: '5px',
-              borderRadius: '10px',
-              border: '1px solid #CCC1B7',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
-            }}>
-              <h3 style={{
-                fontSize: '7px',
-                fontWeight: '700',
-                color: '#990F3D',
-                marginBottom: '4px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px'
-              }}>
-                Technology Stack
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                {[
-                  { layer: 'FRONTEND', tech: 'Next.js 15 • React 19 • TypeScript • Tailwind' },
-                  { layer: 'BACKEND', tech: 'API Routes • Prisma • Trading Engine' },
-                  { layer: 'DATABASE', tech: 'PostgreSQL • 7 Tables • Real-time' },
-                  { layer: 'DATA', tech: 'Yahoo Finance • Alpha Vantage • News' },
-                  { layer: 'AI', tech: 'OpenAI • Anthropic • Google • xAI • DeepSeek' },
-                  { layer: 'HOSTING', tech: 'Vercel Edge • GitHub Actions • CRON' }
-                ].map((stack, idx) => (
-                  <div key={idx} style={{
-                    padding: '3px 4px',
-                    backgroundColor: '#F8EBD8',
-                    borderRadius: '5px',
-                    border: '1px solid #CCC1B7'
-                  }}>
-                    <div style={{
-                      fontSize: '5px',
-                      fontWeight: '700',
-                      color: '#990F3D',
-                      marginBottom: '1px',
-                      letterSpacing: '0.3px'
-                    }}>
-                      {stack.layer}
-                    </div>
-                    <div style={{ fontSize: '5px', color: '#66605C', lineHeight: '1.2' }}>
-                      {stack.tech}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
