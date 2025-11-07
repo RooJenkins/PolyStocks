@@ -370,15 +370,86 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          {/* Advanced Intelligence Systems */}
+          {/* Risk Management */}
           <div style={{
-            marginTop: '48px',
-            padding: '32px',
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
             borderRadius: '20px',
-            border: '2px solid #990F3D',
-            boxShadow: '0 8px 24px rgba(153, 15, 61, 0.2)'
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #CCC1B7'
           }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#262A33',
+              margin: '0 0 20px 0'
+            }}>
+              🛡️ Risk Management
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                {
+                  title: '💰 Capital Limits',
+                  items: [
+                    'Starting capital: $10,000 per agent',
+                    'Maximum trade size: $500',
+                    'Maximum positions: 20 concurrent'
+                  ],
+                  color: '#10b981'
+                },
+                {
+                  title: '📋 Trading Rules',
+                  items: [
+                    'Long positions only (no short selling)',
+                    'No leverage or margin trading',
+                    'Cash must be available before trade'
+                  ],
+                  color: '#3b82f6'
+                },
+                {
+                  title: '⚙️ Execution Simulation',
+                  items: [
+                    'Slippage: 0-0.2% (realistic market impact)',
+                    'Delay: 1-3 seconds (network latency)',
+                    'Fill rate: 90-100% (partial fills possible)'
+                  ],
+                  color: '#8b5cf6'
+                }
+              ].map((section, idx) => (
+                <div key={idx} style={{
+                  backgroundColor: '#FFF',
+                  padding: '20px',
+                  borderRadius: '16px',
+                  border: `2px solid ${section.color}`,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}>
+                  <div style={{
+                    fontWeight: '700',
+                    marginBottom: '12px',
+                    color: '#262A33',
+                    fontSize: '16px'
+                  }}>
+                    {section.title}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
+                    {section.items.map((item, i) => (
+                      <div key={i} style={{ marginBottom: '8px' }}>• {item}</div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Advanced Intelligence Systems */}
+        <div style={{
+          padding: '32px',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          borderRadius: '20px',
+          border: '2px solid #990F3D',
+          boxShadow: '0 8px 24px rgba(153, 15, 61, 0.2)'
+        }}>
             <div style={{
               fontSize: '28px',
               fontWeight: '700',
@@ -413,10 +484,10 @@ export default function HowItWorksPage() {
                   🌍 Market Intelligence
                 </div>
                 <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
-                  <strong>SPY Trend:</strong> S&P 500 regime detection (bullish/bearish/neutral) with MA7/30/90<br/>
+                  <strong>SPY Trend:</strong> S&amp;P 500 regime detection (bullish/bearish/neutral) with MA7/30/90<br/>
                   <strong>VIX Volatility:</strong> Fear index monitoring (low/normal/elevated/high/extreme)<br/>
                   <strong>Sector Rotation:</strong> Leadership analysis across Tech, Financials, Energy, Healthcare, Consumer<br/>
-                  <strong>Relative Strength:</strong> Each stock's performance vs market benchmark
+                  <strong>Relative Strength:</strong> Each stock&apos;s performance vs market benchmark
                 </div>
               </div>
 
@@ -524,83 +595,11 @@ export default function HowItWorksPage() {
                 <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
                   <strong>Stop Loss:</strong> -8% hard floor | <strong>Profit Targets:</strong> 5-20% per strategy | <strong>Trailing Stops:</strong> 3-8% progressive<br/>
                   <strong>Time-Based:</strong> Max holding periods | <strong>Technical:</strong> MA breaks, RSI extremes<br/>
-                  <strong>Macro Circuit Breakers:</strong> VIX > 35, SPY < -8% | <strong>Strategy-Specific:</strong> Custom per trading style
+                  <strong>Macro Circuit Breakers:</strong> VIX &gt; 35, SPY &lt; -8% | <strong>Strategy-Specific:</strong> Custom per trading style
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Risk Management */}
-          <div style={{
-            background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
-            borderRadius: '20px',
-            padding: '32px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-            border: '1px solid #CCC1B7'
-          }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#262A33',
-              margin: '0 0 20px 0'
-            }}>
-              🛡️ Risk Management
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                {
-                  title: '💰 Capital Limits',
-                  items: [
-                    'Starting capital: $10,000 per agent',
-                    'Maximum trade size: $500',
-                    'Maximum positions: 20 concurrent'
-                  ],
-                  color: '#10b981'
-                },
-                {
-                  title: '📋 Trading Rules',
-                  items: [
-                    'Long positions only (no short selling)',
-                    'No leverage or margin trading',
-                    'Cash must be available before trade'
-                  ],
-                  color: '#3b82f6'
-                },
-                {
-                  title: '⚙️ Execution Simulation',
-                  items: [
-                    'Slippage: 0-0.2% (realistic market impact)',
-                    'Delay: 1-3 seconds (network latency)',
-                    'Fill rate: 90-100% (partial fills possible)'
-                  ],
-                  color: '#8b5cf6'
-                }
-              ].map((section, idx) => (
-                <div key={idx} style={{
-                  backgroundColor: '#FFF',
-                  padding: '20px',
-                  borderRadius: '16px',
-                  border: `2px solid ${section.color}`,
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-                }}>
-                  <div style={{
-                    fontWeight: '700',
-                    marginBottom: '12px',
-                    color: '#262A33',
-                    fontSize: '16px'
-                  }}>
-                    {section.title}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#66605C', lineHeight: '1.6' }}>
-                    {section.items.map((item, i) => (
-                      <div key={i} style={{ marginBottom: '8px' }}>• {item}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* AI Models Section */}
         <div style={{
