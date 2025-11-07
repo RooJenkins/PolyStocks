@@ -33,6 +33,7 @@ interface Props {
 export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
     const fetchHeatmapData = async () => {
@@ -41,9 +42,11 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         const data = await response.json();
         setHeatmapData(data);
         setLoading(false);
+        setHasLoadedOnce(true);
       } catch (error) {
         console.error('Failed to fetch heatmap data:', error);
         setLoading(false);
+        setHasLoadedOnce(true);
       }
     };
 
@@ -53,7 +56,7 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (loading || !hasLoadedOnce) {
     return (
       <div style={{ padding: '20px', textAlign: 'center', color: '#66605C' }}>
         Loading advanced analytics...

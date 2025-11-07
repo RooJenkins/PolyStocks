@@ -14,6 +14,7 @@ interface PerformanceChartProps {
 export default function PerformanceChartOption3({ agents, timeframe = 'all', mockData }: PerformanceChartProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [lineEndpoints, setLineEndpoints] = useState<Record<string, { x: number; y: number }>>({});
   const [hoveredBubble, setHoveredBubble] = useState<string | null>(null);
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
     if (mockData) {
       setData(mockData);
       setLoading(false);
+      setHasLoadedOnce(true);
       return;
     }
 
@@ -46,9 +48,11 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
         const performanceData = await response.json();
         setData(performanceData);
         setLoading(false);
+        setHasLoadedOnce(true);
       } catch (error) {
         console.error('Error fetching performance data:', error);
         setLoading(false);
+        setHasLoadedOnce(true);
       }
     };
 
@@ -308,7 +312,8 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
     return agent?.accountValue || 0;
   };
 
-  if (loading) {
+  // Show loading state if we haven't loaded at least once, or if we're loading and have no data
+  if (loading || !hasLoadedOnce) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-[#F5E6D3] rounded-lg">
         <div className="text-[#66605C]">Loading chart data...</div>
@@ -316,7 +321,8 @@ export default function PerformanceChartOption3({ agents, timeframe = 'all', moc
     );
   }
 
-  if (data.length === 0) {
+  // Only show "no data" message if we've successfully loaded at least once and data is still empty
+  if (data.length === 0 && hasLoadedOnce) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-[#F5E6D3] rounded-lg">
         <div className="text-[#66605C]">No performance data available yet</div>
