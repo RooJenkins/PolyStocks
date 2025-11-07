@@ -7,16 +7,16 @@ export default function HowItWorksPage() {
     <div style={{
       height: '100vh',
       backgroundColor: '#E9DECF',
-      padding: '8px',
+      padding: '4px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       overflow: 'hidden'
     }}>
-      <div style={{ maxWidth: '1900px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ maxWidth: '1900px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
-          padding: '6px 16px',
-          borderRadius: '20px',
+          padding: '4px 12px',
+          borderRadius: '16px',
           border: '2px solid #990F3D',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
           display: 'flex',
@@ -78,12 +78,12 @@ export default function HowItWorksPage() {
         {/* Main Content */}
         <div style={{
           background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
-          borderRadius: '20px',
-          padding: '10px',
+          borderRadius: '16px',
+          padding: '6px',
           flex: 1,
           display: 'grid',
           gridTemplateRows: 'auto 1fr auto',
-          gap: '8px',
+          gap: '5px',
           overflow: 'hidden',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
           border: '1px solid #CCC1B7'
@@ -92,26 +92,26 @@ export default function HowItWorksPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1.4fr 240px 240px',
-            gap: '8px'
+            gap: '5px'
           }}>
             {/* Trading Cycle */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <div style={{
                 background: 'linear-gradient(135deg, #990F3D 0%, #b8123f 100%)',
                 color: '#FFF',
-                padding: '5px 10px',
-                borderRadius: '10px',
+                padding: '3px 8px',
+                borderRadius: '8px',
                 textAlign: 'center',
                 fontWeight: '700',
-                fontSize: '8px',
-                letterSpacing: '0.8px',
-                marginBottom: '8px',
+                fontSize: '7px',
+                letterSpacing: '0.6px',
+                marginBottom: '5px',
                 boxShadow: '0 2px 4px rgba(153, 15, 61, 0.3)'
               }}>
                 30-MINUTE TRADING CYCLE
@@ -128,24 +128,24 @@ export default function HowItWorksPage() {
                     <div key={idx} style={{ flex: 1 }}>
                       <div style={{
                         backgroundColor: '#F8EBD8',
-                        padding: '6px 4px',
-                        borderRadius: '10px',
+                        padding: '4px 3px',
+                        borderRadius: '8px',
                         border: '2px solid #990F3D',
                         boxShadow: '0 2px 4px rgba(153, 15, 61, 0.1)'
                       }}>
                         <div style={{
                           fontWeight: '700',
-                          fontSize: '7px',
+                          fontSize: '6px',
                           color: '#990F3D',
-                          marginBottom: '3px',
+                          marginBottom: '2px',
                           textAlign: 'center'
                         }}>
                           {step.num}. {step.title}
                         </div>
                         <div style={{
-                          fontSize: '6px',
+                          fontSize: '5px',
                           color: '#5a5a5a',
-                          lineHeight: '1.3',
+                          lineHeight: '1.2',
                           textAlign: 'center'
                         }}>
                           {step.desc}
@@ -167,33 +167,33 @@ export default function HowItWorksPage() {
             {/* Data Sources */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#990F3D',
-                marginBottom: '8px',
+                marginBottom: '5px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px',
+                letterSpacing: '0.6px',
                 textAlign: 'center'
               }}>
                 Market Data APIs
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{
                   backgroundColor: '#F8EBD8',
-                  padding: '8px',
-                  borderRadius: '10px',
+                  padding: '5px',
+                  borderRadius: '8px',
                   border: '1px solid #CCC1B7'
                 }}>
-                  <div style={{ fontWeight: '700', fontSize: '9px', color: '#262A33', marginBottom: '4px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '7px', color: '#262A33', marginBottom: '2px' }}>
                     Yahoo Finance
                   </div>
-                  <div style={{ fontSize: '7px', color: '#66605C', lineHeight: '1.4', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3', marginBottom: '3px' }}>
                     • Real-time quotes<br/>
                     • Historical OHLCV<br/>
                     • Company info<br/>
@@ -201,13 +201,13 @@ export default function HowItWorksPage() {
                     • News feed
                   </div>
                   <div style={{
-                    fontSize: '6px',
+                    fontSize: '5px',
                     color: '#10b981',
                     fontWeight: '700',
                     textTransform: 'uppercase',
                     backgroundColor: '#ecfdf5',
-                    padding: '2px 5px',
-                    borderRadius: '5px',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
                     textAlign: 'center'
                   }}>
                     ∞ Unlimited
@@ -215,27 +215,27 @@ export default function HowItWorksPage() {
                 </div>
                 <div style={{
                   backgroundColor: '#F8EBD8',
-                  padding: '8px',
-                  borderRadius: '10px',
+                  padding: '5px',
+                  borderRadius: '8px',
                   border: '1px solid #CCC1B7'
                 }}>
-                  <div style={{ fontWeight: '700', fontSize: '9px', color: '#262A33', marginBottom: '4px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '7px', color: '#262A33', marginBottom: '2px' }}>
                     Alpha Vantage
                   </div>
-                  <div style={{ fontSize: '7px', color: '#66605C', lineHeight: '1.4', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3', marginBottom: '3px' }}>
                     • RSI, MACD indicators<br/>
                     • SMA/EMA averages<br/>
                     • Bollinger Bands<br/>
                     • News sentiment
                   </div>
                   <div style={{
-                    fontSize: '6px',
+                    fontSize: '5px',
                     color: '#ea580c',
                     fontWeight: '700',
                     textTransform: 'uppercase',
                     backgroundColor: '#ffedd5',
-                    padding: '2px 5px',
-                    borderRadius: '5px',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
                     textAlign: 'center'
                   }}>
                     ⚠ 25/Day Limit
@@ -247,23 +247,23 @@ export default function HowItWorksPage() {
             {/* Risk Management */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#990F3D',
-                marginBottom: '8px',
+                marginBottom: '5px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px',
+                letterSpacing: '0.6px',
                 textAlign: 'center'
               }}>
                 Risk Rules & Limits
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {[
                   { title: 'Capital', items: ['Start: $10,000/agent', 'Max trade: $500', 'Max positions: 20'] },
                   { title: 'Rules', items: ['Long only (no shorts)', 'No leverage/margin', 'Cash required first'] },
@@ -271,14 +271,14 @@ export default function HowItWorksPage() {
                 ].map((section, idx) => (
                   <div key={idx} style={{
                     backgroundColor: '#F8EBD8',
-                    padding: '6px 8px',
-                    borderRadius: '10px',
+                    padding: '4px 6px',
+                    borderRadius: '8px',
                     border: '1px solid #CCC1B7'
                   }}>
-                    <div style={{ fontWeight: '700', marginBottom: '3px', color: '#262A33', fontSize: '8px' }}>
+                    <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>
                       {section.title}
                     </div>
-                    <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3' }}>
+                    <div style={{ fontSize: '5px', color: '#66605C', lineHeight: '1.2' }}>
                       {section.items.map((item, i) => (
                         <div key={i}>• {item}</div>
                       ))}
@@ -293,34 +293,34 @@ export default function HowItWorksPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1.5fr 1fr',
-            gap: '8px',
+            gap: '5px',
             overflow: 'hidden'
           }}>
             {/* AI Models */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
               display: 'flex',
               flexDirection: 'column'
             }}>
               <h2 style={{
-                fontSize: '10px',
+                fontSize: '8px',
                 fontWeight: '700',
                 color: '#262A33',
-                marginBottom: '8px',
+                marginBottom: '5px',
                 textAlign: 'center',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px'
+                letterSpacing: '0.6px'
               }}>
                 Competing AI Models
               </h2>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '6px',
+                gap: '4px',
                 flex: 1
               }}>
                 {[
@@ -333,8 +333,8 @@ export default function HowItWorksPage() {
                 ].map((model, idx) => (
                   <div key={idx} style={{
                     backgroundColor: '#F8EBD8',
-                    padding: '7px',
-                    borderRadius: '10px',
+                    padding: '4px',
+                    borderRadius: '8px',
                     border: `2px solid ${model.color}`,
                     display: 'flex',
                     flexDirection: 'column',
@@ -342,11 +342,11 @@ export default function HowItWorksPage() {
                   }}>
                     <div style={{
                       fontWeight: '700',
-                      fontSize: '9px',
+                      fontSize: '7px',
                       color: model.color,
-                      marginBottom: '2px',
+                      marginBottom: '1px',
                       textAlign: 'center',
-                      minHeight: '18px',
+                      minHeight: '14px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -354,29 +354,29 @@ export default function HowItWorksPage() {
                       {model.name}
                     </div>
                     <div style={{
-                      fontSize: '6px',
+                      fontSize: '5px',
                       color: '#66605C',
                       fontWeight: '600',
                       textAlign: 'center',
-                      marginBottom: '4px'
+                      marginBottom: '2px'
                     }}>
                       {model.provider}
                     </div>
                     <div style={{
-                      fontSize: '6px',
+                      fontSize: '5px',
                       color: '#5a5a5a',
-                      lineHeight: '1.3',
+                      lineHeight: '1.2',
                       flex: 1,
-                      marginBottom: '5px'
+                      marginBottom: '3px'
                     }}>
                       {model.desc}
                     </div>
                     <div style={{
-                      padding: '3px 5px',
+                      padding: '2px 4px',
                       backgroundColor: '#FFF',
                       border: `1px solid ${model.color}`,
-                      borderRadius: '6px',
-                      fontSize: '6px',
+                      borderRadius: '5px',
+                      fontSize: '5px',
                       color: model.color,
                       fontWeight: '700',
                       textAlign: 'center',
@@ -392,25 +392,25 @@ export default function HowItWorksPage() {
             {/* Database Schema */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
               display: 'flex',
               flexDirection: 'column'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#262A33',
-                marginBottom: '8px',
+                marginBottom: '5px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px',
+                letterSpacing: '0.6px',
                 textAlign: 'center'
               }}>
                 PostgreSQL Database
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1 }}>
                 {[
                   { table: 'Agents', fields: 'id, name, model, accountValue, cashBalance', records: '6 models', color: '#10b981' },
                   { table: 'Positions', fields: 'symbol, quantity, entryPrice, unrealizedPnL', records: '~50 active', color: '#3b82f6' },
@@ -422,8 +422,8 @@ export default function HowItWorksPage() {
                 ].map((db, idx) => (
                   <div key={idx} style={{
                     backgroundColor: '#F8EBD8',
-                    padding: '5px 7px',
-                    borderRadius: '8px',
+                    padding: '3px 5px',
+                    borderRadius: '6px',
                     border: `1px solid ${db.color}`,
                     borderLeft: `3px solid ${db.color}`
                   }}>
@@ -431,10 +431,10 @@ export default function HowItWorksPage() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '2px'
+                      marginBottom: '1px'
                     }}>
                       <div style={{
-                        fontSize: '7px',
+                        fontSize: '6px',
                         fontWeight: '700',
                         color: '#262A33'
                       }}>
@@ -445,8 +445,8 @@ export default function HowItWorksPage() {
                         color: db.color,
                         fontWeight: '700',
                         backgroundColor: '#FFF',
-                        padding: '2px 4px',
-                        borderRadius: '4px',
+                        padding: '1px 3px',
+                        borderRadius: '3px',
                         border: `1px solid ${db.color}`
                       }}>
                         {db.records}
@@ -455,7 +455,7 @@ export default function HowItWorksPage() {
                     <div style={{
                       fontSize: '5px',
                       color: '#66605C',
-                      lineHeight: '1.3'
+                      lineHeight: '1.2'
                     }}>
                       {db.fields}
                     </div>
@@ -469,38 +469,38 @@ export default function HowItWorksPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '8px'
+            gap: '5px'
           }}>
             {/* Performance Metrics */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '5px',
+              borderRadius: '10px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#990F3D',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px'
+                letterSpacing: '0.6px'
               }}>
                 Performance Analytics
               </h3>
-              <div style={{ fontSize: '6px', color: '#5a5a5a', lineHeight: '1.4' }}>
-                <div style={{ marginBottom: '5px' }}>
-                  <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>Core Metrics</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '5px', borderRadius: '6px', marginBottom: '3px' }}>
+              <div style={{ fontSize: '5px', color: '#5a5a5a', lineHeight: '1.3' }}>
+                <div style={{ marginBottom: '3px' }}>
+                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Core Metrics</div>
+                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px', marginBottom: '2px' }}>
                     <strong>Account Value:</strong> Cash + positions<br/>
                     <strong>ROI:</strong> (current - start) / start × 100%<br/>
                     <strong>P&L:</strong> Realized + unrealized
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>Risk Metrics</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '5px', borderRadius: '6px' }}>
+                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Risk Metrics</div>
+                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px' }}>
                     <strong>Sharpe:</strong> Risk-adjusted returns<br/>
                     <strong>Drawdown:</strong> Peak-to-trough<br/>
                     <strong>Win Rate:</strong> Profitable / total
@@ -512,42 +512,42 @@ export default function HowItWorksPage() {
             {/* Automation */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '5px',
+              borderRadius: '10px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#990F3D',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px'
+                letterSpacing: '0.6px'
               }}>
                 Automated Trading
               </h3>
-              <div style={{ fontSize: '6px', color: '#5a5a5a', lineHeight: '1.4' }}>
-                <div style={{ marginBottom: '5px' }}>
-                  <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>Scheduler</div>
-                  <div style={{ backgroundColor: '#F8EBD8', padding: '5px', borderRadius: '6px', marginBottom: '3px' }}>
+              <div style={{ fontSize: '5px', color: '#5a5a5a', lineHeight: '1.3' }}>
+                <div style={{ marginBottom: '3px' }}>
+                  <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>Scheduler</div>
+                  <div style={{ backgroundColor: '#F8EBD8', padding: '3px', borderRadius: '5px', marginBottom: '2px' }}>
                     GitHub Actions → Vercel API<br/>
                     <code style={{ fontSize: '5px', fontFamily: 'monospace' }}>0,30 14-21 * * 1-5</code>
                   </div>
                 </div>
-                <div style={{ fontWeight: '700', marginBottom: '2px', color: '#262A33', fontSize: '7px' }}>16 Cycles/Day</div>
-                <div style={{ fontSize: '6px', lineHeight: '1.3', marginBottom: '5px' }}>
+                <div style={{ fontWeight: '700', marginBottom: '1px', color: '#262A33', fontSize: '6px' }}>16 Cycles/Day</div>
+                <div style={{ fontSize: '5px', lineHeight: '1.2', marginBottom: '3px' }}>
                   9:00•9:30•10:00•10:30•11:00•11:30<br/>
                   12:00•12:30•1:00•1:30•2:00•2:30<br/>
                   3:00•3:30•4:00•4:30 PM EST
                 </div>
                 <div style={{
-                  padding: '4px',
+                  padding: '3px',
                   backgroundColor: '#F8EBD8',
-                  borderRadius: '6px',
+                  borderRadius: '5px',
                   fontWeight: '700',
                   color: '#262A33',
-                  fontSize: '6px',
+                  fontSize: '5px',
                   textAlign: 'center'
                 }}>
                   MON-FRI • MARKET HOURS
@@ -558,22 +558,22 @@ export default function HowItWorksPage() {
             {/* Tech Stack */}
             <div style={{
               backgroundColor: '#FFF',
-              padding: '10px',
-              borderRadius: '16px',
+              padding: '5px',
+              borderRadius: '10px',
               border: '1px solid #CCC1B7',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
             }}>
               <h3 style={{
-                fontSize: '8px',
+                fontSize: '7px',
                 fontWeight: '700',
                 color: '#990F3D',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px'
+                letterSpacing: '0.6px'
               }}>
                 Technology Stack
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {[
                   { layer: 'FRONTEND', tech: 'Next.js 15 • React 19 • TypeScript • Tailwind' },
                   { layer: 'BACKEND', tech: 'API Routes • Prisma • Trading Engine' },
@@ -583,21 +583,21 @@ export default function HowItWorksPage() {
                   { layer: 'HOSTING', tech: 'Vercel Edge • GitHub Actions • CRON' }
                 ].map((stack, idx) => (
                   <div key={idx} style={{
-                    padding: '4px 6px',
+                    padding: '3px 4px',
                     backgroundColor: '#F8EBD8',
-                    borderRadius: '6px',
+                    borderRadius: '5px',
                     border: '1px solid #CCC1B7'
                   }}>
                     <div style={{
-                      fontSize: '6px',
+                      fontSize: '5px',
                       fontWeight: '700',
                       color: '#990F3D',
                       marginBottom: '1px',
-                      letterSpacing: '0.4px'
+                      letterSpacing: '0.3px'
                     }}>
                       {stack.layer}
                     </div>
-                    <div style={{ fontSize: '6px', color: '#66605C', lineHeight: '1.3' }}>
+                    <div style={{ fontSize: '5px', color: '#66605C', lineHeight: '1.2' }}>
                       {stack.tech}
                     </div>
                   </div>
