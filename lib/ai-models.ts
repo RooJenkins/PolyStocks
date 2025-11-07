@@ -241,25 +241,29 @@ export async function getAIDecision(
   console.log(`  🤖 Getting decision from ${agentName}...`);
 
   try {
-    switch (agentId) {
-      case 'gpt4':
+    // Route based on agent name to proper AI API
+    switch (agentName) {
+      case 'GPT-5':
         return await callOpenAI(context, agentId, agentName);
-      case 'claude':
+      case 'Claude Sonnet 4.5':
         return await callClaude(context, agentId, agentName);
-      case 'gemini':
+      case 'Gemini Flash':
         return await callGemini(context);
-      case 'deepseek':
+      case 'DeepSeek':
         return await callDeepSeek(context);
-      case 'qwen':
+      case 'Qwen':
         return await callQwen(context);
+      case 'Grok':
+        return await callGrok(context);
       default:
-        return getRandomDecision(context);
+        throw new Error(`Unknown agent: ${agentName}. Cannot use mock data - real AI integration required.`);
     }
   } catch (error: any) {
     console.error(`  ❌ Error getting AI decision for ${agentName}:`, error.message);
+    // Return error state - DO NOT use mock/random data per user requirements
     return {
       action: 'HOLD',
-      reasoning: `Error communicating with AI: ${error.message}`,
+      reasoning: `⚠️ AI API Error: ${error.message}. System cannot generate mock decisions per policy. This agent will hold until API connection is restored.`,
       confidence: 0.1,
     };
   }
@@ -305,7 +309,7 @@ Strategy: Prefer Yahoo Finance tools (unlimited), use Alpha Vantage only for tec
 
   while (toolCallsUsed < MAX_TOOL_CALLS) {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5',
       messages,
       tools,
       temperature: 0.7,
@@ -365,7 +369,7 @@ Strategy: Prefer Yahoo Finance tools (unlimited), use Alpha Vantage only for tec
   // Budget exhausted, force decision
   console.log(`  ⚠️  Tool budget exhausted (${MAX_TOOL_CALLS} calls), forcing decision`);
   const finalResponse = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5',
     messages: [
       ...messages,
       {
@@ -411,7 +415,7 @@ async function callClaudeWithTools(
 
   while (toolCallsUsed < MAX_TOOL_CALLS) {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 800, // Increased from 200 for better reasoning
       messages,
       tools,
@@ -482,7 +486,7 @@ async function callClaudeWithTools(
   // Budget exhausted, force decision
   console.log(`  ⚠️  Tool budget exhausted (${MAX_TOOL_CALLS} calls), forcing decision`);
   const finalResponse = await anthropic.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: 500,
     messages: [
       ...messages,
@@ -671,6 +675,37 @@ async function callQwen(context: MarketContext): Promise<TradingDecision> {
   return parseAIResponse(text);
 }
 
+async function callGrok(context: MarketContext): Promise<TradingDecision> {
+  // Grok uses OpenAI-compatible API via xAI
+  const response = await axios.post(
+    'https://api.x.ai/v1/chat/completions',
+    {
+      model: 'grok-2-1212', // Using Grok 2 (December 2024 version)
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert stock trader. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: createPrompt(context),
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
+      },
+    }
+  );
+
+  const text = response.data.choices[0].message.content;
+  return parseAIResponse(text);
+}
+
 function parseAIResponse(response: string): TradingDecision {
   try {
     // Extract JSON from markdown code blocks if present
@@ -694,11 +729,19 @@ function parseAIResponse(response: string): TradingDecision {
       throw new Error('Invalid action');
     }
 
+    // CRITICAL: Validate reasoning length (minimum 200 characters)
+    const reasoning = decision.reasoning || '';
+    if (reasoning.length < 200) {
+      console.error(`  ❌ REASONING TOO SHORT: ${reasoning.length} chars (minimum 200 required)`);
+      console.error(`  📝 Reasoning: "${reasoning}"`);
+      throw new Error(`Reasoning must be at least 200 characters (got ${reasoning.length}). Rejecting decision.`);
+    }
+
     return {
       action: decision.action,
       symbol: decision.symbol,
       quantity: decision.quantity ? Math.floor(decision.quantity) : undefined,
-      reasoning: decision.reasoning || 'No reasoning provided',
+      reasoning: reasoning,
       confidence: Math.max(0, Math.min(1, decision.confidence || 0.5)),
       riskAssessment: decision.riskAssessment,
       targetPrice: decision.targetPrice,
@@ -715,60 +758,5 @@ function parseAIResponse(response: string): TradingDecision {
   }
 }
 
-function getRandomDecision(context: MarketContext): TradingDecision {
-  const random = Math.random();
-
-  // 40% HOLD, 35% BUY, 25% SELL
-  if (random < 0.4) {
-    return {
-      action: 'HOLD',
-      reasoning: 'Waiting for better market conditions',
-      confidence: 0.5,
-    };
-  }
-
-  if (random < 0.75 && context.cashBalance > 100) {
-    // BUY
-    const stock = context.stocks[Math.floor(Math.random() * context.stocks.length)];
-    const maxInvestment = context.cashBalance * 0.15;
-    const quantity = Math.floor(maxInvestment / stock.price);
-
-    if (quantity === 0) {
-      return {
-        action: 'HOLD',
-        reasoning: 'Insufficient funds for purchase',
-        confidence: 0.3,
-      };
-    }
-
-    return {
-      action: 'BUY',
-      symbol: stock.symbol,
-      quantity,
-      reasoning: `Buying ${stock.symbol} based on momentum (${stock.changePercent.toFixed(2)}% today)`,
-      confidence: 0.6,
-      riskAssessment: 'Medium',
-      targetPrice: stock.price * 1.1,
-      stopLoss: stock.price * 0.95,
-    };
-  }
-
-  // SELL
-  if (context.positions.length === 0) {
-    return {
-      action: 'HOLD',
-      reasoning: 'No positions to sell',
-      confidence: 0.5,
-    };
-  }
-
-  const position = context.positions[Math.floor(Math.random() * context.positions.length)];
-
-  return {
-    action: 'SELL',
-    symbol: position.symbol,
-    quantity: position.quantity,
-    reasoning: `Closing ${position.symbol} position (P&L: ${position.unrealizedPnL >= 0 ? '+' : ''}$${position.unrealizedPnL.toFixed(2)})`,
-    confidence: 0.55,
-  };
-}
+// getRandomDecision function REMOVED per user requirement: NO MOCK DATA
+// All trading decisions must come from real AI APIs or explicit error states

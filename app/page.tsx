@@ -829,17 +829,17 @@ export default function SplitViewPage() {
                   borderRadius: '16px',
                   border: '1px solid #CCC1B7'
                 }}>
-                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
                     Risk vs Return Analysis
                   </h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <ScatterChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ScatterChart margin={{ top: 10, right: 20, bottom: 40, left: 50 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#CCC1B7" />
                       <XAxis
                         type="number"
                         dataKey="risk"
                         name="Risk"
-                        label={{ value: 'Max Drawdown (%)', position: 'bottom', style: { fontSize: 10, fill: '#66605C' } }}
+                        label={{ value: 'Max Drawdown (%)', position: 'insideBottom', offset: -10, style: { fontSize: 11, fill: '#66605C', fontWeight: '600' } }}
                         tick={{ fontSize: 10, fill: '#66605C' }}
                         stroke="#66605C"
                       />
@@ -847,7 +847,7 @@ export default function SplitViewPage() {
                         type="number"
                         dataKey="roi"
                         name="ROI"
-                        label={{ value: 'ROI (%)', angle: -90, position: 'left', style: { fontSize: 10, fill: '#66605C' } }}
+                        label={{ value: 'ROI (%)', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#66605C', fontWeight: '600' } }}
                         tick={{ fontSize: 10, fill: '#66605C' }}
                         stroke="#66605C"
                       />
@@ -932,10 +932,10 @@ export default function SplitViewPage() {
                   borderRadius: '16px',
                   border: '1px solid #CCC1B7'
                 }}>
-                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33', textAlign: 'center' }}>
                     Head-to-Head: All Models
                   </h3>
-                  <ResponsiveContainer width="100%" height={200}>
+                  <ResponsiveContainer width="100%" height={400}>
                     <RadarChart data={[
                       {
                         metric: 'ROI',
@@ -1481,7 +1481,7 @@ export default function SplitViewPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
-                      Entry: ${(trade.entryPrice || 0).toFixed(2)} → Exit: ${(trade.exitPrice || 0).toFixed(2)}
+                      Entry: ${(trade.entryPrice || trade.price || 0).toFixed(2)} → Exit: ${(trade.exitPrice || trade.price || 0).toFixed(2)}
                     </div>
                     <div style={{ fontSize: '11px', color: '#66605C', marginBottom: '4px' }}>
                       Quantity: {trade.quantity} shares
@@ -2141,12 +2141,12 @@ export default function SplitViewPage() {
                       <div style={{ fontSize: '12px', lineHeight: '2' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Account Value:</span>
-                          <span style={{ fontWeight: '700' }}>${selectedAgent.accountValue.toLocaleString()}</span>
+                          <span style={{ fontWeight: '700' }}>${selectedAgent.accountValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#66605C' }}>Total P&L:</span>
                           <span style={{ fontWeight: '700', color: (selectedAgent.totalPnL || 0) >= 0 ? '#0F7B3A' : '#CC0000' }}>
-                            ${selectedAgent.totalPnL?.toLocaleString()}
+                            ${(selectedAgent.totalPnL || 0) >= 0 ? '+' : ''}{(selectedAgent.totalPnL || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -2224,7 +2224,8 @@ export default function SplitViewPage() {
                             tick={{ fontSize: 10, fill: '#66605C' }}
                             stroke="#66605C"
                             domain={['dataMin - 1000', 'dataMax + 1000']}
-                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
+                            tickCount={5}
                           />
                           <Tooltip
                             contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
@@ -2261,13 +2262,52 @@ export default function SplitViewPage() {
 
                         if (agentPositions.length === 0) {
                           return (
-                            <div style={{
-                              padding: '40px',
-                              textAlign: 'center',
-                              color: '#66605C',
-                              fontSize: '12px'
-                            }}>
-                              No active positions. All cash currently.
+                            <div>
+                              <div style={{
+                                textAlign: 'center',
+                                color: '#66605C',
+                                fontSize: '11px',
+                                marginBottom: '12px'
+                              }}>
+                                No active positions. All cash currently.
+                              </div>
+                              <ResponsiveContainer width="100%" height={180}>
+                                <PieChart>
+                                  <Pie
+                                    data={[{
+                                      name: 'Cash',
+                                      value: 100,
+                                      color: '#4CAF50'
+                                    }]}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={45}
+                                    outerRadius={70}
+                                    paddingAngle={0}
+                                    dataKey="value"
+                                  >
+                                    <Cell fill="#4CAF50" />
+                                  </Pie>
+                                  <text
+                                    x="50%"
+                                    y="50%"
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: '24px', fontWeight: '700', fill: '#0F7B3A' }}
+                                  >
+                                    100%
+                                  </text>
+                                  <text
+                                    x="50%"
+                                    y="58%"
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: '12px', fill: '#66605C' }}
+                                  >
+                                    Cash
+                                  </text>
+                                </PieChart>
+                              </ResponsiveContainer>
                             </div>
                           );
                         }
@@ -2375,39 +2415,43 @@ export default function SplitViewPage() {
                       <h4 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: '#262A33' }}>
                         Trade Distribution
                       </h4>
-                      <ResponsiveContainer width="100%" height={180}>
+                      <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
                           <Pie
                             data={[
                               {
-                                name: 'Winning Trades',
+                                name: 'Wins',
                                 value: Math.round(selectedAgent.tradeCount * (selectedAgent.winRate || 0) / 100),
                                 color: '#0F7B3A'
                               },
                               {
-                                name: 'Losing Trades',
+                                name: 'Losses',
                                 value: Math.round(selectedAgent.tradeCount * (1 - (selectedAgent.winRate || 0) / 100)),
                                 color: '#CC0000'
                               }
                             ]}
                             cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={70}
+                            cy="45%"
+                            innerRadius={40}
+                            outerRadius={65}
                             paddingAngle={2}
                             dataKey="value"
-                            label={(entry) => `${entry.name}: ${entry.value}`}
+                            label={(entry: any) =>
+                              entry.value > 0 ? `${entry.name}: ${entry.value}` : null
+                            }
                             labelLine={{ stroke: '#66605C', strokeWidth: 1 }}
+                            style={{ fontSize: '11px' }}
                           >
                             {[
-                              { name: 'Winning Trades', value: Math.round(selectedAgent.tradeCount * (selectedAgent.winRate || 0) / 100), color: '#0F7B3A' },
-                              { name: 'Losing Trades', value: Math.round(selectedAgent.tradeCount * (1 - (selectedAgent.winRate || 0) / 100)), color: '#CC0000' }
+                              { name: 'Wins', value: Math.round(selectedAgent.tradeCount * (selectedAgent.winRate || 0) / 100), color: '#0F7B3A' },
+                              { name: 'Losses', value: Math.round(selectedAgent.tradeCount * (1 - (selectedAgent.winRate || 0) / 100)), color: '#CC0000' }
                             ].map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
                           <Tooltip
                             contentStyle={{ backgroundColor: '#FFF1E5', border: '1px solid #CCC1B7', borderRadius: '8px', fontSize: '11px' }}
+                            formatter={(value: any, name: string) => [`${value} trades`, name]}
                           />
                         </PieChart>
                       </ResponsiveContainer>

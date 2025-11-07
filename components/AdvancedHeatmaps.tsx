@@ -484,144 +484,544 @@ export default function AdvancedHeatmaps({ agents, selectedAgentId }: Props) {
         </div>
       </div>
 
-      {/* Performance Correlation Matrix */}
+      {/* AI Performance Comparison Dashboard */}
       <div style={{
-        backgroundColor: '#F8EBD8',
-        padding: '20px',
-        borderRadius: '16px',
-        border: '1px solid #CCC1B7'
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '20px'
       }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
-          Model Performance Correlation
-        </h3>
+        {/* Win Rate Comparison */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: `50px repeat(${agents.length}, 1fr)`,
-          gap: '2px',
-          fontSize: '10px'
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
         }}>
-          {/* Header row */}
-          <div />
-          {agents.map(agent => (
-            <div
-              key={agent.id}
-              style={{
-                textAlign: 'center',
-                fontWeight: '600',
-                color: '#262A33',
-                fontSize: '9px',
-                padding: '4px'
-              }}
-            >
-              {agent.name.split(' ')[0]}
-            </div>
-          ))}
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Win Rate Comparison
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .sort((a, b) => (b.winRate || 0) - (a.winRate || 0))
+              .map((agent, idx) => {
+                const winRate = agent.winRate || 0;
+                const barWidth = `${winRate}%`;
+                const isTop = idx === 0 && winRate > 0;
 
-          {/* Correlation cells */}
-          {agents.map((rowAgent, rowIdx) => {
-            // Get row agent data
-            const rowAgentData = heatmapData.find(d => d.agentId === rowAgent.id);
-
-            return (
-              <>
-                <div
-                  key={`label-${rowAgent.id}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    fontWeight: '600',
-                    color: '#262A33',
-                    fontSize: '9px',
-                    padding: '4px'
-                  }}
-                >
-                  {rowAgent.name.split(' ')[0]}
-                </div>
-                {agents.map((colAgent, colIdx) => {
-                  // Get column agent data
-                  const colAgentData = heatmapData.find(d => d.agentId === colAgent.id);
-
-                  // Calculate Pearson correlation based on daily returns
-                  let correlation = 0;
-                  if (rowIdx === colIdx) {
-                    correlation = 1; // Perfect correlation with self
-                  } else if (rowAgentData && colAgentData) {
-                    // Get common dates
-                    const rowDates = Object.keys(rowAgentData.dailyPerformance);
-                    const colDates = Object.keys(colAgentData.dailyPerformance);
-                    const commonDates = rowDates.filter(date => colDates.includes(date));
-
-                    if (commonDates.length >= 2) {
-                      // Extract daily returns
-                      const rowReturns = commonDates.map(date => rowAgentData.dailyPerformance[date].percentChange);
-                      const colReturns = commonDates.map(date => colAgentData.dailyPerformance[date].percentChange);
-
-                      // Calculate Pearson correlation
-                      const n = rowReturns.length;
-                      const sumRow = rowReturns.reduce((a, b) => a + b, 0);
-                      const sumCol = colReturns.reduce((a, b) => a + b, 0);
-                      const sumRowSq = rowReturns.reduce((a, b) => a + b * b, 0);
-                      const sumColSq = colReturns.reduce((a, b) => a + b * b, 0);
-                      const sumRowCol = rowReturns.reduce((acc, val, i) => acc + val * colReturns[i], 0);
-
-                      const numerator = n * sumRowCol - sumRow * sumCol;
-                      const denominator = Math.sqrt((n * sumRowSq - sumRow * sumRow) * (n * sumColSq - sumCol * sumCol));
-
-                      if (denominator > 0) {
-                        correlation = numerator / denominator;
-                      } else {
-                        // No variance - agents have identical returns
-                        correlation = 1;
-                      }
-                    } else {
-                      // Not enough data - show as neutral
-                      correlation = 0;
-                    }
-                  }
-
-                  const intensity = Math.abs(correlation);
-                  const color = correlation > 0.3
-                    ? `rgba(15, 123, 58, ${0.3 + intensity * 0.7})`
-                    : correlation < -0.3
-                    ? `rgba(204, 0, 0, ${0.3 + intensity * 0.7})`
-                    : `rgba(153, 153, 153, 0.4)`;
-
-                  return (
-                    <div
-                      key={`${rowAgent.id}-${colAgent.id}`}
-                      title={`${rowAgent.name} vs ${colAgent.name}: ${(correlation * 100).toFixed(0)}% correlation`}
-                      style={{
-                        aspectRatio: '1',
-                        backgroundColor: color,
-                        borderRadius: '4px',
-                        border: '1px solid #CCC1B7',
+                return (
+                  <div key={agent.id}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color || '#66605C'
+                        }} />
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#262A33' }}>
+                          {agent.name}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: isTop ? '#0F7B3A' : '#262A33'
+                      }}>
+                        {winRate.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#E9DECF',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #CCC1B7'
+                    }}>
+                      <div style={{
+                        width: barWidth,
+                        height: '100%',
+                        backgroundColor: isTop ? '#0F7B3A' : 'rgba(15, 123, 58, 0.7)',
+                        transition: 'width 0.5s ease',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '8px',
-                        fontWeight: '700',
-                        color: intensity > 0.5 || correlation > 0.3 ? '#FFF' : '#262A33'
-                      }}
-                    >
-                      {(correlation * 100).toFixed(0)}
+                        justifyContent: 'flex-end',
+                        paddingRight: winRate > 15 ? '8px' : '0'
+                      }}>
+                        {isTop && winRate > 15 && (
+                          <span style={{ fontSize: '9px', color: '#FFF', fontWeight: '700' }}>
+                            Best
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
-              </>
-            );
-          })}
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Higher win rate indicates more profitable trades
+          </div>
         </div>
+
+        {/* ROI Comparison */}
         <div style={{
-          marginTop: '12px',
-          padding: '10px',
-          backgroundColor: '#EBE0D0',
-          borderRadius: '8px',
-          fontSize: '10px',
-          color: '#66605C'
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
         }}>
-          <strong style={{ color: '#262A33' }}>Note:</strong> Pearson correlation of daily returns. Positive (green) means models perform similarly,
-          negative (red) means opposite strategies, gray means no clear relationship. Requires multiple trading days for accuracy.
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Return on Investment (ROI)
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .sort((a, b) => {
+                const roiA = ((a.accountValue - 10000) / 10000) * 100;
+                const roiB = ((b.accountValue - 10000) / 10000) * 100;
+                return roiB - roiA;
+              })
+              .map((agent, idx) => {
+                const roi = ((agent.accountValue - 10000) / 10000) * 100;
+                const isPositive = roi >= 0;
+                const absRoi = Math.abs(roi);
+                const maxRoi = 10; // Scale bars to max 10% for visual clarity
+                const barWidth = `${Math.min((absRoi / maxRoi) * 100, 100)}%`;
+                const isTop = idx === 0 && roi > 0;
+
+                return (
+                  <div key={agent.id}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color || '#66605C'
+                        }} />
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#262A33' }}>
+                          {agent.name}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: isPositive ? (isTop ? '#0F7B3A' : 'rgba(15, 123, 58, 0.8)') : '#CC0000'
+                      }}>
+                        {isPositive ? '+' : ''}{roi.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#E9DECF',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #CCC1B7'
+                    }}>
+                      <div style={{
+                        width: barWidth,
+                        height: '100%',
+                        backgroundColor: isPositive
+                          ? (isTop ? '#0F7B3A' : 'rgba(15, 123, 58, 0.7)')
+                          : '#CC0000',
+                        transition: 'width 0.5s ease'
+                      }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Percentage return from initial $10,000
+          </div>
+        </div>
+
+        {/* Sharpe Ratio Comparison */}
+        <div style={{
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Risk-Adjusted Returns (Sharpe Ratio)
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .sort((a, b) => (b.sharpeRatio || 0) - (a.sharpeRatio || 0))
+              .map((agent, idx) => {
+                const sharpe = agent.sharpeRatio || 0;
+                const maxSharpe = 3; // Scale to max 3.0 for visual clarity
+                const barWidth = `${Math.min((Math.max(sharpe, 0) / maxSharpe) * 100, 100)}%`;
+                const isTop = idx === 0 && sharpe > 0;
+                const quality = sharpe > 2 ? 'Excellent' : sharpe > 1 ? 'Good' : sharpe > 0 ? 'Fair' : 'Poor';
+
+                return (
+                  <div key={agent.id}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color || '#66605C'
+                        }} />
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#262A33' }}>
+                          {agent.name}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '8px',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          backgroundColor: sharpe > 1 ? 'rgba(15, 123, 58, 0.15)' : 'rgba(153, 153, 153, 0.15)',
+                          color: sharpe > 1 ? '#0F7B3A' : '#66605C',
+                          fontWeight: '600'
+                        }}>
+                          {quality}
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: isTop ? '#0F7B3A' : '#262A33'
+                        }}>
+                          {sharpe.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#E9DECF',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #CCC1B7'
+                    }}>
+                      <div style={{
+                        width: barWidth,
+                        height: '100%',
+                        backgroundColor: isTop ? '#0F7B3A' : 'rgba(15, 123, 58, 0.7)',
+                        transition: 'width 0.5s ease'
+                      }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Higher is better: &gt;2 = Excellent, &gt;1 = Good, &gt;0 = Fair
+          </div>
+        </div>
+
+        {/* Risk Metrics */}
+        <div style={{
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Maximum Drawdown (Risk)
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .sort((a, b) => (a.maxDrawdown || 0) - (b.maxDrawdown || 0)) // Sort ascending (lower is better)
+              .map((agent, idx) => {
+                const drawdown = Math.abs(agent.maxDrawdown || 0);
+                const maxDrawdown = 20; // Scale to max 20% for visual
+                const barWidth = `${Math.min((drawdown / maxDrawdown) * 100, 100)}%`;
+                const isBest = idx === 0;
+                const riskLevel = drawdown < 5 ? 'Low' : drawdown < 10 ? 'Medium' : 'High';
+
+                return (
+                  <div key={agent.id}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color || '#66605C'
+                        }} />
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#262A33' }}>
+                          {agent.name}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          fontSize: '8px',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          backgroundColor: drawdown < 5 ? 'rgba(15, 123, 58, 0.15)' : drawdown < 10 ? 'rgba(255, 165, 0, 0.15)' : 'rgba(204, 0, 0, 0.15)',
+                          color: drawdown < 5 ? '#0F7B3A' : drawdown < 10 ? '#FF8C00' : '#CC0000',
+                          fontWeight: '600'
+                        }}>
+                          {riskLevel} Risk
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: isBest ? '#0F7B3A' : '#CC0000'
+                        }}>
+                          -{drawdown.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#E9DECF',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #CCC1B7'
+                    }}>
+                      <div style={{
+                        width: barWidth,
+                        height: '100%',
+                        backgroundColor: drawdown < 5
+                          ? (isBest ? '#0F7B3A' : 'rgba(15, 123, 58, 0.7)')
+                          : drawdown < 10
+                          ? '#FF8C00'
+                          : '#CC0000',
+                        transition: 'width 0.5s ease'
+                      }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Lower is better - measures largest peak-to-trough decline
+          </div>
+        </div>
+
+        {/* Trade Extremes */}
+        <div style={{
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Biggest Win vs Loss
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .map(agent => {
+                const biggestWin = agent.biggestWin || 0;
+                const biggestLoss = Math.abs(agent.biggestLoss || 0);
+                const winLossRatio = biggestLoss !== 0 ? biggestWin / biggestLoss : 0;
+
+                return (
+                  <div
+                    key={agent.id}
+                    style={{
+                      padding: '12px',
+                      backgroundColor: '#F5E6D3',
+                      borderRadius: '10px',
+                      border: '1px solid #CCC1B7'
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '10px'
+                    }}>
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: agent.color || '#66605C'
+                      }} />
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#262A33' }}>
+                        {agent.name}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#66605C' }}>Biggest Win</span>
+                        <span style={{ fontWeight: '700', color: '#0F7B3A', fontSize: '11px' }}>
+                          +${biggestWin.toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#66605C' }}>Biggest Loss</span>
+                        <span style={{ fontWeight: '700', color: '#CC0000', fontSize: '11px' }}>
+                          -${biggestLoss.toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#66605C' }}>Ratio</span>
+                        <span style={{
+                          fontWeight: '700',
+                          color: winLossRatio > 1 ? '#0F7B3A' : '#CC0000',
+                          fontSize: '11px'
+                        }}>
+                          {winLossRatio.toFixed(2)}x
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Shows largest single win and loss for each AI trader
+          </div>
+        </div>
+
+        {/* Total Trades Comparison */}
+        <div style={{
+          backgroundColor: '#F8EBD8',
+          padding: '20px',
+          borderRadius: '16px',
+          border: '1px solid #CCC1B7'
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '16px', color: '#262A33' }}>
+            Trading Activity
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents
+              .filter(agent => agent.id !== 'benchmark-sp20')
+              .sort((a, b) => (b.tradeCount || 0) - (a.tradeCount || 0))
+              .map((agent, idx) => {
+                const totalTrades = agent.tradeCount || 0;
+                const wins = Math.round(totalTrades * (agent.winRate || 0) / 100);
+                const losses = totalTrades - wins;
+                const maxTrades = Math.max(...agents.filter(a => a.id !== 'benchmark-sp20').map(a => a.tradeCount || 0), 1);
+                const barWidth = `${(totalTrades / maxTrades) * 100}%`;
+                const isMostActive = idx === 0 && totalTrades > 0;
+
+                return (
+                  <div key={agent.id}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: agent.color || '#66605C'
+                        }} />
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#262A33' }}>
+                          {agent.name}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '9px', color: '#66605C' }}>
+                          {wins}W / {losses}L
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: isMostActive ? '#0F7B3A' : '#262A33'
+                        }}>
+                          {totalTrades}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#E9DECF',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid #CCC1B7'
+                    }}>
+                      <div style={{
+                        width: barWidth,
+                        height: '100%',
+                        background: `linear-gradient(to right, #0F7B3A 0%, #0F7B3A ${(wins/totalTrades)*100}%, #CC0000 ${(wins/totalTrades)*100}%, #CC0000 100%)`,
+                        transition: 'width 0.5s ease'
+                      }} />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div style={{
+            marginTop: '12px',
+            padding: '8px',
+            backgroundColor: '#EBE0D0',
+            borderRadius: '6px',
+            fontSize: '9px',
+            color: '#66605C',
+            textAlign: 'center'
+          }}>
+            Total trades executed (green = wins, red = losses)
+          </div>
         </div>
       </div>
     </div>
