@@ -6,7 +6,7 @@ export const TOP_20_STOCKS = [
   { symbol: 'META', name: 'Meta Platforms Inc.' },
   { symbol: 'GOOGL', name: 'Alphabet Inc.' },
   { symbol: 'TSLA', name: 'Tesla Inc.' },
-  { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.' },
+  { symbol: 'KO', name: 'Coca-Cola Company' }, // Replaced BRK.B (Yahoo Finance validation issues)
   { symbol: 'V', name: 'Visa Inc.' },
   { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
   { symbol: 'WMT', name: 'Walmart Inc.' },
@@ -18,7 +18,7 @@ export const TOP_20_STOCKS = [
   { symbol: 'HD', name: 'Home Depot Inc.' },
   { symbol: 'BAC', name: 'Bank of America Corp.' },
   { symbol: 'CVX', name: 'Chevron Corporation' },
-  { symbol: 'KO', name: 'Coca-Cola Company' },
+  { symbol: 'LLY', name: 'Eli Lilly and Company' }, // 20th stock
 ];
 
 export const AI_AGENTS = [

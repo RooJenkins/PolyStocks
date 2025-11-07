@@ -249,6 +249,39 @@ async function fetchNewsForBigMovers(stocks: Stock[]): Promise<Array<{ symbol: s
   return news;
 }
 
+// Helper: Update all positions with current prices and P&L
+async function updateAllPositions(stocks: Stock[]) {
+  const allPositions = await prisma.position.findMany();
+
+  let updatedCount = 0;
+  for (const position of allPositions) {
+    const currentStock = stocks.find((s) => s.symbol === position.symbol);
+    if (currentStock) {
+      // Calculate P&L - inverse for SHORT positions
+      let unrealizedPnL, unrealizedPnLPercent;
+      if (position.side === 'SHORT') {
+        unrealizedPnL = (position.entryPrice - currentStock.price) * position.quantity;
+        unrealizedPnLPercent = ((position.entryPrice - currentStock.price) / position.entryPrice) * 100;
+      } else {
+        unrealizedPnL = (currentStock.price - position.entryPrice) * position.quantity;
+        unrealizedPnLPercent = ((currentStock.price - position.entryPrice) / position.entryPrice) * 100;
+      }
+
+      await prisma.position.update({
+        where: { id: position.id },
+        data: {
+          currentPrice: currentStock.price,
+          unrealizedPnL,
+          unrealizedPnLPercent,
+        },
+      });
+      updatedCount++;
+    }
+  }
+
+  console.log(`✓ Updated ${updatedCount} positions`);
+}
+
 // Helper: Calculate agent performance stats
 async function calculateAgentStats(agentId: string) {
   const trades = await prisma.trade.findMany({
@@ -331,7 +364,11 @@ export async function runTradingCycle() {
       await processAgentTrading(agent, stocks, marketTrend, news);
     }
 
-    // 9. Update all performance metrics
+    // 9. Update all positions one final time (to capture newly created positions)
+    console.log('\n📊 Final position update pass...');
+    await updateAllPositions(stocks);
+
+    // 10. Update all performance metrics
     await updatePerformanceMetrics();
 
     console.log('\n✅ ===== TRADING CYCLE COMPLETE =====\n');
