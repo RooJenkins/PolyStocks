@@ -281,6 +281,29 @@ export default function SplitViewPage() {
           alignItems: 'center',
           gap: '10px'
         }}>
+          <Link
+            href="/how-it-works"
+            style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              color: '#990F3D',
+              textDecoration: 'none',
+              padding: '6px 14px',
+              backgroundColor: 'rgba(153, 15, 61, 0.1)',
+              borderRadius: '12px',
+              border: '1px solid rgba(153, 15, 61, 0.3)',
+              transition: 'all 0.2s',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(153, 15, 61, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(153, 15, 61, 0.1)';
+            }}
+          >
+            📖 How It Works
+          </Link>
           <div style={{
             fontSize: '9px',
             fontFamily: 'system-ui, sans-serif',
