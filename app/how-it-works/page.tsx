@@ -74,7 +74,7 @@ export default function HowItWorksPage() {
           padding: '12px',
           flex: 1,
           display: 'grid',
-          gridTemplateRows: 'auto 1fr auto',
+          gridTemplateRows: 'minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr)',
           gap: '10px',
           overflow: 'hidden'
         }}>
@@ -82,7 +82,8 @@ export default function HowItWorksPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '180px 1fr 180px',
-            gap: '10px'
+            gap: '10px',
+            minHeight: 0
           }}>
             {/* Data Sources */}
             <div style={{
@@ -235,13 +236,14 @@ export default function HowItWorksPage() {
             padding: '10px',
             border: '1px solid #E5DDD3',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            minHeight: 0
           }}>
             <h2 style={{
               fontSize: '11px',
               fontWeight: '400',
               color: '#33302E',
-              marginBottom: '8px',
+              marginBottom: '6px',
               textAlign: 'center',
               fontFamily: 'Georgia, serif'
             }}>
@@ -250,7 +252,9 @@ export default function HowItWorksPage() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: '8px'
+              gap: '8px',
+              flex: 1,
+              alignItems: 'center'
             }}>
               {[
                 { name: 'GPT-5', provider: 'OpenAI' },
@@ -308,7 +312,8 @@ export default function HowItWorksPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '10px'
+            gap: '10px',
+            minHeight: 0
           }}>
             {/* Tools */}
             <div style={{
