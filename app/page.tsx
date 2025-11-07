@@ -181,7 +181,7 @@ export default function SplitViewPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{
-      backgroundColor: '#FFF1E5',
+      backgroundColor: '#FFF1E0',
       fontFamily: 'Georgia, "Times New Roman", serif',
       color: '#33302E'
     }}>
