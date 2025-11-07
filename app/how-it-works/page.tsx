@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function HowItWorksPage() {
   return (
     <div style={{
@@ -45,7 +47,7 @@ export default function HowItWorksPage() {
                 Six competing AI models trade stocks every 30 minutes using real-time market data and technical analysis
               </p>
             </div>
-            <a
+            <Link
               href="/"
               style={{
                 padding: '12px 24px',
@@ -60,7 +62,7 @@ export default function HowItWorksPage() {
               }}
             >
               ← Back to Dashboard
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -682,7 +684,7 @@ export default function HowItWorksPage() {
           <p style={{ fontSize: '14px', marginBottom: '20px', opacity: 0.9 }}>
             Analyze performance metrics, review trading decisions, and compare strategies
           </p>
-          <a
+          <Link
             href="/"
             style={{
               display: 'inline-block',
@@ -697,7 +699,7 @@ export default function HowItWorksPage() {
             }}
           >
             Go to Dashboard →
-          </a>
+          </Link>
         </div>
       </div>
     </div>
