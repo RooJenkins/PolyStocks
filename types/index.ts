@@ -15,6 +15,19 @@ export interface Stock {
   avgVolume?: number;
   volumeTrend?: number;
   volumeStatus?: 'high' | 'low' | 'normal';
+  // Technical indicators
+  rsi?: number;
+  bollingerBands?: {
+    upper: number;
+    middle: number;
+    lower: number;
+  };
+  // Market intelligence
+  relativeStrength?: number;
+  relativeStrengthWeek?: number;
+  avgVolatility?: number;
+  // Alias for compatibility
+  currentPrice?: number;
 }
 
 export interface AIAgent {

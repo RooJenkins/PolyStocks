@@ -10,6 +10,13 @@ import { getBroker, getBrokerDisplayName, type BrokerType } from './brokers';
 import { validateTrade, validateExitParameters, logSafetyViolation } from './safety-limits';
 import { checkAndExecuteExits } from './exit-manager';
 import { updateBenchmarkPerformance } from './benchmark';
+// NEW: Advanced intelligence modules
+import { getMarketContext, calculateRelativeStrength, type MarketContext } from './market-context';
+import { calculatePortfolioMetrics, getPortfolioRecommendations, type PortfolioMetrics } from './portfolio-intelligence';
+import { getStrategySignals, generateStrategyPrompt, STRATEGY_CONFIGS } from './trading-strategies';
+import { calculatePositionSize, calculateAgentPerformance, adjustForMarketConditions, getPositionSizeSummary, type AgentPerformance } from './position-sizing';
+import { analyzeAllExits, generateExitSummary } from './exit-management';
+import { fetchMacroIndicators, getEnhancedStockData, generateDataSourcesSummary } from './data-sources';
 
 // Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
@@ -169,6 +176,41 @@ async function enrichStocksWithTrends(stocks: Stock[]): Promise<Stock[]> {
       ? ((stock.volume - avgVolume) / avgVolume) * 100
       : undefined;
 
+    // Calculate RSI (Relative Strength Index) using last 14 periods
+    let rsi: number | undefined = undefined;
+    if (historicalPrices.length >= 14) {
+      const changes = [];
+      for (let i = 1; i < Math.min(historicalPrices.length, 15); i++) {
+        changes.push(historicalPrices[i] - historicalPrices[i - 1]);
+      }
+
+      const gains = changes.filter(c => c > 0);
+      const losses = changes.filter(c => c < 0).map(c => Math.abs(c));
+
+      const avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / 14 : 0;
+      const avgLoss = losses.length > 0 ? losses.reduce((a, b) => a + b, 0) / 14 : 0;
+
+      if (avgLoss === 0) {
+        rsi = 100;
+      } else {
+        const rs = avgGain / avgLoss;
+        rsi = 100 - (100 / (1 + rs));
+      }
+    }
+
+    // Calculate average volatility (standard deviation of returns)
+    let avgVolatility: number | undefined = undefined;
+    if (thirtyDayPrices.length >= 5) {
+      const returns = [];
+      for (let i = 1; i < thirtyDayPrices.length; i++) {
+        const dailyReturn = (thirtyDayPrices[i] - thirtyDayPrices[i - 1]) / thirtyDayPrices[i - 1];
+        returns.push(dailyReturn);
+      }
+      const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length;
+      avgVolatility = Math.sqrt(variance) * Math.sqrt(252); // Annualized volatility
+    }
+
     return {
       ...stock,
       weekTrend,
@@ -180,6 +222,9 @@ async function enrichStocksWithTrends(stocks: Stock[]): Promise<Stock[]> {
       low52w,
       avgVolume,
       volumeTrend,
+      rsi,
+      avgVolatility,
+      currentPrice: stock.price, // Alias
     };
   });
 }
@@ -332,20 +377,40 @@ export async function runTradingCycle() {
     stocks = await enrichStocksWithTrends(stocks);
     console.log(`✓ Added 7-day trends and moving averages\n`);
 
-    // 3. Update S&P 20 benchmark performance
+    // 3. Get comprehensive market context (SPY, VIX, sectors, relative strength)
+    console.log('🌍 Analyzing market context...');
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const spyHistoricalPrices = await prisma.stockPrice.findMany({
+      where: { symbol: 'SPY', timestamp: { gte: ninetyDaysAgo } },
+      orderBy: { timestamp: 'asc' },
+      select: { price: true }
+    });
+    const marketContext = await getMarketContext(stocks, spyHistoricalPrices.map(p => p.price));
+
+    // Add relative strength to all stocks
+    stocks = calculateRelativeStrength(stocks, marketContext.spyTrend);
+    console.log(`✓ Market intelligence complete\n`);
+
+    // 4. Get macro indicators and enhanced data sources
+    console.log('📡 Fetching multi-source data...');
+    const macroIndicators = await fetchMacroIndicators();
+    const enhancedStockData = stocks.map(stock => getEnhancedStockData(stock));
+    console.log(`✓ Multi-source data integrated\n`);
+
+    // 5. Update S&P 20 benchmark performance
     await updateBenchmarkPerformance(stocks);
 
-    // 4. Check positions for automatic exits (Alpha Arena Phase 1)
+    // 6. Check positions for automatic exits (Alpha Arena Phase 1)
     await checkAndExecuteExits(stocks);
 
-    // 5. Calculate market trend
+    // 7. Calculate market trend (legacy, for compatibility)
     const marketTrend = calculateMarketTrend(stocks);
     console.log(`📊 Market trend: ${marketTrend.daily >= 0 ? '+' : ''}${marketTrend.daily.toFixed(2)}% today\n`);
 
-    // 6. Fetch news for big movers (>3% change)
+    // 8. Fetch news for big movers (>3% change)
     const news = await fetchNewsForBigMovers(stocks);
 
-    // 7. Get all agents (excluding benchmark)
+    // 9. Get all agents (excluding benchmark)
     const agents = await prisma.agent.findMany({
       include: {
         positions: true,
@@ -359,9 +424,9 @@ export async function runTradingCycle() {
 
     console.log(`🤖 Processing ${agents.length} AI agents\n`);
 
-    // 8. Process each agent
+    // 10. Process each agent with full intelligence
     for (const agent of agents) {
-      await processAgentTrading(agent, stocks, marketTrend, news);
+      await processAgentTrading(agent, stocks, marketContext, macroIndicators, enhancedStockData, marketTrend, news);
     }
 
     // 9. Update all positions one final time (to capture newly created positions)
@@ -382,14 +447,38 @@ export async function runTradingCycle() {
 async function processAgentTrading(
   agent: any,
   stocks: Stock[],
+  marketContext: MarketContext,
+  macroIndicators: any,
+  enhancedStockData: any[],
   marketTrend: { daily: number; weekly: number },
   news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>
 ) {
   console.log(`\n━━━ ${agent.name} (${agent.model}) ━━━`);
 
   try {
-    // Get agent's performance stats
+    // Get agent's performance stats (enhanced for Kelly Criterion)
     const agentStats = await calculateAgentStats(agent.id);
+
+    // Get agent's complete trade history for performance analysis
+    const agentTrades = await prisma.trade.findMany({
+      where: { agentId: agent.id },
+      select: {
+        action: true,
+        price: true,
+        realizedPnL: true,
+        timestamp: true
+      }
+    });
+
+    // Calculate agent performance for position sizing
+    const agentPerformance = calculateAgentPerformance(
+      agentTrades
+        .filter(t => t.action === 'SELL' || t.action === 'BUY_TO_COVER')
+        .map(t => ({
+          pnl: t.realizedPnL || 0,
+          pnlPercent: t.realizedPnL && t.price ? (t.realizedPnL / (t.price * 100)) * 100 : 0,
+        }))
+    );
     // Update current prices for all positions
     for (const position of agent.positions) {
       const currentStock = stocks.find((s) => s.symbol === position.symbol);
@@ -445,8 +534,68 @@ async function processAgentTrading(
       });
     }
 
-    // Prepare market context for AI
-    const marketContext = {
+    // Calculate portfolio intelligence
+    const portfolioMetrics = calculatePortfolioMetrics(
+      agent.positions.map((p: any) => ({
+        symbol: p.symbol,
+        name: p.name,
+        quantity: p.quantity,
+        entryPrice: p.entryPrice,
+        currentPrice: p.currentPrice,
+        unrealizedPnL: p.unrealizedPnL,
+        unrealizedPnLPercent: p.unrealizedPnLPercent,
+      })),
+      agent.cashBalance,
+      portfolioValue,
+      stocks,
+      marketContext,
+      agentStats
+    );
+
+    console.log(`  🎯 Portfolio: ${portfolioMetrics.portfolioSummary}`);
+
+    // Get portfolio recommendations
+    const recommendations = getPortfolioRecommendations(portfolioMetrics);
+    if (recommendations.length > 0) {
+      console.log('  💡 Recommendations:');
+      recommendations.slice(0, 3).forEach(rec => console.log(`    ${rec}`));
+    }
+
+    // Get agent's trading strategy
+    const agentStrategy = STRATEGY_CONFIGS[agent.model];
+    const strategyType = agentStrategy?.type || 'momentum_breakout';
+
+    // Get strategy-specific signals for all stocks
+    const strategySignals = getStrategySignals(agent.model, stocks, marketContext, portfolioMetrics);
+
+    // Analyze exit signals for current positions
+    const exitSignals = analyzeAllExits(
+      agent.positions.map((p: any) => ({
+        symbol: p.symbol,
+        entryPrice: p.entryPrice,
+        currentPrice: p.currentPrice,
+        quantity: p.quantity,
+        entryDate: p.createdAt,
+        daysHeld: Math.floor((Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+        unrealizedPnL: p.unrealizedPnL,
+        unrealizedPnLPercent: p.unrealizedPnLPercent,
+        strategy: strategyType,
+      })),
+      stocks,
+      marketContext
+    );
+
+    // Log critical exit signals
+    const criticalExits = exitSignals.filter(s => s.shouldExit && (s.urgency === 'critical' || s.urgency === 'high'));
+    if (criticalExits.length > 0) {
+      console.log('  ⚠️ EXIT ALERTS:');
+      criticalExits.forEach(exit => {
+        console.log(`    ${exit.symbol}: ${exit.reasoning[0]}`);
+      });
+    }
+
+    // Prepare enhanced market context for AI
+    const enhancedMarketContext = {
       stocks,
       cashBalance: agent.cashBalance,
       accountValue: portfolioValue,
@@ -462,10 +611,20 @@ async function processAgentTrading(
       marketTrend,
       agentStats,
       news: news.length > 0 ? news : undefined,
+      // NEW: Enhanced intelligence
+      marketContext,
+      portfolioMetrics,
+      strategySignals,
+      exitSignals,
+      macroIndicators,
+      agentPerformance,
+      strategyPrompt: generateStrategyPrompt(agent.model, strategySignals, marketContext),
+      exitSummary: generateExitSummary(exitSignals),
+      dataSourcesSummary: generateDataSourcesSummary(enhancedStockData, macroIndicators),
     };
 
-    // Get AI decision
-    const decision = await getAIDecision(agent.id, agent.name, marketContext);
+    // Get AI decision with enhanced intelligence
+    const decision = await getAIDecision(agent.id, agent.name, enhancedMarketContext);
 
     console.log(`  🎯 Decision: ${decision.action}`);
     console.log(`  💭 Reasoning: ${decision.reasoning}`);
@@ -532,36 +691,77 @@ async function executeBuy(agent: any, decision: any, stocks: Stock[]) {
     return;
   }
 
-  // ALPHA ARENA PHASE 2: Conviction-Based Position Sizing
-  // Use confidence score to determine position size as percentage of cash
-  let positionSizePercent = 0;
-  const confidence = decision.confidence || 0.5;
+  // KELLY CRITERION POSITION SIZING
+  // Calculate optimal position size based on agent performance, confidence, volatility
+  const agentStats = await calculateAgentStats(agent.id);
+  const agentTrades = await prisma.trade.findMany({
+    where: { agentId: agent.id, action: { in: ['SELL', 'BUY_TO_COVER'] } },
+    select: { realizedPnL: true, price: true }
+  });
 
-  if (confidence >= 0.9) {
-    positionSizePercent = 0.25; // 25% for very high confidence
-  } else if (confidence >= 0.8) {
-    positionSizePercent = 0.20; // 20% for high confidence
-  } else if (confidence >= 0.7) {
-    positionSizePercent = 0.15; // 15% for medium confidence
-  } else if (confidence >= 0.6) {
-    positionSizePercent = 0.10; // 10% for lower confidence
-  } else {
-    console.log(`  ⚠️  Confidence too low (${(confidence * 100).toFixed(0)}% < 60%) - rejecting trade`);
+  const agentPerformance = calculateAgentPerformance(
+    agentTrades.map(t => ({
+      pnl: t.realizedPnL || 0,
+      pnlPercent: t.realizedPnL && t.price ? (t.realizedPnL / (t.price * 100)) * 100 : 0,
+    }))
+  );
+
+  // Get agent's risk tolerance from strategy config
+  const agentStrategy = STRATEGY_CONFIGS[agent.model];
+  const riskTolerance = agentStrategy?.riskTolerance || 'moderate';
+
+  // Calculate stock volatility (simplified - use month trend as proxy)
+  const stockVolatility = stock.monthTrend ? Math.abs(stock.monthTrend) / 100 : 0.2;
+
+  // Calculate portfolio volatility
+  const positions = await prisma.position.findMany({ where: { agentId: agent.id } });
+  const portfolioVolatility = positions.length > 0 ? 0.15 : 0.1;
+
+  // Get market context for position sizing adjustment
+  const marketContext = (decision as any).marketContext;
+  const portfolioMetrics = (decision as any).portfolioMetrics;
+
+  const positionSizeInput = {
+    cashAvailable: agent.cashBalance,
+    accountValue: agent.accountValue,
+    confidence: (decision.confidence || 0.5) * 100,
+    stockVolatility,
+    portfolioVolatility,
+    agentPerformance,
+    currentPositionCount: positions.length,
+    maxPositionPercent: 30,
+    riskTolerance,
+  };
+
+  let positionSizeResult = calculatePositionSize(positionSizeInput);
+
+  // Adjust for market conditions if available
+  if (marketContext) {
+    positionSizeResult = adjustForMarketConditions(
+      positionSizeResult,
+      marketContext.spyTrend?.regime || 'neutral',
+      marketContext.vix?.level || 15,
+      portfolioMetrics?.portfolioBeta || 1.0
+    );
+  }
+
+  // Check if position size is viable
+  if (positionSizeResult.positionSize === 0) {
+    console.log('  ⚠️  Kelly Criterion suggests NO TRADE - negative edge or insufficient data');
     return;
   }
 
-  const maxInvestment = agent.cashBalance * positionSizePercent;
+  const maxInvestment = positionSizeResult.positionSize;
   const quantity = Math.floor(maxInvestment / stock.price);
 
   if (quantity === 0) {
-    console.log(`  ⚠️  Position size too small for ${positionSizePercent * 100}% allocation`);
+    console.log(`  ⚠️  Position size too small: $${maxInvestment.toFixed(0)}`);
     return;
   }
 
   const estimatedCost = stock.price * quantity;
-  console.log(
-    `  💰 Position sizing: ${(confidence * 100).toFixed(0)}% confidence → ${(positionSizePercent * 100).toFixed(0)}% of cash ($${maxInvestment.toFixed(0)})`
-  );
+  console.log(`  💰 Kelly Position Sizing: $${maxInvestment.toFixed(0)} (${positionSizeResult.positionPercent.toFixed(1)}% of account)`);
+  console.log(`  📊 Kelly: ${(positionSizeResult.kellyFraction * 100).toFixed(1)}% → Adjusted: ${(positionSizeResult.adjustedKelly * 100).toFixed(1)}%`);
 
   // ALPHA ARENA PHASE 6: Validate exit parameters
   const exitValidation = validateExitParameters(

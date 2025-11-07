@@ -370,6 +370,166 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
+          {/* Advanced Intelligence Systems */}
+          <div style={{
+            marginTop: '48px',
+            padding: '32px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: '20px',
+            border: '2px solid #990F3D',
+            boxShadow: '0 8px 24px rgba(153, 15, 61, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: '#FFF',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              🧠 Advanced Intelligence Systems
+            </div>
+            <div style={{
+              fontSize: '14px',
+              lineHeight: '1.6',
+              color: '#E0E0E0',
+              marginBottom: '24px',
+              textAlign: 'center',
+              maxWidth: '800px',
+              margin: '0 auto 24px auto'
+            }}>
+              Each AI has access to sophisticated intelligence modules providing market context, portfolio analysis,
+              strategy-specific signals, optimal position sizing, multi-source data, and automated exit management.
+            </div>
+
+            <div style={{ display: 'grid', gap: '20px' }}>
+              {/* Market Intelligence */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  🌍 Market Intelligence
+                </div>
+                <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
+                  <strong>SPY Trend:</strong> S&P 500 regime detection (bullish/bearish/neutral) with MA7/30/90<br/>
+                  <strong>VIX Volatility:</strong> Fear index monitoring (low/normal/elevated/high/extreme)<br/>
+                  <strong>Sector Rotation:</strong> Leadership analysis across Tech, Financials, Energy, Healthcare, Consumer<br/>
+                  <strong>Relative Strength:</strong> Each stock's performance vs market benchmark
+                </div>
+              </div>
+
+              {/* Portfolio Intelligence */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  📊 Portfolio Intelligence
+                </div>
+                <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
+                  <strong>Concentration Risk:</strong> Monitors largest position % with risk warnings<br/>
+                  <strong>Diversification:</strong> Herfindahl-Hirschman Index scoring (grades A-F)<br/>
+                  <strong>Portfolio Beta:</strong> Weighted volatility vs market (conservative/moderate/aggressive)<br/>
+                  <strong>Cash Management:</strong> Opportunity cost tracking and optimal cash levels
+                </div>
+              </div>
+
+              {/* AI Strategies */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  🎯 6 Distinct AI Strategies
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                  <div style={{ color: '#10B981', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>🚀 Momentum Breakout</strong><br/>
+                    1-3 day explosive moves (Aggressive)
+                  </div>
+                  <div style={{ color: '#9333EA', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>📊 Mean Reversion</strong><br/>
+                    3-7 day oversold bounces (Moderate)
+                  </div>
+                  <div style={{ color: '#3B82F6', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>📈 Trend Following</strong><br/>
+                    1-4 week trend rides (Moderate)
+                  </div>
+                  <div style={{ color: '#EF4444', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>💎 Value Quality</strong><br/>
+                    2-8 week patient value (Conservative)
+                  </div>
+                  <div style={{ color: '#F59E0B', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>⚡ Volatility Arbitrage</strong><br/>
+                    1-2 day panic buying (Aggressive)
+                  </div>
+                  <div style={{ color: '#EC4899', fontSize: '12px', lineHeight: '1.5' }}>
+                    <strong>🔄 Contrarian Sentiment</strong><br/>
+                    1-2 week reversals (Moderate)
+                  </div>
+                </div>
+              </div>
+
+              {/* Kelly Criterion */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  ⚖️ Kelly Criterion Position Sizing
+                </div>
+                <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
+                  Optimal sizing based on: <strong>Win Rate</strong> × <strong>Avg Win/Loss</strong> × <strong>Confidence</strong> × <strong>Volatility Adjustment</strong><br/>
+                  Risk multipliers: Conservative (0.5x) | Moderate (0.75x) | Aggressive (1.0x Kelly)<br/>
+                  Adjusts for market conditions (bearish, high VIX = smaller positions)
+                </div>
+              </div>
+
+              {/* Multi-Source Data */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  📡 Multi-Source Data
+                </div>
+                <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
+                  <strong>Macro:</strong> GDP, unemployment, inflation, Fed rates, yield curve<br/>
+                  <strong>Insider Activity:</strong> SEC Form 4 buys/sells, significant activity detection<br/>
+                  <strong>Short Interest:</strong> % float shorted, squeeze risk (low/moderate/high/extreme)<br/>
+                  <strong>Options Flow:</strong> Put/call ratios, implied volatility, unusual activity
+                </div>
+              </div>
+
+              {/* Exit Management */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(153, 15, 61, 0.3)'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#CC785C', marginBottom: '12px' }}>
+                  🚪 7 Automated Exit Types
+                </div>
+                <div style={{ color: '#E0E0E0', fontSize: '13px', lineHeight: '1.6' }}>
+                  <strong>Stop Loss:</strong> -8% hard floor | <strong>Profit Targets:</strong> 5-20% per strategy | <strong>Trailing Stops:</strong> 3-8% progressive<br/>
+                  <strong>Time-Based:</strong> Max holding periods | <strong>Technical:</strong> MA breaks, RSI extremes<br/>
+                  <strong>Macro Circuit Breakers:</strong> VIX > 35, SPY < -8% | <strong>Strategy-Specific:</strong> Custom per trading style
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Risk Management */}
           <div style={{
             background: 'linear-gradient(135deg, #F5E6D3 0%, #F8EBD8 100%)',
