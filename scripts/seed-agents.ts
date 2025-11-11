@@ -24,17 +24,9 @@ async function seedAgents() {
 
       let agent;
       if (existing) {
-        // Update existing agent
-        agent = await prisma.agent.update({
-          where: { id: existing.id },
-          data: {
-            accountValue: 10000,
-            cashBalance: 10000,
-            startingValue: 10000,
-            lastSyncAt: new Date(),
-          },
-        });
-        console.log(`🔄 ${agent.name} (${agent.model}) - Reset to $${agent.accountValue.toLocaleString()}`);
+        // Skip existing agents to preserve their trading history
+        console.log(`✓ ${existing.name} (${existing.model}) - Already exists (Account: $${existing.accountValue.toLocaleString()})`);
+        continue;
       } else {
         // Create new agent
         agent = await prisma.agent.create({
