@@ -19,6 +19,8 @@ import { analyzeAllExits, generateExitSummary } from './exit-management';
 import { fetchMacroIndicators, getEnhancedStockData, generateDataSourcesSummary } from './data-sources';
 // POLYPOLY ENHANCEMENT: Market-adaptive strategy selection
 import { getOptimalTradingStrategy, getStrategyInstructions, type StrategyRecommendation } from './strategy-selector';
+// AI-DRIVEN STRATEGY: Market intelligence for AI strategy selection
+import { getMarketIntelligence, formatMarketIntelligenceForAI } from './market-intelligence';
 
 // Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
@@ -391,7 +393,12 @@ export async function runTradingCycle() {
 
     // Add relative strength to all stocks
     stocks = calculateRelativeStrength(stocks, marketContext.spyTrend);
-    console.log(`✓ Market intelligence complete\n`);
+    console.log(`✓ Market context complete\n`);
+
+    // 3b. AI-DRIVEN STRATEGY: Generate comprehensive market intelligence (48h, 30d, 90d analysis)
+    console.log('📊 Generating comprehensive market intelligence for AI strategy selection...');
+    const marketIntelligence = await getMarketIntelligence(stocks, marketContext);
+    console.log(`✓ Market intelligence complete (48h, 30d, 90d analysis)\n`);
 
     // 4. Get macro indicators and enhanced data sources
     console.log('📡 Fetching multi-source data...');
@@ -412,13 +419,7 @@ export async function runTradingCycle() {
     // 8. Fetch news for big movers (>3% change)
     const news = await fetchNewsForBigMovers(stocks);
 
-    // 9. POLYPOLY ENHANCEMENT: Detect optimal strategy for current market regime
-    console.log('🎯 Detecting optimal trading strategy for current market...');
-    const optimalStrategy = await getOptimalTradingStrategy(marketContext);
-    const strategyInstructions = getStrategyInstructions(optimalStrategy);
-    console.log(`✓ Strategy selected: ${optimalStrategy.primaryStrategy.toUpperCase().replace(/_/g, ' ')}\n`);
-
-    // 10. Get all agents (excluding benchmark)
+    // 9. Get all agents (excluding benchmark)
     const agents = await prisma.agent.findMany({
       include: {
         positions: true,
@@ -430,11 +431,20 @@ export async function runTradingCycle() {
       }
     });
 
-    console.log(`🤖 Processing ${agents.length} AI agents (all using optimal strategy)\n`);
+    console.log(`🤖 Processing ${agents.length} AI agents (AI-driven strategy selection)\n`);
 
-    // 11. Process each agent with full intelligence and optimal strategy
+    // 10. Process each agent - AI will independently choose strategy based on market intelligence
     for (const agent of agents) {
-      await processAgentTrading(agent, stocks, marketContext, macroIndicators, enhancedStockData, marketTrend, news, optimalStrategy, strategyInstructions);
+      await processAgentTrading(
+        agent,
+        stocks,
+        marketContext,
+        marketIntelligence,
+        macroIndicators,
+        enhancedStockData,
+        marketTrend,
+        news
+      );
     }
 
     // 9. Update all positions one final time (to capture newly created positions)
@@ -456,12 +466,11 @@ async function processAgentTrading(
   agent: any,
   stocks: Stock[],
   marketContext: MarketContext,
+  marketIntelligence: any,
   macroIndicators: any,
   enhancedStockData: any[],
   marketTrend: { daily: number; weekly: number },
-  news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>,
-  optimalStrategy: StrategyRecommendation,
-  strategyInstructions: string
+  news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>
 ) {
   console.log(`\n━━━ ${agent.name} (${agent.model}) ━━━`);
 
@@ -571,15 +580,11 @@ async function processAgentTrading(
       recommendations.slice(0, 3).forEach(rec => console.log(`    ${rec}`));
     }
 
-    // POLYPOLY ENHANCEMENT: Use optimal strategy instead of fixed agent strategy
-    // All agents now use the same strategy optimized for current market conditions
-    const strategyType = optimalStrategy.primaryStrategy;
-
-    console.log(`  📋 Using ${optimalStrategy.primaryStrategy.toUpperCase().replace(/_/g, ' ')} strategy (regime: ${optimalStrategy.regime})`);
-
-    // Get strategy-specific signals for all stocks using optimal strategy
-    // Note: We still use agent.model for backward compatibility, but strategy is overridden
+    // Get strategy-specific signals (AI will choose strategy independently)
     const strategySignals = getStrategySignals(agent.model, stocks, marketContext, portfolioMetrics);
+
+    // AI will select strategy type during decision making
+    const strategyType = 'momentum_breakout'; // Default for exit analysis, actual strategy chosen by AI
 
     // Analyze exit signals for current positions
     const exitSignals = analyzeAllExits(
@@ -625,14 +630,14 @@ async function processAgentTrading(
       agentStats,
       news: news.length > 0 ? news : undefined,
       // NEW: Enhanced intelligence
-      marketContext,
+      marketContext, // Full market context object (for strategy selection)
       portfolioMetrics,
       strategySignals,
       exitSignals,
       macroIndicators,
       agentPerformance,
-      // POLYPOLY ENHANCEMENT: Use optimal strategy instructions instead of agent-specific
-      strategyPrompt: strategyInstructions,
+      // AI-DRIVEN STRATEGY: Market intelligence for AI to independently choose strategy
+      marketIntelligence, // 48h, 30d, 90d market analysis
       exitSummary: generateExitSummary(exitSignals),
       dataSourcesSummary: generateDataSourcesSummary(enhancedStockData, macroIndicators),
     };
@@ -661,7 +666,7 @@ async function processAgentTrading(
       await executeCover(agent, decision, stocks);
     }
 
-    // Log the decision (Alpha Arena: store invalidationCondition)
+    // Log the decision (including AI strategy choice)
     const decisionRecord = await prisma.decision.create({
       data: {
         agentId: agent.id,
@@ -674,6 +679,11 @@ async function processAgentTrading(
         targetPrice: decision.targetPrice,
         stopLoss: decision.stopLoss,
         invalidationCondition: decision.invalidationCondition,
+        // AI-DRIVEN STRATEGY: Store strategy choice
+        chosenStrategy: decision.strategyChoice?.chosenStrategy,
+        strategyReasoning: decision.strategyChoice?.reasoning,
+        strategyConfidence: decision.strategyChoice?.confidence,
+        alternativeStrategy: decision.strategyChoice?.alternativeStrategy,
         portfolioValue,
         cashBalance: agent.cashBalance,
         marketDataSnapshot: JSON.stringify(

@@ -91,6 +91,12 @@ model Decision {
   stopLoss       Float?
   invalidationCondition String? // Exists in production DB
 
+  // AI Strategy Selection (NEW - AI-driven strategy choice)
+  chosenStrategy       String? // momentum_breakout, mean_reversion, trend_following, volatility_arbitrage, defensive_cash
+  strategyReasoning    String? // Why the AI chose this strategy
+  strategyConfidence   Float?  // AI's confidence in strategy choice (0-1)
+  alternativeStrategy  String? // Backup strategy considered
+
   // Market context
   marketDataSnapshot String // JSON string of market data
 

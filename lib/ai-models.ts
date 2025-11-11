@@ -10,6 +10,14 @@ import {
   callMultiSourceTool,
   getMultiSourceUsageSummary,
 } from './multi-source-tools';
+import type { MarketIntelligence } from './market-intelligence';
+import type { MarketContext as MarketContextType } from './market-context';
+import {
+  generateStrategySelectionPrompt,
+  parseStrategySelection,
+  getStrategyInstructions,
+  type StrategyChoice,
+} from './ai-strategy-selection';
 
 interface MarketContext {
   stocks: Stock[];
@@ -46,6 +54,9 @@ interface MarketContext {
   }>;
   // POLYPOLY ENHANCEMENT: Market-adaptive strategy instructions
   strategyPrompt?: string;
+  // AI-DRIVEN STRATEGY: Enhanced market intelligence and context
+  marketIntelligence?: MarketIntelligence;
+  marketContext?: MarketContextType;
 }
 
 interface TradingDecision {
@@ -58,6 +69,8 @@ interface TradingDecision {
   targetPrice?: number;
   stopLoss?: number;
   invalidationCondition?: string; // New: Exit condition if thesis breaks
+  // AI-DRIVEN STRATEGY: Strategy choice metadata
+  strategyChoice?: StrategyChoice;
 }
 
 function createPrompt(context: MarketContext, maxToolCalls: number = 15, useMCPTools: boolean = false): string {
@@ -237,6 +250,67 @@ For SELL/BUY_TO_COVER: {"action":"SELL","reasoning":"Detailed explanation (200+ 
 For HOLD: {"action":"HOLD","reasoning":"Detailed explanation (200+ chars): Why is waiting best? What signals are you monitoring? What would trigger action? Example: 'Holding cash as market shows mixed signals. S&P up 0.19% but sector rotation unclear. Monitoring energy sector momentum and crude oil prices for potential XOM entry. Also watching tech sector for pullback opportunities in NVDA/MSFT. Will act when conviction reaches 70%+ with clear technical setup.'","confidence":0.7}`;
 }
 
+/**
+ * PHASE 1: AI independently selects trading strategy based on market intelligence
+ */
+async function selectAIStrategy(
+  agentName: string,
+  marketIntelligence: MarketIntelligence,
+  marketContext: MarketContextType
+): Promise<StrategyChoice> {
+  console.log(`  🧠 ${agentName} analyzing market to select strategy...`);
+
+  try {
+    const prompt = generateStrategySelectionPrompt(marketIntelligence, marketContext);
+
+    let response: string;
+
+    // Route to appropriate AI model for strategy selection
+    switch (agentName) {
+      case 'GPT-5':
+        response = await callOpenAIForStrategy(prompt);
+        break;
+      case 'Claude Sonnet 4.5':
+        response = await callClaudeForStrategy(prompt);
+        break;
+      case 'Gemini Flash':
+        response = await callGeminiForStrategy(prompt);
+        break;
+      case 'DeepSeek':
+        response = await callDeepSeekForStrategy(prompt);
+        break;
+      case 'Qwen':
+        response = await callQwenForStrategy(prompt);
+        break;
+      case 'Grok':
+        response = await callGrokForStrategy(prompt);
+        break;
+      case 'Kimi K2':
+        response = await callKimiForStrategy(prompt);
+        break;
+      default:
+        throw new Error(`Unknown agent: ${agentName}`);
+    }
+
+    const strategyChoice = parseStrategySelection(response);
+    console.log(`  ✓ ${agentName} chose: ${strategyChoice.chosenStrategy.toUpperCase().replace(/_/g, ' ')} (${(strategyChoice.confidence * 100).toFixed(0)}% confidence)`);
+
+    return strategyChoice;
+  } catch (error: any) {
+    console.error(`  ❌ Error in strategy selection for ${agentName}:`, error.message);
+    // Default to defensive cash on error
+    return {
+      chosenStrategy: 'defensive_cash',
+      reasoning: `Error in strategy selection: ${error.message}. Defaulting to defensive cash for safety.`,
+      confidence: 0.3,
+      keyFactors: ['Error in AI strategy selection'],
+    };
+  }
+}
+
+/**
+ * PHASE 2: AI makes trading decision using selected strategy
+ */
 export async function getAIDecision(
   agentId: string,
   agentName: string,
@@ -245,25 +319,51 @@ export async function getAIDecision(
   console.log(`  🤖 Getting decision from ${agentName}...`);
 
   try {
-    // Route based on agent name to proper AI API
+    // PHASE 1: AI selects strategy (if market intelligence available)
+    let strategyChoice: StrategyChoice | undefined;
+
+    if (context.marketIntelligence && context.marketContext) {
+      strategyChoice = await selectAIStrategy(agentName, context.marketIntelligence, context.marketContext);
+
+      // Inject strategy instructions into context
+      context.strategyPrompt = getStrategyInstructions(strategyChoice.chosenStrategy);
+    }
+
+    // PHASE 2: AI makes trading decision with chosen strategy
+    let decision: TradingDecision;
+
     switch (agentName) {
       case 'GPT-5':
-        return await callOpenAI(context, agentId, agentName);
+        decision = await callOpenAI(context, agentId, agentName);
+        break;
       case 'Claude Sonnet 4.5':
-        return await callClaude(context, agentId, agentName);
+        decision = await callClaude(context, agentId, agentName);
+        break;
       case 'Gemini Flash':
-        return await callGemini(context);
+        decision = await callGemini(context);
+        break;
       case 'DeepSeek':
-        return await callDeepSeek(context);
+        decision = await callDeepSeek(context);
+        break;
       case 'Qwen':
-        return await callQwen(context);
+        decision = await callQwen(context);
+        break;
       case 'Grok':
-        return await callGrok(context);
+        decision = await callGrok(context);
+        break;
       case 'Kimi K2':
-        return await callKimi(context);
+        decision = await callKimi(context);
+        break;
       default:
         throw new Error(`Unknown agent: ${agentName}. Cannot use mock data - real AI integration required.`);
     }
+
+    // Attach strategy choice to decision
+    if (strategyChoice) {
+      decision.strategyChoice = strategyChoice;
+    }
+
+    return decision;
   } catch (error: any) {
     console.error(`  ❌ Error getting AI decision for ${agentName}:`, error.message);
     // Return error state - DO NOT use mock/random data per user requirements
@@ -797,3 +897,176 @@ function parseAIResponse(response: string): TradingDecision {
 
 // getRandomDecision function REMOVED per user requirement: NO MOCK DATA
 // All trading decisions must come from real AI APIs or explicit error states
+
+/**
+ * ════════════════════════════════════════════════════════════════════
+ * AI STRATEGY SELECTION HELPER FUNCTIONS
+ * These functions call each AI model specifically for strategy selection
+ * ════════════════════════════════════════════════════════════════════
+ */
+
+async function callOpenAIForStrategy(prompt: string): Promise<string> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 800,
+  });
+
+  return completion.choices[0].message.content || '{}';
+}
+
+async function callClaudeForStrategy(prompt: string): Promise<string> {
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 800,
+    temperature: 0.7,
+    messages: [
+      {
+        role: 'user',
+        content: `You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.\n\n${prompt}`,
+      },
+    ],
+  });
+
+  const content = response.content[0];
+  return content.type === 'text' ? content.text : '{}';
+}
+
+async function callGeminiForStrategy(prompt: string): Promise<string> {
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.\n\n${prompt}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 800,
+    },
+  });
+
+  return result.response.text();
+}
+
+async function callDeepSeekForStrategy(prompt: string): Promise<string> {
+  const response = await axios.post(
+    'https://api.deepseek.com/chat/completions',
+    {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.choices[0].message.content;
+}
+
+async function callQwenForStrategy(prompt: string): Promise<string> {
+  const response = await axios.post(
+    'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    {
+      model: 'qwen-max',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.QWEN_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.choices[0].message.content;
+}
+
+async function callGrokForStrategy(prompt: string): Promise<string> {
+  const response = await axios.post(
+    'https://api.x.ai/v1/chat/completions',
+    {
+      model: 'grok-2-1212',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROK_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.choices[0].message.content;
+}
+
+async function callKimiForStrategy(prompt: string): Promise<string> {
+  const response = await axios.post(
+    'https://api.moonshot.cn/v1/chat/completions',
+    {
+      model: 'moonshot-v1-128k',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert trader selecting optimal trading strategies. Respond with ONLY valid JSON, no markdown formatting.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.KIMI_API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.choices[0].message.content;
+}
