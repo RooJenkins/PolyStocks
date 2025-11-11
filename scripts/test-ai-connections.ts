@@ -242,7 +242,7 @@ async function testKimi(): Promise<TestResult> {
   const start = Date.now();
   try {
     const response = await axios.post(
-      'https://api.moonshot.cn/v1/chat/completions',
+      'https://api.moonshot.ai/v1/chat/completions',
       {
         model: 'moonshot-v1-128k',
         messages: [{ role: 'user', content: 'Say "OK" if you can read this.' }],

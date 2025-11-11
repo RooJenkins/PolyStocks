@@ -833,7 +833,7 @@ async function callGrok(context: MarketContext): Promise<TradingDecision> {
 async function callKimi(context: MarketContext): Promise<TradingDecision> {
   // Kimi uses OpenAI-compatible API via Moonshot AI
   const response = await axios.post(
-    'https://api.moonshot.cn/v1/chat/completions',
+    'https://api.moonshot.ai/v1/chat/completions',
     {
       model: 'moonshot-v1-128k', // Kimi K2 with 128k context
       messages: [
@@ -1065,7 +1065,7 @@ async function callGrokForStrategy(prompt: string): Promise<string> {
 
 async function callKimiForStrategy(prompt: string): Promise<string> {
   const response = await axios.post(
-    'https://api.moonshot.cn/v1/chat/completions',
+    'https://api.moonshot.ai/v1/chat/completions',
     {
       model: 'moonshot-v1-128k',
       messages: [

@@ -103,7 +103,8 @@ KIMI_API_KEY="sk-YOUR_NEW_KEY_HERE"
 
 **API Endpoint:**
 ```
-https://api.moonshot.cn/v1/chat/completions
+https://api.moonshot.ai/v1/chat/completions (Global - Recommended)
+https://api.moonshot.cn/v1/chat/completions (China - Requires identity verification)
 ```
 
 ---
