@@ -284,9 +284,6 @@ async function selectAIStrategy(
       case 'DeepSeek':
         response = await callDeepSeekForStrategy(prompt);
         break;
-      case 'Qwen':
-        response = await callQwenForStrategy(prompt);
-        break;
       case 'Grok':
         response = await callGrokForStrategy(prompt);
         break;
@@ -362,9 +359,6 @@ export async function getAIDecision(
         break;
       case 'DeepSeek':
         decision = await callDeepSeek(context);
-        break;
-      case 'Qwen':
-        decision = await callQwen(context);
         break;
       case 'Grok':
         decision = await callGrok(context);

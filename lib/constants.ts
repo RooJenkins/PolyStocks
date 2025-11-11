@@ -47,12 +47,6 @@ export const AI_AGENTS = [
     color: '#8b5cf6',
   },
   {
-    id: 'qwen',
-    name: 'Qwen',
-    model: 'Alibaba Qwen',
-    color: '#ec4899',
-  },
-  {
     id: 'grok',
     name: 'Grok',
     model: 'xAI Grok 2',
