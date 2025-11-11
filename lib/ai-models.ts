@@ -333,10 +333,14 @@ export async function getAIDecision(
       // Get base strategy instructions
       const baseInstructions = getStrategyInstructions(strategyChoice.chosenStrategy);
 
-      // Generate frequency guidance for this strategy
+      // Calculate cash percentage for cash-aware frequency guidance
+      const cashPercentage = (context.cashBalance / context.accountValue) * 100;
+
+      // Generate frequency guidance for this strategy (CASH-AWARE)
       const frequencyGuidance = generateFrequencyGuidance(
         strategyChoice.chosenStrategy,
-        context.daysSinceLastTrade || 999
+        context.daysSinceLastTrade || 999,
+        cashPercentage
       );
 
       // Inject both strategy instructions and frequency guidance into context

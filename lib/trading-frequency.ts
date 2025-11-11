@@ -84,10 +84,12 @@ export function calculateDaysSinceLastTrade(lastTradeTimestamp: Date | null): nu
 
 /**
  * Generate trading frequency guidance for AI prompt
+ * CASH-AWARE: Encourages deployment when cash is high, discourages churning when invested
  */
 export function generateFrequencyGuidance(
   strategy: TradingStrategy,
-  daysSinceLastTrade: number
+  daysSinceLastTrade: number,
+  cashPercentage: number // 0-100, percentage of account value in cash
 ): string {
   const guidance = FREQUENCY_GUIDANCE[strategy];
 
@@ -101,6 +103,45 @@ export function generateFrequencyGuidance(
     : daysSinceLastTrade >= guidance.minDaysBetweenTrades * 2
     ? '(It\'s been a while - you have flexibility to act)'
     : '';
+
+  // CASH-AWARE GUIDANCE: Adjust messaging based on capital deployment
+  let capitalDeploymentGuidance = '';
+
+  if (cashPercentage >= 70) {
+    // High cash - encourage deployment
+    capitalDeploymentGuidance = `
+🚀 CAPITAL DEPLOYMENT PRIORITY:
+You have ${cashPercentage.toFixed(0)}% cash sitting idle! This is costing you opportunity.
+→ Be AGGRESSIVE about deploying capital on strong setups
+→ Missing opportunities hurts more than occasional overtrading
+→ Your goal: Get invested in quality positions
+→ Don't let cash drag down your returns!`;
+  } else if (cashPercentage >= 50) {
+    // Moderate cash - balanced approach
+    capitalDeploymentGuidance = `
+💰 BALANCED CAPITAL DEPLOYMENT:
+You have ${cashPercentage.toFixed(0)}% cash available.
+→ Look for good opportunities to deploy more capital
+→ Balance quality vs. getting invested
+→ Don't force trades, but don't be overly conservative either`;
+  } else if (cashPercentage >= 30) {
+    // Reasonable deployment - normal frequency guidance
+    capitalDeploymentGuidance = `
+✓ GOOD CAPITAL DEPLOYMENT:
+You have ${cashPercentage.toFixed(0)}% cash - well deployed!
+→ Focus on quality setups and respect your strategy frequency
+→ No rush to deploy remaining cash`;
+  } else {
+    // Fully invested - strict anti-churning
+    capitalDeploymentGuidance = `
+⚠️ AVOID CHURNING (You're ${(100 - cashPercentage).toFixed(0)}% invested):
+You're nearly fully invested with only ${cashPercentage.toFixed(0)}% cash.
+→ RESPECT YOUR FREQUENCY LIMITS STRICTLY
+→ Don't churn positions just to "do something"
+→ Only trade on clear strategy signals or when taking profits
+→ Unnecessary churning creates spread costs and whipsaw losses
+→ Let your positions work for you!`;
+  }
 
   return `
 ═══════════════════════════════════════════════════════════
@@ -117,16 +158,17 @@ ${guidance.reasoning}
 YOUR SITUATION:
 • Days since last trade: ${daysSinceLastTrade === 999 ? 'First trade' : `${daysSinceLastTrade} days`}
 • Minimum recommended: ${guidance.minDaysBetweenTrades} days
+• Cash available: ${cashPercentage.toFixed(1)}%
 • Recommendation: ${recommendation} ${urgency}
 
 GUIDANCE:
 ${guidance.encouragement}
+${capitalDeploymentGuidance}
 
 REMEMBER:
-• Missing great opportunities hurts MORE than occasional overtrading
-• But respecting your strategy timeframe maximizes long-term returns
+• HIGH CASH (>50%): Be aggressive, deploy capital on strong setups
+• WELL INVESTED (<30% cash): Respect frequency limits, avoid churning
 • Quality setups > Quantity of trades
-• If you're unsure, HOLD is always valid
 
 Risk of Overtrading: ${guidance.riskOfOvertrading.toUpperCase()}
 ${guidance.riskOfOvertrading === 'high' ? '⚠️ Your strategy is especially vulnerable to overtrading - be disciplined!' : ''}
