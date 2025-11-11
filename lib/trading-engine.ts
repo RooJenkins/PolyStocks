@@ -17,6 +17,8 @@ import { getStrategySignals, generateStrategyPrompt, STRATEGY_CONFIGS } from './
 import { calculatePositionSize, calculateAgentPerformance, adjustForMarketConditions, getPositionSizeSummary, type AgentPerformance } from './position-sizing';
 import { analyzeAllExits, generateExitSummary } from './exit-management';
 import { fetchMacroIndicators, getEnhancedStockData, generateDataSourcesSummary } from './data-sources';
+// POLYPOLY ENHANCEMENT: Market-adaptive strategy selection
+import { getOptimalTradingStrategy, getStrategyInstructions, type StrategyRecommendation } from './strategy-selector';
 
 // Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
@@ -410,7 +412,13 @@ export async function runTradingCycle() {
     // 8. Fetch news for big movers (>3% change)
     const news = await fetchNewsForBigMovers(stocks);
 
-    // 9. Get all agents (excluding benchmark)
+    // 9. POLYPOLY ENHANCEMENT: Detect optimal strategy for current market regime
+    console.log('🎯 Detecting optimal trading strategy for current market...');
+    const optimalStrategy = await getOptimalTradingStrategy(marketContext);
+    const strategyInstructions = getStrategyInstructions(optimalStrategy);
+    console.log(`✓ Strategy selected: ${optimalStrategy.primaryStrategy.toUpperCase().replace(/_/g, ' ')}\n`);
+
+    // 10. Get all agents (excluding benchmark)
     const agents = await prisma.agent.findMany({
       include: {
         positions: true,
@@ -422,11 +430,11 @@ export async function runTradingCycle() {
       }
     });
 
-    console.log(`🤖 Processing ${agents.length} AI agents\n`);
+    console.log(`🤖 Processing ${agents.length} AI agents (all using optimal strategy)\n`);
 
-    // 10. Process each agent with full intelligence
+    // 11. Process each agent with full intelligence and optimal strategy
     for (const agent of agents) {
-      await processAgentTrading(agent, stocks, marketContext, macroIndicators, enhancedStockData, marketTrend, news);
+      await processAgentTrading(agent, stocks, marketContext, macroIndicators, enhancedStockData, marketTrend, news, optimalStrategy, strategyInstructions);
     }
 
     // 9. Update all positions one final time (to capture newly created positions)
@@ -451,7 +459,9 @@ async function processAgentTrading(
   macroIndicators: any,
   enhancedStockData: any[],
   marketTrend: { daily: number; weekly: number },
-  news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>
+  news: Array<{ symbol: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral' }>,
+  optimalStrategy: StrategyRecommendation,
+  strategyInstructions: string
 ) {
   console.log(`\n━━━ ${agent.name} (${agent.model}) ━━━`);
 
@@ -561,11 +571,14 @@ async function processAgentTrading(
       recommendations.slice(0, 3).forEach(rec => console.log(`    ${rec}`));
     }
 
-    // Get agent's trading strategy
-    const agentStrategy = STRATEGY_CONFIGS[agent.model];
-    const strategyType = agentStrategy?.type || 'momentum_breakout';
+    // POLYPOLY ENHANCEMENT: Use optimal strategy instead of fixed agent strategy
+    // All agents now use the same strategy optimized for current market conditions
+    const strategyType = optimalStrategy.primaryStrategy;
 
-    // Get strategy-specific signals for all stocks
+    console.log(`  📋 Using ${optimalStrategy.primaryStrategy.toUpperCase().replace(/_/g, ' ')} strategy (regime: ${optimalStrategy.regime})`);
+
+    // Get strategy-specific signals for all stocks using optimal strategy
+    // Note: We still use agent.model for backward compatibility, but strategy is overridden
     const strategySignals = getStrategySignals(agent.model, stocks, marketContext, portfolioMetrics);
 
     // Analyze exit signals for current positions
@@ -618,7 +631,8 @@ async function processAgentTrading(
       exitSignals,
       macroIndicators,
       agentPerformance,
-      strategyPrompt: generateStrategyPrompt(agent.model, strategySignals, marketContext),
+      // POLYPOLY ENHANCEMENT: Use optimal strategy instructions instead of agent-specific
+      strategyPrompt: strategyInstructions,
       exitSummary: generateExitSummary(exitSignals),
       dataSourcesSummary: generateDataSourcesSummary(enhancedStockData, macroIndicators),
     };

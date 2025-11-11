@@ -44,6 +44,8 @@ interface MarketContext {
     headline: string;
     sentiment: 'positive' | 'negative' | 'neutral';
   }>;
+  // POLYPOLY ENHANCEMENT: Market-adaptive strategy instructions
+  strategyPrompt?: string;
 }
 
 interface TradingDecision {
@@ -146,7 +148,9 @@ Format: Symbol:Price (Today%) 7d:Week% 30d:Month% MA7:vsMA7% MA30:vsMA30% MA90:v
 - 52wH/52wL: % from 52-week high/low (near high = potential resistance, near low = potential support)
 - VolTrend: Volume vs 7-day average (high volume = strong conviction)
 
-==== YOUR PERFORMANCE ====
+${context.strategyPrompt ? `${context.strategyPrompt}
+
+` : ''}==== YOUR PERFORMANCE ====
 ${agentStatsStr || 'No trade history yet'}
 
 ==== POSITION SIZING BASED ON CONFIDENCE ====
