@@ -645,7 +645,7 @@ async function callGeminiWithTools(
 
   const tools = getMultiSourceToolsForGemini();
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     tools: [{ functionDeclarations: tools }],
     generationConfig: {
       temperature: 0.7,
@@ -962,8 +962,8 @@ async function callClaudeForStrategy(prompt: string): Promise<string> {
 }
 
 async function callGeminiForStrategy(prompt: string): Promise<string> {
-  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   const result = await model.generateContent({
     contents: [
@@ -1055,7 +1055,7 @@ async function callGrokForStrategy(prompt: string): Promise<string> {
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROK_API_KEY}`,
+        Authorization: `Bearer ${process.env.XAI_API_KEY}`,
       },
     }
   );

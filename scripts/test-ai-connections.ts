@@ -89,25 +89,25 @@ async function testGemini(): Promise<TestResult> {
   const start = Date.now();
   try {
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent('Say "OK" if you can read this.');
 
     if (result.response.text()) {
       return {
-        model: 'Gemini Flash (gemini-2.0-flash-exp)',
+        model: 'Gemini Flash (gemini-2.0-flash)',
         status: 'success',
         responseTime: Date.now() - start,
       };
     } else {
       return {
-        model: 'Gemini Flash (gemini-2.0-flash-exp)',
+        model: 'Gemini Flash (gemini-2.0-flash)',
         status: 'error',
         error: 'No response content',
       };
     }
   } catch (error: any) {
     return {
-      model: 'Gemini Flash (gemini-2.0-flash-exp)',
+      model: 'Gemini Flash (gemini-2.0-flash)',
       status: 'error',
       error: error.message,
     };
