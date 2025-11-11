@@ -18,6 +18,7 @@ import {
   getStrategyInstructions,
   type StrategyChoice,
 } from './ai-strategy-selection';
+import { generateFrequencyGuidance } from './trading-frequency';
 
 interface MarketContext {
   stocks: Stock[];
@@ -57,6 +58,10 @@ interface MarketContext {
   // AI-DRIVEN STRATEGY: Enhanced market intelligence and context
   marketIntelligence?: MarketIntelligence;
   marketContext?: MarketContextType;
+  // TRADING FREQUENCY: Days since last trade and frequency tracking
+  daysSinceLastTrade?: number;
+  tradesThisWeek?: number;
+  tradesThisMonth?: number;
 }
 
 interface TradingDecision {
@@ -325,8 +330,17 @@ export async function getAIDecision(
     if (context.marketIntelligence && context.marketContext) {
       strategyChoice = await selectAIStrategy(agentName, context.marketIntelligence, context.marketContext);
 
-      // Inject strategy instructions into context
-      context.strategyPrompt = getStrategyInstructions(strategyChoice.chosenStrategy);
+      // Get base strategy instructions
+      const baseInstructions = getStrategyInstructions(strategyChoice.chosenStrategy);
+
+      // Generate frequency guidance for this strategy
+      const frequencyGuidance = generateFrequencyGuidance(
+        strategyChoice.chosenStrategy,
+        context.daysSinceLastTrade || 999
+      );
+
+      // Inject both strategy instructions and frequency guidance into context
+      context.strategyPrompt = baseInstructions + '\n\n' + frequencyGuidance;
     }
 
     // PHASE 2: AI makes trading decision with chosen strategy

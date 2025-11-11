@@ -21,6 +21,12 @@ import { fetchMacroIndicators, getEnhancedStockData, generateDataSourcesSummary 
 import { getOptimalTradingStrategy, getStrategyInstructions, type StrategyRecommendation } from './strategy-selector';
 // AI-DRIVEN STRATEGY: Market intelligence for AI strategy selection
 import { getMarketIntelligence, formatMarketIntelligenceForAI } from './market-intelligence';
+// TRADING FREQUENCY OPTIMIZATION: Strategy-specific frequency guidance
+import {
+  calculateDaysSinceLastTrade,
+  generateFrequencyGuidance,
+  assessTradingFrequency,
+} from './trading-frequency';
 
 // Wrapper functions that route to correct broker based on agent's broker configuration
 async function executeBuyTrade(agentId: string, agentName: string, symbol: string, quantity: number, marketPrice: number) {
@@ -612,6 +618,26 @@ async function processAgentTrading(
       });
     }
 
+    // TRADING FREQUENCY: Calculate days since last trade and generate guidance
+    // (Will be injected into AI prompt after strategy selection)
+    const lastTrade = await prisma.trade.findFirst({
+      where: { agentId: agent.id },
+      orderBy: { timestamp: 'desc' },
+      select: { timestamp: true },
+    });
+    const daysSinceLastTrade = calculateDaysSinceLastTrade(lastTrade?.timestamp || null);
+
+    // Assess current trading frequency for logging
+    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const thisMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [tradesThisWeek, tradesThisMonth] = await Promise.all([
+      prisma.trade.count({ where: { agentId: agent.id, timestamp: { gte: thisWeek } } }),
+      prisma.trade.count({ where: { agentId: agent.id, timestamp: { gte: thisMonth } } }),
+    ]);
+
+    // Log trading frequency for monitoring (will assess after strategy selection)
+    console.log(`  📅 Last trade: ${daysSinceLastTrade === 999 ? 'Never' : `${daysSinceLastTrade} days ago`} | Week: ${tradesThisWeek} trades | Month: ${tradesThisMonth} trades`);
+
     // Prepare enhanced market context for AI
     const enhancedMarketContext = {
       stocks,
@@ -640,6 +666,10 @@ async function processAgentTrading(
       marketIntelligence, // 48h, 30d, 90d market analysis
       exitSummary: generateExitSummary(exitSignals),
       dataSourcesSummary: generateDataSourcesSummary(enhancedStockData, macroIndicators),
+      // TRADING FREQUENCY: Days since last trade (for frequency guidance after strategy selection)
+      daysSinceLastTrade,
+      tradesThisWeek,
+      tradesThisMonth,
     };
 
     // Get AI decision with enhanced intelligence
@@ -653,6 +683,19 @@ async function processAgentTrading(
     }
     if (decision.stopLoss) {
       console.log(`  🛡️  Stop Loss: $${decision.stopLoss.toFixed(2)}`);
+    }
+
+    // TRADING FREQUENCY: Assess if trading frequency is appropriate for chosen strategy
+    if (decision.strategyChoice && decision.action !== 'HOLD') {
+      const frequencyAssessment = assessTradingFrequency(
+        decision.strategyChoice.chosenStrategy,
+        tradesThisWeek + 1, // +1 for this trade
+        tradesThisMonth + 1
+      );
+
+      if (frequencyAssessment.status !== 'healthy') {
+        console.log(`  ${frequencyAssessment.message}`);
+      }
     }
 
     // Execute trade based on decision
