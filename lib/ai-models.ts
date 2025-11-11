@@ -255,6 +255,8 @@ export async function getAIDecision(
         return await callQwen(context);
       case 'Grok':
         return await callGrok(context);
+      case 'Kimi K2':
+        return await callKimi(context);
       default:
         throw new Error(`Unknown agent: ${agentName}. Cannot use mock data - real AI integration required.`);
     }
@@ -698,6 +700,37 @@ async function callGrok(context: MarketContext): Promise<TradingDecision> {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
+      },
+    }
+  );
+
+  const text = response.data.choices[0].message.content;
+  return parseAIResponse(text);
+}
+
+async function callKimi(context: MarketContext): Promise<TradingDecision> {
+  // Kimi uses OpenAI-compatible API via Moonshot AI
+  const response = await axios.post(
+    'https://api.moonshot.cn/v1/chat/completions',
+    {
+      model: 'moonshot-v1-128k', // Kimi K2 with 128k context
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert stock trader. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: createPrompt(context),
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.KIMI_API_KEY}`,
       },
     }
   );

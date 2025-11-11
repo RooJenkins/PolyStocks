@@ -23,15 +23,15 @@ export const TOP_20_STOCKS = [
 
 export const AI_AGENTS = [
   {
-    id: 'gpt4',
-    name: 'GPT-4o Mini',
-    model: 'OpenAI GPT-4o-mini',
+    id: 'gpt5',
+    name: 'GPT-5',
+    model: 'OpenAI GPT-5',
     color: '#10b981',
   },
   {
     id: 'claude',
-    name: 'Claude Haiku',
-    model: 'Anthropic Claude Haiku',
+    name: 'Claude Sonnet 4.5',
+    model: 'Anthropic Claude Sonnet 4.5',
     color: '#3b82f6',
   },
   {
@@ -39,12 +39,6 @@ export const AI_AGENTS = [
     name: 'Gemini Flash',
     model: 'Google Gemini 2.0 Flash',
     color: '#f59e0b',
-  },
-  {
-    id: 'grok',
-    name: 'Grok',
-    model: 'xAI Grok (Fallback)',
-    color: '#ef4444',
   },
   {
     id: 'deepseek',
@@ -55,8 +49,20 @@ export const AI_AGENTS = [
   {
     id: 'qwen',
     name: 'Qwen',
-    model: 'Alibaba Qwen (Fallback)',
+    model: 'Alibaba Qwen',
     color: '#ec4899',
+  },
+  {
+    id: 'grok',
+    name: 'Grok',
+    model: 'xAI Grok 2',
+    color: '#ef4444',
+  },
+  {
+    id: 'kimi',
+    name: 'Kimi K2',
+    model: 'Moonshot Kimi K2',
+    color: '#14b8a6',
   },
 ];
 

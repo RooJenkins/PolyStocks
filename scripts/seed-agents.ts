@@ -3,12 +3,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const AGENTS = [
-  { name: 'GPT-4o Mini', model: 'gpt-4o-mini', color: '#5BA3A3', broker: 'simulation', isLive: false },
-  { name: 'Claude Haiku', model: 'claude-3-5-haiku-20241022', color: '#D97757', broker: 'simulation', isLive: false },
-  { name: 'Grok', model: 'grok-beta', color: '#C77B6A', broker: 'simulation', isLive: false },
-  { name: 'Gemini Flash', model: 'gemini-2.0-flash-exp', color: '#FFB224', broker: 'simulation', isLive: false },
-  { name: 'Qwen', model: 'qwen-2.5-72b', color: '#E579B8', broker: 'simulation', isLive: false },
-  { name: 'DeepSeek', model: 'deepseek-chat', color: '#8B7EC8', broker: 'simulation', isLive: false },
+  { name: 'GPT-5', model: 'gpt-5', color: '#10b981', broker: 'simulation', isLive: false },
+  { name: 'Claude Sonnet 4.5', model: 'claude-sonnet-4-20250514', color: '#3b82f6', broker: 'simulation', isLive: false },
+  { name: 'Gemini Flash', model: 'gemini-2.0-flash-exp', color: '#f59e0b', broker: 'simulation', isLive: false },
+  { name: 'DeepSeek', model: 'deepseek-chat', color: '#8b5cf6', broker: 'simulation', isLive: false },
+  { name: 'Qwen', model: 'qwen-max', color: '#ec4899', broker: 'simulation', isLive: false },
+  { name: 'Grok', model: 'grok-2-1212', color: '#ef4444', broker: 'simulation', isLive: false },
+  { name: 'Kimi K2', model: 'moonshot-v1-128k', color: '#14b8a6', broker: 'simulation', isLive: false },
 ];
 
 async function seedAgents() {
